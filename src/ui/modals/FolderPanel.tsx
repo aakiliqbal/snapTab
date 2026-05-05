@@ -3,7 +3,7 @@ import type { DropAction } from "../../domain/dropActions";
 import { type ResolvedFolder } from "../../domain/tabOperations";
 import { type Shortcut, type TabState } from "../../domain/tabState";
 import { createDropAction } from "../drag/dropActionAdapter";
-import { getDropPosition, computeDropIndex } from "../drag/dragGeometry";
+import { captureTileRects, computeDropIndex, emptyShift, getDropPosition, getShiftBetweenRects } from "../drag/dragGeometry";
 import type { DragSource, DropTarget } from "../drag/dragModel";
 import { ShortcutIcon } from "../ShortcutIcon";
 
@@ -18,6 +18,8 @@ type FolderPanelProps = {
   onStartOutgoingDrag: (source: DragSource) => void;
   tabState: TabState;
 };
+
+const FOLDER_REORDER_DEBOUNCE_MS = 200;
 
 export function FolderPanel({
   activeFolder,
@@ -34,19 +36,35 @@ export function FolderPanel({
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
   const [dropPosition, setDropPosition] = useState<"left" | "right">("left");
   const [overlayPos, setOverlayPos] = useState<{ x: number; y: number } | null>(null);
+  const [overlayOffset, setOverlayOffset] = useState({ x: 40, y: 40 });
+  const [initialRects, setInitialRects] = useState<Record<string, DOMRect>>({});
   const dragSourceRef = useRef<DragSource | null>(null);
+  const folderGridRef = useRef<HTMLDivElement | null>(null);
+  const moveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hoverIntentRef = useRef<string | null>(null);
   // Tracks whether we've already started the "drag out" sequence so we don't
   // fire onStartOutgoingDrag / onClose more than once per gesture.
   const outgoingDragStartedRef = useRef(false);
   const activePageId = tabState.pages[activeShortcutPageIndex]?.id ?? "page-1";
 
+  const clearMoveTimer = useCallback(() => {
+    if (moveTimerRef.current) {
+      clearTimeout(moveTimerRef.current);
+      moveTimerRef.current = null;
+    }
+  }, []);
+
   const clearDrag = useCallback(() => {
+    clearMoveTimer();
     setDraggedShortcutId(null);
     setDropTargetId(null);
     setOverlayPos(null);
+    setOverlayOffset({ x: 40, y: 40 });
+    setInitialRects({});
     dragSourceRef.current = null;
+    hoverIntentRef.current = null;
     outgoingDragStartedRef.current = false;
-  }, []);
+  }, [clearMoveTimer]);
 
   // Track pointer position while dragging to render a custom overlay tile
   useEffect(() => {
@@ -82,8 +100,19 @@ export function FolderPanel({
     );
   }, []);
 
+  const updateOverlayPosition = useCallback((event: DragEvent<HTMLElement | HTMLDivElement>) => {
+    setOverlayPos({ x: event.clientX, y: event.clientY });
+  }, []);
+
   const handleDragStart = useCallback(
-    (shortcut: { id: string }) => {
+    (event: DragEvent<HTMLElement>, shortcut: { id: string }) => {
+      const rect = event.currentTarget.getBoundingClientRect();
+      setInitialRects(captureTileRects(folderGridRef.current, ".folder-item"));
+      setOverlayOffset({
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top
+      });
+      updateOverlayPosition(event);
       setDraggedShortcutId(shortcut.id);
       dragSourceRef.current = {
         kind: "folder-child",
@@ -93,7 +122,40 @@ export function FolderPanel({
         index: activeFolder.childIds.indexOf(shortcut.id)
       };
     },
-    [activeFolder.id, activeFolder.childIds, activePageId]
+    [activeFolder.id, activeFolder.childIds, activePageId, updateOverlayPosition]
+  );
+
+  const getChildShift = useCallback(
+    (shortcutId: string) => {
+      if (!draggedShortcutId || !dropTargetId || shortcutId === draggedShortcutId) {
+        return emptyShift;
+      }
+
+      const sourceIndex = activeFolder.childIds.indexOf(draggedShortcutId);
+      const targetIndex = activeFolder.childIds.indexOf(dropTargetId);
+      const tileIndex = activeFolder.childIds.indexOf(shortcutId);
+
+      if (sourceIndex < 0 || targetIndex < 0 || tileIndex < 0 || sourceIndex === targetIndex) {
+        return emptyShift;
+      }
+
+      let shift = 0;
+      if (sourceIndex < targetIndex) {
+        if (dropPosition === "right" && tileIndex > sourceIndex && tileIndex <= targetIndex) shift = -1;
+        if (dropPosition === "left" && tileIndex > sourceIndex && tileIndex < targetIndex) shift = -1;
+      } else if (sourceIndex > targetIndex) {
+        if (dropPosition === "left" && tileIndex >= targetIndex && tileIndex < sourceIndex) shift = 1;
+        if (dropPosition === "right" && tileIndex > targetIndex && tileIndex < sourceIndex) shift = 1;
+      }
+
+      if (shift === 0) {
+        return emptyShift;
+      }
+
+      const targetShortcutId = activeFolder.childIds[tileIndex + shift];
+      return getShiftBetweenRects(initialRects[shortcutId], initialRects[targetShortcutId]);
+    },
+    [activeFolder.childIds, draggedShortcutId, dropPosition, dropTargetId, initialRects]
   );
 
   // ── Within-folder reorder ─────────────────────────────────────────────────
@@ -125,6 +187,24 @@ export function FolderPanel({
     return getDropPosition(event.clientX, rect) === "right" ? "right" : "left";
   };
 
+  const scheduleDropTarget = useCallback(
+    (shortcutId: string, position: "left" | "right") => {
+      const intentKey = `${shortcutId}:${position}`;
+      if (hoverIntentRef.current === intentKey) {
+        return;
+      }
+
+      hoverIntentRef.current = intentKey;
+      clearMoveTimer();
+      moveTimerRef.current = setTimeout(() => {
+        setDropTargetId(shortcutId);
+        setDropPosition(position);
+        moveTimerRef.current = null;
+      }, FOLDER_REORDER_DEBOUNCE_MS);
+    },
+    [clearMoveTimer]
+  );
+
   // ── Backdrop drag handlers ────────────────────────────────────────────────
 
   /**
@@ -140,6 +220,7 @@ export function FolderPanel({
       if (!draggedShortcutId) return;
       event.preventDefault();
       event.dataTransfer.dropEffect = "move";
+      updateOverlayPosition(event);
 
       if (!outgoingDragStartedRef.current) {
         outgoingDragStartedRef.current = true;
@@ -154,7 +235,7 @@ export function FolderPanel({
         onClose(); // Reveal the main grid so the user can drop precisely
       }
     },
-    [draggedShortcutId, activeFolder.id, activeFolder.childIds, activePageId, onStartOutgoingDrag, onClose]
+    [draggedShortcutId, activeFolder.id, activeFolder.childIds, activePageId, onStartOutgoingDrag, onClose, updateOverlayPosition]
   );
 
   /**
@@ -261,15 +342,13 @@ export function FolderPanel({
     (event: DragEvent<HTMLElement>, shortcutId: string) => {
       if (!draggedShortcutId || shortcutId === draggedShortcutId) return;
       event.preventDefault();
-      setDropTargetId(shortcutId);
-      setDropPosition(getChildDropPosition(event));
+      updateOverlayPosition(event);
+      scheduleDropTarget(shortcutId, getChildDropPosition(event));
     },
-    [draggedShortcutId]
+    [draggedShortcutId, scheduleDropTarget, updateOverlayPosition]
   );
 
-  const handleDragLeave = useCallback(() => {
-    setDropTargetId(null);
-  }, []);
+  const handleDragLeave = useCallback(() => {}, []);
 
   const handleChildDrop = useCallback(
     (event: DragEvent<HTMLElement>, targetShortcutId: string) => {
@@ -279,6 +358,25 @@ export function FolderPanel({
       handleDropOnChild(targetShortcutId, getChildDropPosition(event));
     },
     [draggedShortcutId, handleDropOnChild]
+  );
+
+  const handleFolderGridDrop = useCallback(
+    (event: DragEvent<HTMLDivElement>) => {
+      if (!draggedShortcutId) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (dropTargetId && dropTargetId !== draggedShortcutId) {
+        handleDropOnChild(dropTargetId, dropPosition);
+        return;
+      }
+
+      clearDrag();
+    },
+    [clearDrag, draggedShortcutId, dropPosition, dropTargetId, handleDropOnChild]
   );
 
   return (
@@ -303,12 +401,16 @@ export function FolderPanel({
           if (draggedShortcutId) {
             event.preventDefault();
             event.stopPropagation();
+            updateOverlayPosition(event);
           }
         }}
         onDrop={(event) => {
           if (draggedShortcutId) {
             event.preventDefault();
             event.stopPropagation();
+            if (dropTargetId && dropTargetId !== draggedShortcutId) {
+              handleDropOnChild(dropTargetId, dropPosition);
+            }
           }
         }}
       >
@@ -327,8 +429,12 @@ export function FolderPanel({
           </div>
         </div>
 
-        <div className="folder-grid">
-          {activeFolder.shortcuts.map((shortcut) => (
+        <div className="folder-grid" ref={folderGridRef} onDrop={handleFolderGridDrop}>
+          {activeFolder.shortcuts.map((shortcut) => {
+            const shift = getChildShift(shortcut.id);
+            const shiftStyle = shift.x !== 0 || shift.y !== 0 ? { transform: `translate(${shift.x}px, ${shift.y}px)` } : {};
+
+            return (
             <a
               className={[
                 "quick-link",
@@ -339,11 +445,12 @@ export function FolderPanel({
                 .filter(Boolean)
                 .join(" ")}
               draggable={true}
+              data-tile-key={shortcut.id}
               href={shortcut.url}
               key={shortcut.id}
               onDragEnd={clearDrag}
               onDragStart={(event) => {
-                handleDragStart({ id: shortcut.id });
+                handleDragStart(event, { id: shortcut.id });
                 event.dataTransfer.effectAllowed = "move";
                 event.dataTransfer.setData("text/plain", shortcut.id);
                 // Hide the browser's default ghost image — ShortcutGrid renders
@@ -358,11 +465,12 @@ export function FolderPanel({
               onDragOver={(event) => {
                 if (draggedShortcutId && shortcut.id !== draggedShortcutId) {
                   event.preventDefault();
-                  setDropTargetId(shortcut.id);
-                  setDropPosition(getChildDropPosition(event));
+                  updateOverlayPosition(event);
+                  scheduleDropTarget(shortcut.id, getChildDropPosition(event));
                 }
               }}
               onDrop={(event) => handleChildDrop(event, shortcut.id)}
+              style={shiftStyle}
             >
               <ShortcutIcon shortcut={shortcut} />
               <span className="quick-link-title">{shortcut.title}</span>
@@ -378,7 +486,8 @@ export function FolderPanel({
                 Edit
               </button>
             </a>
-          ))}
+          );
+          })}
 
           <button className="quick-link add-link" type="button" onClick={onOpenNewShortcutDialog}>
             <span className="quick-link-icon add-link-icon" aria-hidden="true">
@@ -398,8 +507,8 @@ export function FolderPanel({
             className="drag-overlay-tile"
             style={{
               position: "fixed",
-              left: overlayPos.x - 40,
-              top: overlayPos.y - 40,
+              left: overlayPos.x - overlayOffset.x,
+              top: overlayPos.y - overlayOffset.y,
               pointerEvents: "none",
               zIndex: 9999,
             }}

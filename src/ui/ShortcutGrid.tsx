@@ -150,6 +150,10 @@ export function ShortcutGrid({
     () => new Map(draggableTiles.map((tile, index) => [tile.key, { index, tile }])),
     [draggableTiles]
   );
+  const visibleItemByKey = useMemo(
+    () => new Map(visibleShortcutPageItems.map((tile, index) => [tile.key, { index, tile }])),
+    [visibleShortcutPageItems]
+  );
   const visibleKeyIndexByKey = useMemo(
     () => new Map(visibleShortcutPageItems.map((tile, index) => [tile.key, index])),
     [visibleShortcutPageItems]
@@ -341,13 +345,17 @@ export function ShortcutGrid({
     }
     
     const activeZone = confirmedZone ?? dropPosition;
-    const targetIndex = draggableTileByKey.get(dropTargetKey)?.index ?? -1;
+    const targetIndex = outgoingDragSource
+      ? visibleItemByKey.get(dropTargetKey)?.index ?? -1
+      : draggableTileByKey.get(dropTargetKey)?.index ?? -1;
     
     if (targetIndex === -1) {
       return emptyShift;
     }
     
-    const tileIndex = draggableTileByKey.get(tileKey)?.index ?? -1;
+    const tileIndex = outgoingDragSource
+      ? visibleItemByKey.get(tileKey)?.index ?? -1
+      : draggableTileByKey.get(tileKey)?.index ?? -1;
     if (tileIndex === -1) return emptyShift;
     
     let shift = 0;
@@ -378,7 +386,8 @@ export function ShortcutGrid({
     if (shift === 0) return emptyShift;
 
     const targetTileIndex = tileIndex + shift;
-    const targetTile = draggableTiles[targetTileIndex];
+    const shiftItems = outgoingDragSource ? visibleShortcutPageItems : draggableTiles;
+    const targetTile = shiftItems[targetTileIndex];
     const initialRects = dragState?.initialRects ?? outgoingInitialRects;
     
     if (targetTile && initialRects?.[tileKey] && initialRects[targetTile.key]) {
@@ -387,7 +396,7 @@ export function ShortcutGrid({
       return getShiftBetweenRects(sourceRect, targetRect);
     }
 
-    if (outgoingDragSource && targetTileIndex === draggableTiles.length && initialRects?.[tileKey]) {
+    if (outgoingDragSource && targetTileIndex === shiftItems.length && initialRects?.[tileKey]) {
       return getOverflowShift(initialRects[tileKey]);
     }
     
@@ -483,9 +492,22 @@ export function ShortcutGrid({
         }}
       >
         {visibleShortcutPageItems.map((tile: ShortcutPageItem, index: number) => {
+          const shift = getTileShift(tile.key);
+          const tileShiftStyle = (shift.x !== 0 || shift.y !== 0) ? { 
+            transform: `translate(${shift.x}px, ${shift.y}px)`,
+            transition: reducedMotion ? 'none' : 'transform 100ms ease-out'
+          } : {};
+
           if (tile.type === "create-shortcut") {
             return (
-              <button className="quick-link add-link" type="button" key={tile.key} onClick={onOpenNewShortcutDialog}>
+              <button
+                className="quick-link add-link"
+                data-tile-key={tile.key}
+                key={tile.key}
+                onClick={onOpenNewShortcutDialog}
+                style={tileShiftStyle}
+                type="button"
+              >
                 <span className="quick-link-icon add-link-icon" aria-hidden="true">
                   +
                 </span>
@@ -496,13 +518,6 @@ export function ShortcutGrid({
 
           const isDragging = dragState?.sourceKey === tile.key;
           const isDropTarget = dropTargetKey === tile.key;
-          
-          // Calculate live shift for FLIP-like animation
-          const shift = getTileShift(tile.key);
-          const tileShiftStyle = (shift.x !== 0 || shift.y !== 0) ? { 
-            transform: `translate(${shift.x}px, ${shift.y}px)`,
-            transition: reducedMotion ? 'none' : 'transform 100ms ease-out'
-          } : {};
           
           const effectiveZone = confirmedZone ?? dropPosition;
           let tileClassName = [
