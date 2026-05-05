@@ -14,6 +14,9 @@ ShortcutGrid.tsx (UI Layer)
   ├── moveTimerRef: zone debounce
   └── dragOverlay: pointer follow
           │
+          ▼ createDropAction()
+dropActionAdapter.ts (UI Adapter)
+          │
           ▼ Dispatch DropAction
 useTabStore (State Layer)
           │
@@ -32,6 +35,8 @@ dropActions.ts (Domain Layer)
 | File | Responsibility |
 |------|-------------|
 | `src/ui/ShortcutGrid.tsx` | UI session, native drag events |
+| `src/ui/modals/FolderPanel.tsx` | Folder child drag session and outgoing drag handoff |
+| `src/ui/drag/dropActionAdapter.ts` | Drag Source + Drop Target to Drop Action adapter |
 | `src/domain/dropActions.ts` | Domain logic, reducer |
 | `src/stores/useTabStore.ts` | State persistence |
 
@@ -44,6 +49,7 @@ type DragState = {
   sourcePageIndex: number;  // Page being dragged from
   sourceIndex: number;    // Index on that page
   sourceKey: string;     // Tile key (prefixed)
+  initialRects: Record<string, DOMRect>;
 };
 
 type DropPosition = "left" | "center" | "right";
@@ -85,7 +91,7 @@ Flow:
 
 ## Drop Action Decisions
 
-Current logic in `handleDrop()`:
+Current production logic routes UI `DragSource` and `DropTarget` values through `createDropAction()`:
 
 | Condition | Action |
 |----------|--------|
@@ -94,7 +100,7 @@ Current logic in `handleDrop()`:
 | position=left | REORDER (before) |
 | position=right | REORDER (after) |
 
-Note: This bypasses `resolveDrop()` - see issue #2.
+`resolveDrop()` remains domain-tested but is not used by production UI yet.
 
 ## Drag Overlay
 
@@ -141,8 +147,8 @@ function getTileShift(tileKey: string): number {
 
 3. onDrop (section level)
    └─ Use confirmedZone or dropPosition
-       Build DropAction from condition tree
-       dispatchDropAction() to store
+        Build DropAction through createDropAction()
+        dispatchDropAction() to store
 
 4. onDragEnd
    └─ Clear all state
@@ -189,7 +195,7 @@ type ResolveDropInput = {
 1. **Extract hook**: Drag state lives in ShortcutGrid
 2. **Route through resolveDrop()**: Currently bypasses domain function
 3. **Cross-page**: Domain exists, UI not wired
-4. **Folder child**: Domain exists, UI not wired
+4. **Folder child polish**: UI is wired; extraction and more coverage remain
 5. **Keyboard drag**: Not implemented
 6. **Touch drag**: Not verified
 
@@ -204,20 +210,9 @@ type ResolveDropInput = {
 | `.combine-preview` | Center drop preview on shortcuts |
 | `.drag-overlay-tile` | Pointer-following overlay |
 
-## Debug Logging
-
-Current console marks (should be removed):
-
-```typescript
-console.log('[DEBUG] handleDragOver: tileKey=', tileKey, 'position=', position);
-console.log('[DEBUG] handleDrop: targetKey=', targetKey, 'dragState=', dragState);
-console.log('[DEBUG] REORDER: baseKeys=', baseKeys, 'sourceKey=', dragState.sourceKey);
-console.log('[DEBUG] tileShift: tileKey=', tile.key, 'shift=', shift);
-```
-
 ## Test Coverage
 
-Domain tests: `src/domain/dropActions.test.ts`
+Domain tests: `tests/unit/domain/dropActions.test.ts`
 - `applyDropAction` for each action type
 - `resolveDrop` decision table
 - Folder cleanup logic

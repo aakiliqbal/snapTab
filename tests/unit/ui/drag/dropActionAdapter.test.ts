@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createDropAction } from "./dropActionAdapter";
+import { createDropAction } from "../../../../src/ui/drag/dropActionAdapter";
 
 describe("createDropAction", () => {
   it("combines top-level shortcuts only on center zone", () => {

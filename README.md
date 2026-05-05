@@ -15,7 +15,8 @@ A local-first Chrome new tab extension inspired by Infinity New Tab Pro.
 ## Development
 
 For implementation details and current architecture notes, see
-[docs/development.md](docs/development.md) and [docs/architecture.md](docs/architecture.md).
+[docs/development.md](docs/development.md), [docs/hld.md](docs/hld.md), and
+[docs/lld-drag-drop.md](docs/lld-drag-drop.md).
 
 Install dependencies:
 

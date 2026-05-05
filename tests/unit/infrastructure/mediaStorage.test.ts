@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { defaultTabState } from "../domain/tabState";
-import { materializeTabStateMedia, stripResolvedMediaFromTabState } from "./mediaStorage";
+import { defaultTabState } from "../../../src/domain/tabState";
+import { materializeTabStateMedia, stripResolvedMediaFromTabState } from "../../../src/infrastructure/mediaStorage";
 
 describe("mediaStorage", () => {
   it("stores and reloads wallpaper and shortcut GIFs through media ids", async () => {

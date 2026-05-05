@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { defaultTabState, migrateLegacyTabState } from "./tabState";
+import { defaultTabState, migrateLegacyTabState, normalizeTabState } from "../../../src/domain/tabState";
 
 const baseLegacyState = {
   schemaVersion: 1 as const,
@@ -130,6 +130,72 @@ describe("migrateLegacyTabState", () => {
       ]
     });
 
-    expect(migrated.pages[0].tileIds).toEqual(["work-folder", "docs"]);
+    expect(migrated.pages[0].tileIds).toEqual(["docs", "work-notion"]);
+    expect(migrated.tiles["work-folder"]).toBeUndefined();
   });
 });
+
+describe("normalizeTabState", () => {
+  it("filters invalid folder children and dissolves folders with fewer than two valid shortcuts", () => {
+    const normalized = normalizeTabState({
+      ...defaultTabState,
+      tiles: {
+        one: shortcut("one"),
+        two: shortcut("two"),
+        missingOnly: folder("missingOnly", ["missing"]),
+        mixed: folder("mixed", ["one", "missing", "one", "missingOnly"]),
+        valid: folder("valid", ["one", "two", "missing"])
+      },
+      pages: [{ id: "page-1", tileIds: ["missingOnly", "mixed", "valid"] }]
+    });
+
+    expect(normalized.tiles.missingOnly).toBeUndefined();
+    expect(normalized.tiles.mixed).toBeUndefined();
+    expect(normalized.tiles.valid.kind === "folder" ? normalized.tiles.valid.childIds : []).toEqual(["one", "two"]);
+    expect(normalized.pages[0].tileIds).toEqual(["valid"]);
+  });
+
+  it("normalizes duplicate page ids", () => {
+    const normalized = normalizeTabState({
+      ...defaultTabState,
+      tiles: {
+        one: shortcut("one"),
+        two: shortcut("two")
+      },
+      pages: [
+        { id: "page-1", tileIds: ["one"] },
+        { id: "page-1", tileIds: ["two"] }
+      ]
+    });
+
+    expect(normalized.pages.map((page) => page.id)).toEqual(["page-1", "page-2"]);
+  });
+});
+
+function shortcut(id: string) {
+  return {
+    kind: "shortcut" as const,
+    id,
+    title: id,
+    url: `https://${id}.example.com`,
+    icon: {
+      type: "fallback" as const,
+      label: id.slice(0, 1).toUpperCase(),
+      background: "#111827"
+    }
+  };
+}
+
+function folder(id: string, childIds: string[]) {
+  return {
+    kind: "folder" as const,
+    id,
+    title: id,
+    icon: {
+      type: "fallback" as const,
+      label: "F",
+      background: "#64748b"
+    },
+    childIds
+  };
+}

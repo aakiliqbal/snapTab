@@ -9,7 +9,7 @@ The browser page rendered by Infi Tab when Chrome opens a new tab.
 A top-level or folder-contained link with a title, URL, and icon.
 
 **Shortcut Page**  
-A visible partition of the New Tab Surface's Shortcut and Folder tiles, sized to fit within the viewport without vertical page scrolling.
+A visible partition derived from top-level order, Grid Layout capacity, and the Shortcut creation tile, sized to fit within the viewport without vertical page scrolling.
 _Avoid_: browser page, tab page, slide
 
 **Folder**  
@@ -24,7 +24,7 @@ A user-selected row and column arrangement that defines how many Top-Level Tiles
 _Avoid_: automatic capacity, measured capacity, layout mode
 
 **Wallpaper**  
-The user-selected background media for the New Tab Surface. It may be a static image or GIF and is represented as a data URL in the current state model.
+The user-selected background media for the New Tab Surface. It may be a static image or GIF and is currently persisted as a data URL in `TabState`.
 
 **Settings Drawer**  
 The right-side drawer that exposes Search, Grid Layout, Wallpaper, and Backup controls.
@@ -61,15 +61,17 @@ A domain command produced from Drag Intent: `REORDER`, `COMBINE`, `ADD_TO_FOLDER
 ### Persistence
 
 - Infi Tab is local-first; no backend or account sync exists in the MVP.
-- `chrome.storage.local` is the runtime persistence adapter.
+- Zustand persist writes runtime state to `chrome.storage.local`; localStorage is the dev fallback.
 - JSON Backup is replace-only on import.
 - Wallpapers and uploaded icons remain portable as data URLs.
+- IndexedDB media infrastructure exists but is not wired into the active runtime persistence path.
 
 ### Product Structure
 
 - The New Tab Surface is a single React app, not multiple extension pages.
 - Folders are created by dragging one Shortcut onto another (gesture-based combine).
 - A Folder always contains at least two Shortcuts; removal that leaves one child promotes it to the page.
+- Deleting a Folder deletes its contained Shortcuts.
 - The Shortcut creation tile participates in Shortcut Page capacity after all user tiles.
 
 ### Tile Management
@@ -82,6 +84,7 @@ A domain command produced from Drag Intent: `REORDER`, `COMBINE`, `ADD_TO_FOLDER
 ### Shortcut Pages
 
 - Shortcut Page capacity comes from Grid Layout.
+- Persisted `pages[].tileIds` stores top-level order; visible Shortcut Pages are derived by slicing that order by current Grid Layout capacity.
 - The main surface must not browser-scroll; overlays may scroll internally.
 - Mouse wheel navigation applies to Shortcut Pages (thresholded).
 - Infinite wrapping for next/prev navigation.
@@ -93,28 +96,28 @@ A domain command produced from Drag Intent: `REORDER`, `COMBINE`, `ADD_TO_FOLDER
 - Grid Layout presets: 2x4, 2x5, 2x6, 2x7, 3x3, and Customize.
 - Custom rows/columns range 1-8.
 - Default: 2x6 preset with 100% icon size and spacing.
-- Row, column, spacing, icon size stored as percentages (50-120% for icon).
+- Row/column counts are stored directly; column spacing and line spacing are 0-100%; icon size is 50-120%.
 - Grid Layout preserved across viewports; presentation scales to avoid scrolling.
 
 ### Drag and Drop
 
 - Top-Level Tile drag uses native HTML drag events with custom pointer-following overlay.
 - Active-page drag supports reorder, combine, and add-to-folder.
+- FolderPanel drag supports child reorder, drag-out promotion, and add-to-folder by center drop.
 - Drag UI maps Drag Source plus Drop Target into Drop Action through `src/ui/drag/dropActionAdapter.ts`.
 - Drag Intent uses left/center/right UI zones (30%/40%/30%).
 - Zone confirmation uses 200ms debounce timer.
 - Cross-page drag is supported in the domain reducer but not wired in the UI.
-- Folder child drag-out promotion is supported in reducer but not wired.
 - Keyboard and touch drag are separate future work.
 
 ### Technology
 
-- React 18 + TypeScript + Vite
+- React 19 + TypeScript + Vite
 - Zustand + Immer for state management
 - chrome.storage.local for persistence
 - Native HTML drag events
 - Motion (Framer Motion) with reduced motion support
-- CSS Modules for styling
+- Global CSS in `src/ui/styles.css`
 
 ### Implemented Features
 
@@ -126,6 +129,7 @@ A domain command produced from Drag Intent: `REORDER`, `COMBINE`, `ADD_TO_FOLDER
 - [x] Folder creation via drag combine
 - [x] Folder edit/delete modal
 - [x] FolderPanel child view
+- [x] FolderPanel child reorder and drag-out promotion
 - [x] Top-level reorder
 - [x] Add shortcut to folder
 - [x] Settings Drawer

@@ -332,6 +332,7 @@ export function normalizeShortcutPages(value: unknown, tiles: Record<TileId, Til
       .map((tile) => tile.id)
   );
   const seen = new Set<TileId>();
+  const seenPageIds = new Set<string>();
   const pages: ShortcutPage[] = [];
 
   if (Array.isArray(value)) {
@@ -349,7 +350,7 @@ export function normalizeShortcutPages(value: unknown, tiles: Record<TileId, Til
         return true;
       });
 
-      pages.push({ id: typeof page.id === "string" ? page.id : `page-${index + 1}`, tileIds });
+      pages.push({ id: getUniquePageId(page.id, index, seenPageIds), tileIds });
     }
   }
 
@@ -472,12 +473,57 @@ function normalizeTiles(value: Record<string, unknown>): Record<TileId, Tile> {
     if (tile.kind === "folder" && typeof tile.title === "string" && isRecord(tile.icon) && Array.isArray(tile.childIds)) {
       tiles[id] = {
         ...(tile as Folder),
-        childIds: tile.childIds.filter((childId): childId is string => typeof childId === "string")
+        childIds: uniqueStrings(tile.childIds)
       };
     }
   }
 
+  normalizeFolderChildren(tiles);
+
   return Object.keys(tiles).length > 0 ? tiles : defaultTabState.tiles;
+}
+
+function normalizeFolderChildren(tiles: Record<TileId, Tile>) {
+  for (const [id, tile] of Object.entries(tiles)) {
+    if (tile.kind !== "folder") {
+      continue;
+    }
+
+    tile.childIds = tile.childIds.filter((childId) => tiles[childId]?.kind === "shortcut");
+    if (tile.childIds.length < 2) {
+      delete tiles[id];
+    }
+  }
+}
+
+function uniqueStrings(value: unknown[]) {
+  const seen = new Set<string>();
+  return value.filter((item): item is string => {
+    if (typeof item !== "string" || seen.has(item)) {
+      return false;
+    }
+
+    seen.add(item);
+    return true;
+  });
+}
+
+function getUniquePageId(value: unknown, index: number, seenPageIds: Set<string>) {
+  const requestedId = typeof value === "string" && value.trim() ? value : `page-${index + 1}`;
+  if (!seenPageIds.has(requestedId)) {
+    seenPageIds.add(requestedId);
+    return requestedId;
+  }
+
+  let nextIndex = index + 1;
+  let nextId = `page-${nextIndex}`;
+  while (seenPageIds.has(nextId)) {
+    nextIndex += 1;
+    nextId = `page-${nextIndex}`;
+  }
+
+  seenPageIds.add(nextId);
+  return nextId;
 }
 
 function isFolderChild(tileId: TileId, tiles: Record<TileId, Tile>) {

@@ -1,4 +1,6 @@
+import { produce } from "immer";
 import { brandIcons, matchBrandIcon, type BrandIcon } from "./brandIcons";
+import { runFolderCleanup } from "./dropActions";
 import { compactShortcutPages, type Folder, type Shortcut, type TabState, type TileId } from "./tabState";
 import type { FolderEditDraft, ShortcutDraft } from "../ui/model/drafts";
 
@@ -119,24 +121,32 @@ export function deleteShortcutFromState(state: TabState, draft: ShortcutDraft): 
     return state;
   }
 
-  const { [draft.id]: _deleted, ...tiles } = state.tiles;
-  const nextTiles = Object.fromEntries(
-    Object.entries(tiles).map(([id, tile]) => [
-      id,
-      tile.kind === "folder"
-        ? {
-            ...tile,
-            childIds: tile.childIds.filter((childId) => childId !== draft.id)
-          }
-        : tile
-    ])
-  );
+  return produce(state, (nextState) => {
+    delete nextState.tiles[draft.id!];
 
-  return {
-    ...state,
-    tiles: nextTiles,
-    pages: compactShortcutPages(state.pages.map((page) => ({ ...page, tileIds: page.tileIds.filter((id) => id !== draft.id) })))
-  };
+    for (const page of nextState.pages) {
+      removeTileId(page.tileIds, draft.id!);
+    }
+
+    const changedFolderIds: TileId[] = [];
+    for (const tile of Object.values(nextState.tiles)) {
+      if (tile.kind !== "folder") {
+        continue;
+      }
+
+      const previousLength = tile.childIds.length;
+      removeTileId(tile.childIds, draft.id!);
+      if (tile.childIds.length !== previousLength) {
+        changedFolderIds.push(tile.id);
+      }
+    }
+
+    for (const folderId of changedFolderIds) {
+      runFolderCleanup(nextState, folderId);
+    }
+
+    nextState.pages = compactShortcutPages(nextState.pages);
+  });
 }
 
 export function updateFolder(state: TabState, folder: Folder): TabState {
@@ -150,13 +160,23 @@ export function updateFolder(state: TabState, folder: Folder): TabState {
 }
 
 export function deleteFolderFromState(state: TabState, folderId: string): TabState {
-  const { [folderId]: _deleted, ...tiles } = state.tiles;
+  return produce(state, (nextState) => {
+    const folder = nextState.tiles[folderId];
+    if (folder?.kind !== "folder") {
+      return;
+    }
 
-  return {
-    ...state,
-    tiles,
-    pages: compactShortcutPages(state.pages.map((page) => ({ ...page, tileIds: page.tileIds.filter((id) => id !== folderId) })))
-  };
+    for (const childId of folder.childIds) {
+      delete nextState.tiles[childId];
+    }
+    delete nextState.tiles[folderId];
+
+    for (const page of nextState.pages) {
+      removeTileId(page.tileIds, folderId);
+    }
+
+    nextState.pages = compactShortcutPages(nextState.pages);
+  });
 }
 
 export function resolveTopLevelTiles(state: TabState): ResolvedTopLevelTile[] {
@@ -278,6 +298,13 @@ function appendTileToLastPage(pages: TabState["pages"], tileId: TileId): TabStat
   const nextPages = pages.length > 0 ? pages.map((page) => ({ ...page, tileIds: [...page.tileIds] })) : [{ id: "page-1", tileIds: [] }];
   nextPages[nextPages.length - 1].tileIds.push(tileId);
   return nextPages;
+}
+
+function removeTileId(tileIds: TileId[], tileId: TileId) {
+  const index = tileIds.indexOf(tileId);
+  if (index >= 0) {
+    tileIds.splice(index, 1);
+  }
 }
 
 function getTopLevelTileKey(tile: Shortcut | Folder) {

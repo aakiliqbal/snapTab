@@ -5,6 +5,7 @@ import type { DropAction } from "../domain/dropActions";
 import type { ResolvedFolder, ResolvedTopLevelTile } from "../domain/tabOperations";
 import type { Shortcut, TabState } from "../domain/tabState";
 import { createDropAction } from "./drag/dropActionAdapter";
+import { hideNativeDragImage } from "./drag/dragImage";
 import {
   captureTileRects,
   computeDropIndex,
@@ -218,6 +219,7 @@ export function ShortcutGrid({
     });
     
     e.dataTransfer.effectAllowed = "move";
+    hideNativeDragImage(e.dataTransfer);
     e.dataTransfer.setData("text/plain", tileKey);
   };
 

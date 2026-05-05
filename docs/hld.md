@@ -32,10 +32,12 @@ Domain Layer (src/domain/)
   └─ backup.ts      # Import/export
 
 Infrastructure Layer (src/infrastructure/)
-  ├─ useTabStore.ts    # Zustand + immer store
-  ├─ tabStorage.ts   # chrome.storage.local
-  ├─ mediaStorage.ts # IndexedDB for media
+  ├─ tabStorage.ts   # chrome.storage.local adapter, not active runtime path
+  ├─ mediaStorage.ts # IndexedDB media adapter, not active runtime path
   └─ fileData.ts    # Browser File API
+
+Store Layer (src/stores/)
+  └─ useTabStore.ts  # Zustand + immer persisted store
 ```
 
 ## State Model
@@ -72,13 +74,16 @@ Folder {
 }
 ```
 
+Persisted `pages[].tileIds` is top-level order. The visible Shortcut Pages are derived at render time by flattening that order, appending the Shortcut creation tile, and slicing by current Grid Layout capacity.
+
 ## Key Invariants
 
 1. **Flat tile map**: All tiles in single `tiles` map, no nesting
 2. **Position not in tile**: Page order in `pages[].tileIds`, not in tile records
 3. **Folder containment**: Children in `folder.childIds`, not nested records
-4. **One store**: All persisted state in Zustand + immer store
-5. **Local-first**: No backend, chrome.storage.local persistence
+4. **Folder invariant**: folders with fewer than two valid children are dissolved
+5. **One store**: All persisted state in Zustand + immer store
+6. **Local-first**: No backend, chrome.storage.local persistence
 
 ## Product Surfaces
 
@@ -89,19 +94,19 @@ Folder {
 | Settings Drawer | Right-side settings |
 | Shortcut Modal | Add/edit shortcuts |
 | Folder Modal | Edit folder metadata |
-| Folder Panel | View folder children |
+| Folder Panel | View, reorder, and drag out folder children |
 | Backup Flow | JSON replace-only import |
 
 ## Technology Choices
 
 | Concern | Choice | Rationale |
 |---------|--------|-----------|
-| UI Framework | React 18 | Reference uses Vue; React chosen for ecosystem |
+| UI Framework | React 19 | Reference uses Vue; React chosen for ecosystem |
 | Build Tool | Vite | Fast HMR, extension-friendly |
 | State | Zustand + Immer | Store shape from ADR 0004 |
 | Drag | Native HTML | dnd-kit deferred; native fits current behavior |
-| Styling | CSS Modules | No Tailwind yet; simple approach |
-| Persistence | chrome.storage.local | Per extension API |
+| Styling | Global CSS | Single stylesheet at `src/ui/styles.css` |
+| Persistence | Zustand persist to chrome.storage.local | localStorage fallback in dev |
 | Animation | Motion (Framer Motion) | Reduced motion support |
 | Icons | Lucide + Simple Icons | Brand matching |
 
@@ -137,7 +142,7 @@ The extracted Infinity New Tab Pro extension confirms:
 - [x] Combine (shortcut + shortcut → folder)
 - [x] Add to folder (shortcut → folder)
 - [ ] Cross-page drag (wired in domain, not UI)
-- [ ] Folder child drag (wired in domain, not UI)
+- [x] Folder child drag reorder and drag-out promotion
 - [ ] Keyboard drag
 - [ ] Touch drag
 
@@ -146,4 +151,4 @@ The extracted Infinity New Tab Pro extension confirms:
 1. Extract drag hook from ShortcutGrid
 2. Route native drag through resolveDrop()
 3. Wire cross-page drag UI
-4. Wire folder child promotion UI
+4. Add keyboard/touch drag adapters

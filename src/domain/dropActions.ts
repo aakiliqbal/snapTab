@@ -96,8 +96,9 @@ export function applyDropAction(state: Draft<TabState>, action: DropAction): voi
     }
     case "ADD_TO_FOLDER": {
       const folder = getFolder(state, action.folderId);
+      const source = state.tiles[action.sourceTileId];
 
-      if (!folder || !state.tiles[action.sourceTileId]) {
+      if (!folder || !source || source.kind !== "shortcut" || action.sourceTileId === action.folderId) {
         return;
       }
 

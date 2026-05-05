@@ -1,7 +1,7 @@
 import { produce } from "immer";
 import { describe, expect, it } from "vitest";
-import { applyDropAction, resolveDrop, runFolderCleanup, type DropZone } from "./dropActions";
-import type { TabState } from "./tabState";
+import { applyDropAction, resolveDrop, runFolderCleanup, type DropZone } from "../../../src/domain/dropActions";
+import type { TabState } from "../../../src/domain/tabState";
 
 describe("applyDropAction", () => {
   it("reorders a tile within a page", () => {
@@ -56,6 +56,24 @@ describe("applyDropAction", () => {
       "d",
       "a"
     ]);
+  });
+
+  it("rejects adding folders to folders", () => {
+    const state = createTestState();
+    const next = produce(state, (draft) => {
+      applyDropAction(draft, { type: "ADD_TO_FOLDER", sourceTileId: "folder-1", folderId: "folder-2" });
+    });
+
+    expect(next).toEqual(state);
+  });
+
+  it("rejects adding a folder to itself", () => {
+    const state = createTestState();
+    const next = produce(state, (draft) => {
+      applyDropAction(draft, { type: "ADD_TO_FOLDER", sourceTileId: "folder-1", folderId: "folder-1" });
+    });
+
+    expect(next).toEqual(state);
   });
 
   it("moves a tile between pages", () => {

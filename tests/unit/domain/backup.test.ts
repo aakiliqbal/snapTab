@@ -3,8 +3,8 @@ import {
   describeBackupReplacement,
   getBackupImportErrorMessage,
   parseTabStateBackup
-} from "./backup";
-import { defaultTabState } from "./tabState";
+} from "../../../src/domain/backup";
+import { defaultTabState } from "../../../src/domain/tabState";
 
 describe("parseTabStateBackup", () => {
   it("normalizes v2 backups missing optional media settings", () => {

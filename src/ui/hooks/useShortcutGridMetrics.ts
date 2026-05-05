@@ -64,6 +64,7 @@ export function useShortcutGridMetrics(
   }, [
     activeShortcutPageIndex,
     gridLayout.columns,
+    gridLayout.columnSpacing,
     gridLayout.lineSpacing,
     gridLayout.rows,
     gridRef,

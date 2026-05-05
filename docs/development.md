@@ -1,6 +1,6 @@
 # Development Notes
 
-This document captures the current state of Infi Tab after the initial MVP build. The detailed HLD/LLD lives in `docs/architecture.md`.
+This document captures current Infi Tab implementation notes. Detailed architecture docs live in `docs/hld.md` and `docs/lld-drag-drop.md`.
 
 ## Product Direction
 
@@ -10,11 +10,11 @@ Infi Tab is a local-first Chrome new tab extension inspired by Infinity New Tab 
 
 - Chrome Manifest V3 new tab override.
 - React + Vite single-page new tab UI.
-- Quick-link grid with add, edit, delete, active-page drag reorder, drag-combine folder creation, and drag-add-to-folder.
+- Quick-link grid with add, edit, delete, active-page drag reorder, drag-combine folder creation, drag-add-to-folder, and FolderPanel child drag-out promotion.
 - Folder tiles that open as modal overlays.
 - Shortcut editing with title, URL, fallback label/color, uploaded icon image, and Simple Icons recommendations.
 - Bundled default shortcuts with Simple Icons for common websites.
-- User-uploaded wallpaper, including GIFs, stored in IndexedDB.
+- User-uploaded wallpaper, including GIFs, stored as data URLs in active runtime state.
 - Wallpaper dim and blur controls.
 - Search provider presets: Google, Bing, Yahoo, Yandex, DuckDuckGo.
 - Search-box customization: hide box, hide category labels, hide search mark, size, rounded corners, opacity.
@@ -49,8 +49,8 @@ src/ui/modals/*               Folder and shortcut modal overlays
 src/ui/model/drafts.ts        Editor draft types and defaults
 src/ui/hooks/useShortcutGridMetrics.ts  Grid fitting calculations
 src/ui/styles.css             Application styling
-tests/smoke.spec.ts           Browser smoke test
-src/domain/backup.test.ts     Backup parsing tests
+tests/smoke/smoke.spec.ts     Browser smoke test
+tests/unit/                   Vitest unit tests grouped by source area
 vitest.config.ts              Unit test runner config
 playwright.config.ts          Browser smoke test config
 src/domain/tabState.ts        App state types and default state
@@ -60,10 +60,11 @@ src/domain/dropActions.ts     Drag/drop actions and folder cleanup reducer
 src/domain/backup.ts          Backup parsing and compatibility defaults
 src/stores/useTabStore.ts     Zustand + immer persisted state store
 src/infrastructure/fileData.ts  File-to-data-URL adapter
-src/infrastructure/mediaStorage.ts  IndexedDB media adapter and state hydration
-src/infrastructure/tabStorage.ts  Storage adapter
+src/infrastructure/mediaStorage.ts  IndexedDB media adapter, not active runtime path
+src/infrastructure/tabStorage.ts  Unused storage adapter for media materialization path
 CONTEXT.md                    Domain glossary and current decisions
-docs/architecture.md          Current HLD and LLD
+docs/hld.md                   High-level design
+docs/lld-drag-drop.md         Drag/drop low-level design
 docs/architecture-review.md   Architecture deepening notes
 docs/roadmap-issues.md        Future issue backlog
 docs/development.md           Current development notes
@@ -88,11 +89,13 @@ Top-level fields:
 - `brand`: bundled Simple Icons ID.
 - `image`: uploaded image data URL plus stable media ID.
 
-Folders store child shortcuts by ID through `childIds[]`; child shortcut records still live in the flat `tiles` map. Legacy schema v1 runtime state is migrated on load from `quickLinks`, nested folder `quickLinks`, and `topLevelTiles` into the v2 flat map and page structure.
+Folders store child shortcuts by ID through `childIds[]`; child shortcut records still live in the flat `tiles` map. Folders with fewer than two valid children are dissolved during normalization or folder cleanup. Deleting a Folder deletes its contained Shortcuts. Legacy schema v1 runtime state is migrated on load from `quickLinks`, nested folder `quickLinks`, and `topLevelTiles` into the v2 flat map and page structure.
 
 ## Storage
 
-Runtime state is persisted with `chrome.storage.local` through `src/infrastructure/tabStorage.ts`. Large wallpaper and uploaded shortcut images are stored in IndexedDB through `src/infrastructure/mediaStorage.ts`, while the JSON state keeps only stable media IDs.
+Runtime state is persisted by Zustand persist in `src/stores/useTabStore.ts`. In Chrome extension context it writes to `chrome.storage.local`; in Vite dev it falls back to `window.localStorage`.
+
+Wallpaper and uploaded shortcut icons are currently stored as portable data URLs inside `TabState`. `src/infrastructure/mediaStorage.ts` and `src/infrastructure/tabStorage.ts` contain IndexedDB media infrastructure, but that path is not wired into active runtime persistence.
 
 The manifest includes:
 
@@ -100,9 +103,7 @@ The manifest includes:
 "permissions": ["storage", "unlimitedStorage"]
 ```
 
-`unlimitedStorage` remains enabled for local-first storage headroom, but the large media payloads now live in IndexedDB instead of the main Chrome storage blob.
-
-When running outside Chrome extension context, the storage adapter falls back to `window.localStorage` so Vite development works in a normal browser tab.
+`unlimitedStorage` remains enabled for local-first storage headroom while media payloads remain in the persisted state blob.
 
 ## Backup And Restore
 
@@ -154,7 +155,8 @@ Shortcut and Folder editing rules live in `src/domain/tabOperations.ts`. Drag/dr
 - Folder contents open in modal overlays.
 - Top-Level Tile drag/drop currently uses native HTML drag events with a custom pointer-following overlay.
 - Active-page drag supports reorder, Shortcut-to-Shortcut combine, and Shortcut-to-Folder add.
-- Cross-page drag and Folder child drag-out have domain reducer support but are not wired in the UI.
+- FolderPanel supports child reorder, drag-out promotion, and center-drop add-to-folder.
+- Cross-page drag has domain reducer support but is not wired in the UI.
 - Keyboard and touch drag are future input adapters over the same Drop Action interface.
 - Local JSON backup is the first sync strategy. Account sync is deferred.
 
@@ -168,31 +170,32 @@ npm run build
 
 Load the built extension from `dist/` through `chrome://extensions/` with Developer mode enabled.
 
+## Tooling Config
+
+- Vite builds `newtab.html` as the Rollup input and removes `crossorigin` attributes during build.
+- Vitest runs `tests/unit/**/*.test.ts` in a Node environment.
+- Playwright smoke tests run from `tests/smoke/` against `http://127.0.0.1:4173`; its web server command is `npm run build && npm run preview -- --port 4173`.
+- Manifest V3 currently declares only the new-tab override, `storage`, and `unlimitedStorage`; there is no action popup, background script, content script, or icon set.
+
 ## Release Workflow
 
 Release automation lives in `.github/workflows/release.yml`.
 
-The workflow is manual-only and creates a release directly when run:
-
-- `package.json` and `public/manifest.json` must have the same version.
-- The workflow fails if the target tag already exists.
-- The workflow builds `dist/`, zips it, creates a `vX.Y.Z` GitHub release, and attaches the zip.
-- Release notes are generated from commit subjects since the previous tag.
-
-Before running the workflow, intentionally bump the version in both version files and commit that change.
+The workflow is manual-only, must run from `main`, installs with `npm ci`, auto-selects the next unused patch version from `package.json`, syncs `package.json`, `package-lock.json`, and `public/manifest.json`, builds `dist/`, zips it, creates a `vX.Y.Z` GitHub release, and generates release notes from commit subjects since the previous tag.
 
 ## Current Known Gaps
 
-- Drag/drop session logic still lives inside `ShortcutGrid`; it should be extracted before cross-page or folder-child drag is added.
-- Drag UI constructs some Drop Actions directly instead of routing all drops through `resolveDrop()`.
-- Cross-page drag and Folder child drag-out are not wired in the UI.
+- Drag/drop session logic still lives inside `ShortcutGrid`; it should be extracted before cross-page drag is added.
+- Drag UI routes most drops through `createDropAction()` but does not use domain `resolveDrop()` in production.
+- Cross-page drag is not wired in the UI.
 - Keyboard and touch drag are not implemented.
 - Favicon lookup for unknown websites is not implemented.
 - Keyboard focus trapping for modals/drawer is not complete.
 - Chrome Web Store assets and privacy text are not prepared.
+- `@dnd-kit/*` packages are installed but inactive; current drag implementation is native HTML drag.
 
 See `docs/roadmap-issues.md` for issue-ready future slices.
 
 See `docs/architecture-review.md` for the latest architecture deepening pass.
 
-See `docs/architecture.md` for the current HLD/LLD.
+See `docs/hld.md` and `docs/lld-drag-drop.md` for current architecture docs.

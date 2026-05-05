@@ -1,6 +1,6 @@
 # Single Zustand + Immer Store
 
-All persisted state — tiles, pages, search provider, layout settings, and wallpaper — lives in a single Zustand store with immer middleware and a `chrome.storage.local` persist adapter. The store exposes a `dispatch(DropAction)` interface for drag-and-drop mutations and direct setters for settings. Non-persisted UI state (modal drafts, drawer open, active page index) remains in React component state — it is transient and does not need persistence or cross-component sharing.
+All persisted state — tiles, pages, search provider, layout settings, and wallpaper — lives in a single Zustand store with immer middleware and a `chrome.storage.local` persist adapter. The store exposes `updateState()` for reducer-style mutations; the UI controller currently wraps `applyDropAction()` for drag-and-drop. Non-persisted UI state (modal drafts, drawer open, active page index) remains in React component state — it is transient and does not need persistence or cross-component sharing.
 
 A single store was chosen over two (tiles vs settings) because grid layout changes directly affect page capacity, making the coupling between settings and tiles too tight to split cleanly. One store means one storage key, one `schemaVersion`, one backup value, and no cross-store coordination.
 

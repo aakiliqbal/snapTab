@@ -3,6 +3,7 @@ import type { DropAction } from "../../domain/dropActions";
 import { type ResolvedFolder } from "../../domain/tabOperations";
 import { type Shortcut, type TabState } from "../../domain/tabState";
 import { createDropAction } from "../drag/dropActionAdapter";
+import { hideNativeDragImage } from "../drag/dragImage";
 import { captureTileRects, computeDropIndex, emptyShift, getDropPosition, getShiftBetweenRects } from "../drag/dragGeometry";
 import type { DragSource, DropTarget } from "../drag/dragModel";
 import { ShortcutIcon } from "../ShortcutIcon";
@@ -253,22 +254,22 @@ export function FolderPanel({
       const targetPageId = activePageId;
       const targetPage = tabState.pages[activeShortcutPageIndex];
 
-      if (tileKey) {
-        const tileId = tileKey.includes(":") ? tileKey.split(":").slice(1).join(":") : tileKey;
-        const tile = tabState.tiles[tileId];
-
-        if (tile?.kind === "folder" && tileId !== activeFolder.id) {
-          dispatchDropAction({
-            type: "ADD_TO_FOLDER",
-            sourceTileId: draggedShortcutId,
-            folderId: tileId
-          });
-        } else {
-          const tileIndex = targetPage?.tileIds.indexOf(tileId) ?? -1;
+        if (tileKey) {
+          const tileId = tileKey.includes(":") ? tileKey.split(":").slice(1).join(":") : tileKey;
+          const tile = tabState.tiles[tileId];
           const dropPos = tileEl ? getDropPosition(event.clientX, tileEl.getBoundingClientRect()) : "right";
-          const atIndex =
-            dropPos === "right"
-              ? tileIndex >= 0 ? tileIndex + 1 : (targetPage?.tileIds.length ?? 0)
+
+          if (tile?.kind === "folder" && tileId !== activeFolder.id && dropPos === "center") {
+            dispatchDropAction({
+              type: "ADD_TO_FOLDER",
+              sourceTileId: draggedShortcutId,
+              folderId: tileId
+            });
+          } else {
+            const tileIndex = targetPage?.tileIds.indexOf(tileId) ?? -1;
+            const atIndex =
+              dropPos === "right"
+                ? tileIndex >= 0 ? tileIndex + 1 : (targetPage?.tileIds.length ?? 0)
               : tileIndex >= 0 ? tileIndex : 0;
           dispatchDropAction({
             type: "PROMOTE",
@@ -453,12 +454,7 @@ export function FolderPanel({
                 handleDragStart(event, { id: shortcut.id });
                 event.dataTransfer.effectAllowed = "move";
                 event.dataTransfer.setData("text/plain", shortcut.id);
-                // Hide the browser's default ghost image — ShortcutGrid renders
-                // a custom overlay once the folder panel closes.
-                const blank = new Image();
-                blank.src =
-                  "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
-                event.dataTransfer.setDragImage(blank, 0, 0);
+                hideNativeDragImage(event.dataTransfer);
               }}
               onDragEnter={(event) => handleDragEnter(event, shortcut.id)}
               onDragLeave={handleDragLeave}

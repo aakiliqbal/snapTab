@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeDropIndex, getTileIdFromKey, toDropZone } from "./dragGeometry";
+import { computeDropIndex, getTileIdFromKey, toDropZone } from "../../../../src/ui/drag/dragGeometry";
 
 describe("dragGeometry", () => {
   it("converts tile keys to ids", () => {

@@ -13,6 +13,7 @@ Current backlog after architecture analysis. Reference extension extracted to `r
 - [x] Folder creation (drag combine)
 - [x] Top-level reorder (active page)
 - [x] Add shortcut to folder
+- [x] FolderPanel child reorder and drag-out promotion
 - [x] Settings Drawer
 - [x] Wallpaper upload
 - [x] JSON Backup export/import
@@ -65,21 +66,7 @@ Wire cross-page drag with page-edge preview.
 
 **Blocked by:** Issue 2
 
-### 4. FolderPanel Child Drag
-
-**Type:** HITL
-
-Allow dragging folder children to surface.
-
-**Acceptance criteria:**
-- [ ] Child reorder in FolderPanel
-- [ ] Drag out triggers PROMOTE
-- [ ] 2-child folder cleanup works
-- [ ] Cancel restores position
-
-**Blocked by:** Issue 2
-
-### 5. Folder Icon Mini-Preview Grid
+### 4. Folder Icon Mini-Preview Grid
 
 **Type:** AFK
 
@@ -93,7 +80,7 @@ Show first child icons in Folder tile.
 
 **Blocked by:** None
 
-### 6. Keyboard Drag
+### 5. Keyboard Drag
 
 **Type:** HITL
 
@@ -107,7 +94,7 @@ Accessible keyboard drag operations.
 
 **Blocked by:** Issue 2
 
-### 7. Icon Recommendations
+### 6. Icon Recommendations
 
 **Type:** HITL
 
@@ -120,7 +107,7 @@ Improve brand icon matching.
 
 **Blocked by:** None
 
-### 8. Focus Management
+### 7. Focus Management
 
 **Type:** AFK
 
@@ -133,7 +120,7 @@ Keyboard-safe overlays.
 
 **Blocked by:** None
 
-### 9. Chrome Web Store Release
+### 8. Chrome Web Store Release
 
 **Type:** HITL
 
@@ -166,3 +153,4 @@ These were completed in earlier work:
 - [x] Keyboard navigation
 - [x] Animation (reduced motion)
 - [x] FolderPanel Child Drag (outgoing drag freeze bugfix)
+- [x] Folder invariant cleanup on delete/import
