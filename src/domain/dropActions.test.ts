@@ -102,6 +102,25 @@ describe("applyDropAction", () => {
     expect(next.pages[0].tileIds).toEqual(["a", "c", "b", "d"]);
   });
 
+  it("shifts the last tile to the next page when promoting into a full page", () => {
+    const state = createTestState();
+    state.layout.gridLayout = { ...state.layout.gridLayout, rows: 1, columns: 3 };
+
+    const next = produce(state, (draft) => {
+      applyDropAction(draft, {
+        type: "PROMOTE",
+        tileId: "c",
+        fromFolderId: "folder-1",
+        toPageId: "page-1",
+        toIndex: 1
+      });
+    });
+
+    expect(next.tiles["folder-1"]).toBeUndefined();
+    expect(next.pages[0].tileIds).toEqual(["a", "c", "b"]);
+    expect(next.pages[1].tileIds).toEqual(["d", "e", "folder-2"]);
+  });
+
   it("leaves state unchanged on cancel", () => {
     const state = createTestState();
     const next = produce(state, (draft) => {

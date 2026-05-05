@@ -55,7 +55,7 @@ export function applyDropAction(state: Draft<TabState>, action: DropAction): voi
   switch (action.type) {
     case "REORDER": {
       removeTileFromPages(state.pages, action.tileId);
-      insertTileIntoPage(state.pages, action.targetPageId, action.tileId, action.toIndex);
+      insertTileIntoPage(state, action.targetPageId, action.tileId, action.toIndex);
       compactPages(state.pages);
       return;
     }
@@ -90,7 +90,7 @@ export function applyDropAction(state: Draft<TabState>, action: DropAction): voi
         },
         childIds: [action.sourceTileId, action.targetTileId]
       };
-      insertTileIntoPage(state.pages, action.targetPageId, folderId, insertIndex);
+      insertTileIntoPage(state, action.targetPageId, folderId, insertIndex);
       compactPages(state.pages);
       return;
     }
@@ -121,7 +121,7 @@ export function applyDropAction(state: Draft<TabState>, action: DropAction): voi
       if (fromPage) {
         removeTileId(fromPage.tileIds, action.tileId);
       }
-      insertTileIntoPage(state.pages, action.toPageId, action.tileId, action.toIndex);
+      insertTileIntoPage(state, action.toPageId, action.tileId, action.toIndex);
       compactPages(state.pages);
       return;
     }
@@ -134,7 +134,7 @@ export function applyDropAction(state: Draft<TabState>, action: DropAction): voi
 
       removeTileId(folder.childIds, action.tileId);
       runFolderCleanup(state, action.fromFolderId);
-      insertTileIntoPage(state.pages, action.toPageId, action.tileId, action.toIndex);
+      insertTileIntoPage(state, action.toPageId, action.tileId, action.toIndex);
       compactPages(state.pages);
       return;
     }
@@ -269,13 +269,37 @@ function removeTileFromFolders(state: Draft<TabState>, tileId: TileId) {
   }
 }
 
-function insertTileIntoPage(pages: Draft<ShortcutPage[]>, pageId: string, tileId: TileId, index: number) {
-  const page = getPage(pages, pageId);
+function insertTileIntoPage(state: Draft<TabState>, pageId: string, tileId: TileId, index: number) {
+  const page = getPage(state.pages, pageId);
   if (!page) {
     return;
   }
 
   insertTileId(page.tileIds, tileId, index);
+  shiftPageOverflow(state.pages, pageId, getShortcutPageCapacity(state));
+}
+
+function shiftPageOverflow(pages: Draft<ShortcutPage[]>, pageId: string, capacity: number) {
+  if (capacity < 1) {
+    return;
+  }
+
+  let pageIndex = pages.findIndex((page) => page.id === pageId);
+  while (pageIndex >= 0 && pageIndex < pages.length && pages[pageIndex].tileIds.length > capacity) {
+    const overflowTileId = pages[pageIndex].tileIds.pop();
+    if (!overflowTileId) {
+      return;
+    }
+
+    const nextPage = pages[pageIndex + 1] ?? { id: `page-${pageIndex + 2}`, tileIds: [] };
+    nextPage.tileIds.unshift(overflowTileId);
+    pages[pageIndex + 1] = nextPage;
+    pageIndex += 1;
+  }
+}
+
+function getShortcutPageCapacity(state: Draft<TabState>) {
+  return state.layout.gridLayout.rows * state.layout.gridLayout.columns;
 }
 
 function insertTileId(tileIds: Draft<TileId[]>, tileId: TileId, index: number) {
