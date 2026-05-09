@@ -24,6 +24,20 @@ describe("applyDropAction", () => {
     expect(next.tiles.combined.kind === "folder" ? next.tiles.combined.childIds : []).toEqual(["a", "b"]);
   });
 
+  it("combines a folder child with a top-level shortcut and cleans up the source folder", () => {
+    const next = reduceTestState({
+      type: "COMBINE",
+      sourceTileId: "c",
+      targetTileId: "a",
+      targetPageId: "page-1",
+      folderId: "combined"
+    });
+
+    expect(next.pages[0].tileIds).toEqual(["combined", "b", "d"]);
+    expect(next.tiles["folder-1"]).toBeUndefined();
+    expect(next.tiles.combined.kind === "folder" ? next.tiles.combined.childIds : []).toEqual(["c", "a"]);
+  });
+
   it("ignores duplicate combine actions after source and target leave the page", () => {
     const next = produce(createTestState(), (draft) => {
       applyDropAction(draft, {
@@ -87,6 +101,33 @@ describe("applyDropAction", () => {
 
     expect(next.pages[0].tileIds).toEqual(["b", "folder-1"]);
     expect(next.pages[1].tileIds).toEqual(["e", "a", "folder-2"]);
+  });
+
+  it("compacts the source page when cross-page drag moves its only tile", () => {
+    const state = createTestState();
+    state.pages = [
+      { id: "page-1", tileIds: ["a"] },
+      { id: "page-2", tileIds: ["b", "folder-1"] }
+    ];
+
+    const next = produce(state, (draft) => {
+      applyDropAction(draft, { type: "CROSS_PAGE", tileId: "a", fromPageId: "page-1", toPageId: "page-2", toIndex: 1 });
+    });
+
+    expect(next.pages).toEqual([{ id: "page-2", tileIds: ["b", "a", "folder-1"] }]);
+  });
+
+  it("shifts overflow when cross-page drag inserts into a full page", () => {
+    const state = createTestState();
+    state.layout.gridLayout = { ...state.layout.gridLayout, rows: 1, columns: 2 };
+
+    const next = produce(state, (draft) => {
+      applyDropAction(draft, { type: "CROSS_PAGE", tileId: "a", fromPageId: "page-1", toPageId: "page-2", toIndex: 1 });
+    });
+
+    expect(next.pages[0].tileIds).toEqual(["b", "folder-1"]);
+    expect(next.pages[1].tileIds).toEqual(["e", "a"]);
+    expect(next.pages[2].tileIds).toEqual(["folder-2"]);
   });
 
   it("moves a shortcut from one folder to another (cross-folder)", () => {

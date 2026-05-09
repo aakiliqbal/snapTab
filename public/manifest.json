@@ -3,8 +3,12 @@
   "name": "Infi Tab",
   "description": "A customizable local-first new tab page.",
   "version": "0.1.2",
+  "action": {
+    "default_title": "Add to Infi Tab",
+    "default_popup": "popup.html"
+  },
   "chrome_url_overrides": {
     "newtab": "newtab.html"
   },
-  "permissions": ["storage", "unlimitedStorage"]
+  "permissions": ["activeTab", "storage", "unlimitedStorage"]
 }

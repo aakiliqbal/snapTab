@@ -26,6 +26,15 @@ import {
   upsertShortcut
 } from "../../domain/tabOperations";
 import { applyDropAction, type DropAction } from "../../domain/dropActions";
+import {
+  type CanvasGrid,
+  type SearchWidgetSettings,
+  type ShortcutGridWidgetSettings,
+  type WidgetId,
+  type WidgetPlacement,
+  findNearestFreePlacement,
+  resolveWidgetPlacement
+} from "../../domain/canvas";
 import { readFileAsDataUrl } from "../../infrastructure/fileData";
 import { deleteMediaDataUrl } from "../../infrastructure/mediaStorage";
 import { useTabStore } from "../../stores/useTabStore";
@@ -65,7 +74,7 @@ export function useNewTabController() {
   }, []);
 
   const activeSearchProvider = useMemo(() => {
-    return searchProviders[tabState.searchProvider];
+    return searchProviders[tabState.canvas.widgets.search.settings.searchProvider];
   }, [tabState]);
 
   const topLevelTiles = useMemo(() => resolveTopLevelTiles(tabState), [tabState]);
@@ -88,6 +97,53 @@ export function useNewTabController() {
 
   function changeSearchProvider(providerId: SearchProviderId) {
     setSearchProvider(providerId);
+  }
+
+  function updateWidgetPlacement(widgetId: WidgetId, placement: WidgetPlacement, grid: CanvasGrid) {
+    updateTabState((state) =>
+      produce(state, (draft) => {
+        const widget = draft.canvas.widgets[widgetId];
+        widget.placement = resolveWidgetPlacement(placement, grid, draft.canvas.widgets, widgetId, widget.placement);
+      })
+    );
+  }
+
+  function setWidgetEnabled(widgetId: WidgetId, enabled: boolean, grid?: CanvasGrid) {
+    updateTabState((state) =>
+      produce(state, (draft) => {
+        const widget = draft.canvas.widgets[widgetId];
+        if (enabled && grid) {
+          const nextPlacement = findNearestFreePlacement(widget.placement, grid, draft.canvas.widgets, widgetId);
+          if (nextPlacement) {
+            widget.placement = nextPlacement;
+          }
+        }
+
+        widget.enabled = enabled;
+      })
+    );
+  }
+
+  function changeSearchWidgetSetting<K extends keyof SearchWidgetSettings>(key: K, value: SearchWidgetSettings[K]) {
+    updateTabState((state) =>
+      produce(state, (draft) => {
+        draft.canvas.widgets.search.settings[key] = value;
+        if (key === "searchProvider") {
+          draft.searchProvider = value as SearchProviderId;
+        }
+      })
+    );
+  }
+
+  function changeShortcutGridWidgetSetting<K extends keyof ShortcutGridWidgetSettings>(
+    key: K,
+    value: ShortcutGridWidgetSettings[K]
+  ) {
+    updateTabState((state) =>
+      produce(state, (draft) => {
+        draft.canvas.widgets.shortcutGrid.settings[key] = value;
+      })
+    );
   }
 
   function changeLayout<K extends keyof TabState["layout"]>(key: K, value: TabState["layout"][K]) {
@@ -316,6 +372,8 @@ export function useNewTabController() {
     backupMessage,
     changeLayout,
     changeSearchProvider,
+    changeSearchWidgetSetting,
+    changeShortcutGridWidgetSetting,
     changeWallpaperSetting,
     chooseRecommendedIcon,
     deleteFolder,
@@ -343,9 +401,11 @@ export function useNewTabController() {
     setIsSettingsDrawerOpen,
     setQuery,
     setShortcutDraft,
+    setWidgetEnabled,
     tabState,
     topLevelTiles,
     uploadShortcutIcon,
+    updateWidgetPlacement,
     uploadWallpaper,
     wallpaperMessage
   };

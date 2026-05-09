@@ -118,6 +118,17 @@ const [dragOverlay, setDragOverlay] = useState<{
 - Positioned with `fixed`, `pointerEvents: none`
 - Coordinates updated via `window.addEventListener('dragover')`
 
+## Cross-Page Drag
+
+Top-Level Tile drag follows the reference extension pattern:
+
+- Page-edge zones are full-height, `10vw` wide, capped at `130px`.
+- Holding left/right edge for `300ms` switches the active Shortcut Page during drag.
+- Continued edge hold repeats paging with a slower `900ms` cadence.
+- Edge overlays fade in as translucent side panels while active.
+- Page edge is a preview/navigation target only; final drop still lands on a Top-Level Tile or Shortcut Page surface.
+- The original source page ID is captured at drag start so final drop can become `CROSS_PAGE` when persisted source and target pages differ.
+
 ## Live Shift Animation
 
 FLIP-like animation for placeholder positions:
@@ -194,7 +205,7 @@ type ResolveDropInput = {
 
 1. **Extract hook**: Drag state lives in ShortcutGrid
 2. **Route through resolveDrop()**: Currently bypasses domain function
-3. **Cross-page**: Domain exists, UI not wired
+3. **Cross-page polish**: Top-Level Tile drag uses page-edge hover; folder-child cross-page polish remains future work
 4. **Folder child polish**: UI is wired; extraction and more coverage remain
 5. **Keyboard drag**: Not implemented
 6. **Touch drag**: Not verified

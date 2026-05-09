@@ -1,5 +1,6 @@
 import type { FormEvent } from "react";
 import { type BrandIcon } from "../../domain/brandIcons";
+import { ShortcutForm } from "../ShortcutForm";
 import { type ShortcutDraft } from "../model/drafts";
 
 type ShortcutModalProps = {
@@ -41,113 +42,16 @@ export function ShortcutModal({
           </button>
         </div>
 
-        <form className="quick-link-form" onSubmit={onSave}>
-          <label>
-            <span>Title</span>
-            <input
-              autoFocus
-              value={draft.title}
-              onChange={(event) => onChangeDraft({ ...draft, title: event.target.value })}
-              required
-            />
-          </label>
-
-          <label>
-            <span>URL</span>
-            <input
-              inputMode="url"
-              placeholder="https://example.com"
-              value={draft.url}
-              onChange={(event) => onChangeDraft({ ...draft, url: event.target.value })}
-              required
-            />
-          </label>
-
-          <div className="form-row">
-            <label>
-              <span>Icon label</span>
-              <input
-                maxLength={2}
-                value={draft.iconLabel}
-                onChange={(event) => onChangeDraft({ ...draft, iconLabel: event.target.value })}
-              />
-            </label>
-
-            <label>
-              <span>Icon color</span>
-              <input
-                className="color-input"
-                type="color"
-                value={draft.iconBackground}
-                onChange={(event) => onChangeDraft({ ...draft, iconBackground: event.target.value })}
-              />
-            </label>
-          </div>
-
-          {iconRecommendations.length > 0 ? (
-            <div className="recommended-icons" aria-label="Recommended icons">
-              <span>Recommended icons</span>
-              <div className="recommended-icon-row">
-                {iconRecommendations.map((icon) => (
-                  <button
-                    className={draft.brandIconId === icon.id ? "selected" : ""}
-                    type="button"
-                    key={icon.id}
-                    onClick={() => onApplyRecommendedIcon(icon)}
-                    aria-label={`Use ${icon.title} icon`}
-                    title={icon.title}
-                  >
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <path d={icon.path} />
-                    </svg>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          <div className="form-preview">
-            <span
-              className={`quick-link-icon ${draft.iconImageDataUrl ? "image-icon" : ""}`}
-              style={{ backgroundColor: draft.iconBackground }}
-              aria-hidden="true"
-            >
-              {draft.iconImageDataUrl ? (
-                <img src={draft.iconImageDataUrl} alt="" />
-              ) : (
-                (draft.iconLabel || draft.title.slice(0, 1) || "?").slice(0, 2).toUpperCase()
-              )}
-            </span>
-          </div>
-
-          <div className="icon-image-actions">
-            <label className="secondary-button file-button">
-              Upload icon image
-              <input
-                accept="image/*"
-                type="file"
-                onChange={(event) => {
-                  onUploadIcon(event.target.files?.[0] ?? null);
-                  event.currentTarget.value = "";
-                }}
-              />
-            </label>
-          </div>
-
-          <div className="modal-actions">
-            {draft.id ? (
-              <button className="danger-button" type="button" onClick={onDelete}>
-                Delete
-              </button>
-            ) : null}
-            <button className="secondary-button" type="button" onClick={onClose}>
-              Cancel
-            </button>
-            <button className="primary-button" type="submit">
-              Save
-            </button>
-          </div>
-        </form>
+        <ShortcutForm
+          draft={draft}
+          iconRecommendations={iconRecommendations}
+          onApplyRecommendedIcon={onApplyRecommendedIcon}
+          onCancel={onClose}
+          onChangeDraft={onChangeDraft}
+          onDelete={onDelete}
+          onSave={onSave}
+          onUploadIcon={onUploadIcon}
+        />
       </section>
     </div>
   );

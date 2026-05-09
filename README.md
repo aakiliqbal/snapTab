@@ -6,6 +6,7 @@ A local-first Chrome new tab extension inspired by Infinity New Tab Pro.
 
 - Chrome Manifest V3 new tab override
 - Quick-link add, edit, delete, and drag reorder
+- Toolbar popup for adding the current website to the new tab grid
 - Folder tiles with modal folder contents
 - User-uploaded wallpaper, including GIFs
 - Search provider and search-box customization

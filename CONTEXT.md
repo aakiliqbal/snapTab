@@ -5,6 +5,27 @@
 **New Tab Surface**  
 The browser page rendered by Infi Tab when Chrome opens a new tab.
 
+**Canvas**  
+The fixed, full-viewport workspace inside the New Tab Surface. It never browser-scrolls and contains Widgets snapped to a logical grid.
+
+**Snap Grid**  
+The logical dotted grid used to place, move, and resize Widgets on the Canvas. Grid units are derived from viewport size so one row is roughly the height of the Search Widget.
+
+**Widget**  
+A user-configurable surface placed on the Canvas. Widgets have enabled state, grid-unit placement, visual settings, and type-specific settings.
+
+**Widget Placement**  
+A Widget's persisted grid-unit rectangle: x, y, width, height, and z-index. Placement must fit inside the Canvas and enabled Widgets must not overlap.
+
+**Canvas Edit Mode**  
+Transient mode where the Snap Grid and Widget frames are visible and Widgets can be moved or resized. It is never persisted and always starts off on a new tab.
+
+**Search Widget**  
+The Widget containing the search input and search-provider controls.
+
+**Shortcut Grid Widget**  
+The Widget containing Shortcut Pages, Top-Level Tiles, and tile/folder drag behavior.
+
 **Shortcut**  
 A top-level or folder-contained link with a title, URL, and icon.
 
@@ -28,6 +49,9 @@ The user-selected background media for the New Tab Surface. It may be a static i
 
 **Settings Drawer**  
 The right-side drawer that exposes Search, Grid Layout, Wallpaper, and Backup controls.
+
+**Toolbar Popup**  
+The Chrome extension action popup used to add the current active website as a Shortcut without opening the New Tab Surface.
 
 **Backup**  
 A portable JSON representation of the full `TabState`, including user settings and media data URLs.
@@ -62,6 +86,7 @@ A domain command produced from Drag Intent: `REORDER`, `COMBINE`, `ADD_TO_FOLDER
 
 - Infi Tab is local-first; no backend or account sync exists in the MVP.
 - Zustand persist writes runtime state to `chrome.storage.local`; localStorage is the dev fallback.
+- The Toolbar Popup writes to the same persisted `TabState` as the New Tab Surface.
 - JSON Backup is replace-only on import.
 - Wallpapers and uploaded icons remain portable as data URLs.
 - IndexedDB media infrastructure exists but is not wired into the active runtime persistence path.
@@ -69,10 +94,15 @@ A domain command produced from Drag Intent: `REORDER`, `COMBINE`, `ADD_TO_FOLDER
 ### Product Structure
 
 - The New Tab Surface is a single React app, not multiple extension pages.
+- The Canvas is the whole interactive New Tab workspace and contains all user-arrangeable Widgets.
+- Infi Tab has exactly one Search Widget and exactly one Shortcut Grid Widget.
+- Widgets can be disabled; disabled Widgets keep settings and last placement but do not reserve Canvas space.
+- Canvas Edit Mode is toggled from the toolbar, shows the dotted Snap Grid, enables Widget movement/resizing, and disables tile drag.
+- The Toolbar Popup is a second React entry point that reuses the shortcut editor form and persisted store.
 - Folders are created by dragging one Shortcut onto another (gesture-based combine).
 - A Folder always contains at least two Shortcuts; removal that leaves one child promotes it to the page.
 - Deleting a Folder deletes its contained Shortcuts.
-- The Shortcut creation tile participates in Shortcut Page capacity after all user tiles.
+- The Toolbar Popup is the shortcut creation flow; the New Tab Surface does not show a Shortcut creation tile.
 
 ### Tile Management
 
@@ -83,31 +113,34 @@ A domain command produced from Drag Intent: `REORDER`, `COMBINE`, `ADD_TO_FOLDER
 
 ### Shortcut Pages
 
+- Shortcut Pages live inside the Shortcut Grid Widget, not directly on the Canvas.
 - Shortcut Page capacity comes from Grid Layout.
 - Persisted `pages[].tileIds` stores top-level order; visible Shortcut Pages are derived by slicing that order by current Grid Layout capacity.
 - The main surface must not browser-scroll; overlays may scroll internally.
-- Mouse wheel navigation applies to Shortcut Pages (thresholded).
+- Mouse wheel navigation applies to Shortcut Pages only while hovering the Shortcut Grid Widget in normal mode.
 - Infinite wrapping for next/prev navigation.
 - Page dots shown only when `pageCount > 1`.
 - Active page is transient UI state, resets on new tab.
+- Keyboard Shortcut Page navigation is not part of the Canvas design.
 
 ### Grid Layout
 
-- Grid Layout presets: 2x4, 2x5, 2x6, 2x7, 3x3, and Customize.
-- Custom rows/columns range 1-8.
-- Default: 2x6 preset with 100% icon size and spacing.
-- Row/column counts are stored directly; column spacing and line spacing are 0-100%; icon size is 50-120%.
-- Grid Layout preserved across viewports; presentation scales to avoid scrolling.
+- Canvas Snap Grid dimensions are derived from viewport size with square-ish cells that fill the viewport.
+- Widget Placement is persisted in Snap Grid units, not pixels.
+- Shortcut Grid Widget rows and columns are derived from its current rendered size.
+- Shortcut Grid Widget settings preserve icon size, column spacing, line spacing, labels, and page dots; fixed row/column presets are retired by the Canvas design.
+- The Canvas and Widgets are clamped to avoid browser scrolling.
 
 ### Drag and Drop
 
 - Top-Level Tile drag uses native HTML drag events with custom pointer-following overlay.
 - Active-page drag supports reorder, combine, and add-to-folder.
 - FolderPanel drag supports child reorder, drag-out promotion, and add-to-folder by center drop.
+- Tile drag is disabled during Canvas Edit Mode so Widget movement and tile movement cannot conflict.
 - Drag UI maps Drag Source plus Drop Target into Drop Action through `src/ui/drag/dropActionAdapter.ts`.
 - Drag Intent uses left/center/right UI zones (30%/40%/30%).
 - Zone confirmation uses 200ms debounce timer.
-- Cross-page drag is supported in the domain reducer but not wired in the UI.
+- Cross-page Top-Level Tile drag is wired through page-edge hover navigation: 10vw/max-130px edge zones, 300ms first hold, then slower repeat paging.
 - Keyboard and touch drag are separate future work.
 
 ### Technology
@@ -126,10 +159,12 @@ A domain command produced from Drag Intent: `REORDER`, `COMBINE`, `ADD_TO_FOLDER
 - [x] Paged tile grid (Shortcut Pages)
 - [x] Grid Layout with presets and customization
 - [x] Shortcut CRUD
+- [x] Toolbar popup add-current-site shortcut flow
 - [x] Folder creation via drag combine
 - [x] Folder edit/delete modal
 - [x] FolderPanel child view
 - [x] FolderPanel child reorder and drag-out promotion
+- [x] Cross-page Top-Level Tile drag via page-edge hover
 - [x] Top-level reorder
 - [x] Add shortcut to folder
 - [x] Settings Drawer

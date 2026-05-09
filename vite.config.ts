@@ -14,7 +14,8 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        newtab: "newtab.html"
+        newtab: "newtab.html",
+        popup: "popup.html"
       }
     }
   }

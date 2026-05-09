@@ -13,7 +13,26 @@ export type Shift = {
   y: number;
 };
 
+export type PageEdgeDirection = "prev" | "next";
+
 export const emptyShift: Shift = { x: 0, y: 0 };
+
+export function getPageEdgeDirection(clientX: number, viewportWidth: number, pageCount: number): PageEdgeDirection | null {
+  if (pageCount <= 1 || viewportWidth <= 0) {
+    return null;
+  }
+
+  const edgeWidth = Math.min(viewportWidth * 0.1, 130);
+  if (clientX <= edgeWidth) {
+    return "prev";
+  }
+
+  if (clientX >= viewportWidth - edgeWidth) {
+    return "next";
+  }
+
+  return null;
+}
 
 export function getDropPosition(clientX: number, rect: DOMRect): DropPosition {
   const relativeX = (clientX - rect.left) / rect.width;

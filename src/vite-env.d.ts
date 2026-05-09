@@ -6,6 +6,15 @@ type ChromeStorageArea = {
   remove?: (keys: string[], callback?: () => void) => void;
 };
 
+type ChromeTab = {
+  title?: string;
+  url?: string;
+};
+
+type ChromeTabs = {
+  query: (queryInfo: { active: boolean; currentWindow: boolean }, callback: (tabs: ChromeTab[]) => void) => void;
+};
+
 declare const chrome:
   | {
       runtime?: {
@@ -16,5 +25,6 @@ declare const chrome:
       storage?: {
         local?: ChromeStorageArea;
       };
+      tabs?: ChromeTabs;
     }
   | undefined;

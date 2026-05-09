@@ -52,21 +52,7 @@ Wire `resolveDrop()` as the decision function for native drag drops instead of c
 
 **Blocked by:** Issue 1
 
-### 3. Cross-Page Drag
-
-**Type:** HITL
-
-Wire cross-page drag with page-edge preview.
-
-**Acceptance criteria:**
-- [ ] 48px edge zones active during drag
-- [ ] 300ms edge hold previews adjacent page
-- [ ] Drop triggers CROSS_PAGE
-- [ ] No empty pages after drop
-
-**Blocked by:** Issue 2
-
-### 4. Folder Icon Mini-Preview Grid
+### 3. Folder Icon Mini-Preview Grid
 
 **Type:** AFK
 
@@ -80,7 +66,7 @@ Show first child icons in Folder tile.
 
 **Blocked by:** None
 
-### 5. Keyboard Drag
+### 4. Keyboard Drag
 
 **Type:** HITL
 
@@ -94,7 +80,7 @@ Accessible keyboard drag operations.
 
 **Blocked by:** Issue 2
 
-### 6. Icon Recommendations
+### 5. Icon Recommendations
 
 **Type:** HITL
 
@@ -107,7 +93,7 @@ Improve brand icon matching.
 
 **Blocked by:** None
 
-### 7. Focus Management
+### 6. Focus Management
 
 **Type:** AFK
 
@@ -120,7 +106,7 @@ Keyboard-safe overlays.
 
 **Blocked by:** None
 
-### 8. Chrome Web Store Release
+### 7. Chrome Web Store Release
 
 **Type:** HITL
 
@@ -154,3 +140,4 @@ These were completed in earlier work:
 - [x] Animation (reduced motion)
 - [x] FolderPanel Child Drag (outgoing drag freeze bugfix)
 - [x] Folder invariant cleanup on delete/import
+- [x] Cross-page Top-Level Tile drag via page-edge hover

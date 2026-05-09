@@ -70,8 +70,9 @@ export function applyDropAction(state: Draft<TabState>, action: DropAction): voi
 
       const targetIndex = targetPage.tileIds.indexOf(action.targetTileId);
       const sourceIndex = targetPage.tileIds.indexOf(action.sourceTileId);
+      const sourceFolderId = findParentFolderId(state, action.sourceTileId);
 
-      if (targetIndex < 0 || sourceIndex < 0) {
+      if (targetIndex < 0 || (sourceIndex < 0 && !sourceFolderId)) {
         return;
       }
 
@@ -79,6 +80,7 @@ export function applyDropAction(state: Draft<TabState>, action: DropAction): voi
       const folderId = action.folderId ?? crypto.randomUUID();
       removeTileFromPages(state.pages, action.sourceTileId);
       removeTileFromPages(state.pages, action.targetTileId);
+      removeTileFromFolders(state, action.sourceTileId);
       state.tiles[folderId] = {
         kind: "folder",
         id: folderId,
@@ -91,6 +93,9 @@ export function applyDropAction(state: Draft<TabState>, action: DropAction): voi
         childIds: [action.sourceTileId, action.targetTileId]
       };
       insertTileIntoPage(state, action.targetPageId, folderId, insertIndex);
+      if (sourceFolderId) {
+        runFolderCleanup(state, sourceFolderId);
+      }
       compactPages(state.pages);
       return;
     }

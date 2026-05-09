@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useEffect, type RefObject } from "react";
+import { useMemo, useState, useRef, useEffect, type CSSProperties, type RefObject } from "react";
 import { useReducedMotion } from "motion/react";
 import { Folder as FolderIcon } from "lucide-react";
 import type { DropAction } from "../domain/dropActions";
@@ -14,6 +14,7 @@ import {
   getShiftBetweenRects,
   getTileIdFromKey,
   toDropZone,
+  type PageEdgeDirection,
   type DropPosition
 } from "./drag/dragGeometry";
 import type { DragSource } from "./drag/dragModel";
@@ -36,20 +37,26 @@ type ShortcutGridProps = {
   onEditShortcut: (shortcut: Shortcut) => void;
   onOpenNewShortcutDialog: () => void;
   onSetActiveFolderId: (folderId: string | null) => void;
-  onSetActiveShortcutPage: (pageIndex: number) => void;
+  onSetActiveShortcutPage: (pageIndex: number | ((current: number) => number)) => void;
+  pageCapacity: number;
   pageCount: number;
+  showPageDots?: boolean;
   showLabels: boolean;
   tabState: TabState;
   visibleShortcutPageItems: ShortcutPageItem[];
 };
 
 type DragState = {
+  sourcePageId: string;
   sourcePageIndex: number;
+  sourcePageTileIndex: number;
   sourceIndex: number;
   sourceKey: string;
   initialRects: Record<string, DOMRect>;
 };
 
+const PAGE_EDGE_HOVER_MS = 300;
+const PAGE_EDGE_REPEAT_MS = 900;
 const ZONE_DEBOUNCE_MS = 200;
 
 export function ShortcutGrid({
@@ -63,7 +70,9 @@ export function ShortcutGrid({
   onOpenNewShortcutDialog,
   onSetActiveFolderId,
   onSetActiveShortcutPage,
+  pageCapacity,
   pageCount,
+  showPageDots = true,
   showLabels,
   tabState,
   visibleShortcutPageItems
@@ -72,10 +81,15 @@ export function ShortcutGrid({
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [dropTargetKey, setDropTargetKey] = useState<string | null>(null);
   const [dropPosition, setDropPosition] = useState<DropPosition | null>(null);
+  const [activePageEdge, setActivePageEdge] = useState<PageEdgeDirection | null>(null);
+  const [pageEdgeStyle, setPageEdgeStyle] = useState<{ prev: CSSProperties; next: CSSProperties } | null>(null);
   const [outgoingInitialRects, setOutgoingInitialRects] = useState<Record<string, DOMRect> | null>(null);
 
   // Timer-based zone detection refs
   const moveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pageEdgeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pageEdgeDirectionRef = useRef<PageEdgeDirection | null>(null);
+  const pageEdgeDelayRef = useRef(PAGE_EDGE_HOVER_MS);
   const dropHandledRef = useRef(false);
   const [confirmedZone, setConfirmedZone] = useState<DropPosition | null>(null);
 
@@ -86,8 +100,21 @@ export function ShortcutGrid({
     }
   };
 
+  const clearPageEdgeTimer = () => {
+    if (pageEdgeTimerRef.current) {
+      clearTimeout(pageEdgeTimerRef.current);
+      pageEdgeTimerRef.current = null;
+    }
+
+    pageEdgeDirectionRef.current = null;
+    pageEdgeDelayRef.current = PAGE_EDGE_HOVER_MS;
+    setActivePageEdge(null);
+    setPageEdgeStyle(null);
+  };
+
   const clearDragSession = () => {
     clearMoveTimer();
+    clearPageEdgeTimer();
     setDragState(null);
     setDropTargetKey(null);
     setDropPosition(null);
@@ -107,7 +134,8 @@ export function ShortcutGrid({
     }
   }, [outgoingDragSource]);
 
-  // After outgoingDragSource is set, initialize overlay for folder-child drags
+  // After outgoingDragSource is set, prepare overlay data for folder-child drags.
+  // Position waits for first dragover so the tile does not flash at viewport center.
   useEffect(() => {
     if (!outgoingDragSource || outgoingDragSource.kind !== "folder-child") return;
     const shortcut = tabState.tiles[outgoingDragSource.shortcutId];
@@ -117,14 +145,14 @@ export function ShortcutGrid({
       key: `shortcut:${shortcut.id}`,
       shortcut
     };
-    // Use viewport center to match top-page drag behavior - next dragover will snap to cursor
-    setDragOverlay({ tile, x: window.innerWidth / 2, y: window.innerHeight / 2 });
+    setDragOverlay({ tile, x: Number.NaN, y: Number.NaN });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [outgoingDragSource]);
 
   // Cleanup on global dragend/drop events
   useEffect(() => {
     if (!outgoingDragSource) return;
+
     const handleGlobalEnd = () => {
       onClearOutgoingDrag();
       clearDragSession();
@@ -202,9 +230,16 @@ export function ShortcutGrid({
     dropHandledRef.current = false;
     
     const initialRects = captureTileRects(gridRef.current);
+    const sourceId = getTileIdFromKey(tileKey);
+    const sourcePagePosition = getTilePagePosition(tabState, sourceId) ?? {
+      pageId: tabState.pages[activeShortcutPageIndex]?.id ?? "page-1",
+      index
+    };
     
     setDragState({
+      sourcePageId: sourcePagePosition.pageId,
       sourcePageIndex: activeShortcutPageIndex,
+      sourcePageTileIndex: sourcePagePosition.index,
       sourceIndex: index,
       sourceKey: tileKey,
       initialRects
@@ -235,6 +270,167 @@ export function ShortcutGrid({
     handleZoneChange(position);
   };
 
+  const handlePageEdgePointer = (clientX: number, clientY: number) => {
+    if (pageCount <= 1 || (!dragState && !outgoingDragSource)) {
+      clearPageEdgeTimer();
+      return;
+    }
+
+    const direction = getGridPageEdgeDirection(clientX, clientY);
+    if (!direction) {
+      clearPageEdgeTimer();
+      return;
+    }
+
+    setActivePageEdge(direction);
+
+    if (pageEdgeDirectionRef.current === direction && pageEdgeTimerRef.current) {
+      return;
+    }
+
+    if (pageEdgeDirectionRef.current !== direction) {
+      clearPageEdgeTimer();
+      setActivePageEdge(direction);
+      pageEdgeDirectionRef.current = direction;
+    }
+
+    pageEdgeTimerRef.current = setTimeout(() => {
+      onSetActiveShortcutPage((current) => {
+        if (direction === "next") {
+          return (current + 1) % pageCount;
+        }
+
+        return (current - 1 + pageCount) % pageCount;
+      });
+      pageEdgeTimerRef.current = null;
+      pageEdgeDelayRef.current = PAGE_EDGE_REPEAT_MS;
+      setDropTargetKey(null);
+      setDropPosition(null);
+      setConfirmedZone(null);
+      requestAnimationFrame(() => {
+        setOutgoingInitialRects(captureTileRects(gridRef.current));
+      });
+    }, pageEdgeDelayRef.current);
+  };
+
+  const cancelDragOutsideGrid = () => {
+    if (outgoingDragSource) {
+      onClearOutgoingDrag();
+    }
+    clearDragSession();
+  };
+
+  const isPointInsideGrid = (clientX: number, clientY: number) => {
+    const rect = gridRef.current?.getBoundingClientRect();
+    return Boolean(
+      rect &&
+      clientX >= rect.left &&
+      clientX <= rect.right &&
+      clientY >= rect.top &&
+      clientY <= rect.bottom
+    );
+  };
+
+  const isDropInsideGridElement = (event: DragEvent | React.DragEvent<HTMLElement>) => {
+    const grid = gridRef.current;
+    return Boolean(grid && document.elementsFromPoint(event.clientX, event.clientY).some((element) => element === grid || grid.contains(element)));
+  };
+
+  const isPointInsideDragArea = (clientX: number, clientY: number) => {
+    const rect = gridRef.current?.getBoundingClientRect();
+    if (!rect || clientY < rect.top || clientY > rect.bottom) {
+      return false;
+    }
+
+    const edgeWidth = getGridEdgeWidth();
+    return clientX >= rect.left - edgeWidth && clientX <= rect.right + edgeWidth;
+  };
+
+  const getGridEdgeWidth = () => Math.min(window.innerWidth * 0.1, 130);
+
+  const getGridPageEdgeDirection = (clientX: number, clientY: number | undefined): PageEdgeDirection | null => {
+    if (pageCount <= 1) {
+      return null;
+    }
+
+    const rect = gridRef.current?.getBoundingClientRect();
+    if (!rect || (clientY !== undefined && (clientY < rect.top || clientY > rect.bottom))) {
+      return null;
+    }
+
+    const edgeWidth = getGridEdgeWidth();
+    if (clientX >= rect.left - edgeWidth && clientX <= rect.left) {
+      return "prev";
+    }
+
+    if (clientX >= rect.right && clientX <= rect.right + edgeWidth) {
+      return "next";
+    }
+
+    return null;
+  };
+
+  const syncPageEdgeStyle = () => {
+    const rect = gridRef.current?.getBoundingClientRect();
+    if (!rect) {
+      setPageEdgeStyle(null);
+      return;
+    }
+
+    const edgeWidth = getGridEdgeWidth();
+    setPageEdgeStyle({
+      prev: { top: rect.top, left: Math.max(0, rect.left - edgeWidth), width: edgeWidth, height: rect.height },
+      next: { top: rect.top, left: rect.right, width: edgeWidth, height: rect.height }
+    });
+  };
+
+  const clearDropPreview = () => {
+    clearMoveTimer();
+    setDropTargetKey(null);
+    setDropPosition(null);
+    setConfirmedZone(null);
+  };
+
+  useEffect(() => {
+    if (!dragState && !outgoingDragSource) {
+      return;
+    }
+
+    const handleWindowDragOver = (event: DragEvent) => {
+      const insideGrid = isPointInsideGrid(event.clientX, event.clientY);
+      const edgeDirection = getGridPageEdgeDirection(event.clientX, event.clientY);
+
+      if (!isPointInsideDragArea(event.clientX, event.clientY)) {
+        cancelDragOutsideGrid();
+        return;
+      }
+
+      if (!insideGrid) {
+        clearDropPreview();
+      }
+
+      handlePageEdgePointer(event.clientX, event.clientY);
+    };
+
+    const handleWindowDrop = (event: DragEvent) => {
+      if (!isDropInsideGridElement(event)) {
+        event.preventDefault();
+        cancelDragOutsideGrid();
+      }
+    };
+
+    syncPageEdgeStyle();
+    window.addEventListener("dragover", handleWindowDragOver);
+    window.addEventListener("drop", handleWindowDrop, true);
+    window.addEventListener("resize", syncPageEdgeStyle);
+
+    return () => {
+      window.removeEventListener("dragover", handleWindowDragOver);
+      window.removeEventListener("drop", handleWindowDrop, true);
+      window.removeEventListener("resize", syncPageEdgeStyle);
+    };
+  }, [dragState, outgoingDragSource, pageCount, activeShortcutPageIndex]);
+
   const handleDragLeave = () => {
     clearMoveTimer();
     setConfirmedZone(null);
@@ -251,17 +447,24 @@ export function ShortcutGrid({
       const effectiveZone = confirmedZone ?? dropPosition;
       if (effectiveZone) {
         const targetTile = draggableTileByKey.get(targetKey)?.tile;
-        const targetPageId = tabState.pages[activeShortcutPageIndex]?.id ?? "page-1";
         const targetId = getTileIdFromKey(targetKey);
-        // Source is not in the page, so no index shift: right→insert after, left/center→insert at
-        const resolvedIndex = effectiveZone === "right" ? targetIndex + 1 : targetIndex;
+        const targetPosition = targetTile
+          ? getTilePagePosition(tabState, targetId) ?? getVisualPageEndPosition(tabState, activeShortcutPageIndex, pageCapacity)
+          : getVisualPageEndPosition(tabState, activeShortcutPageIndex, pageCapacity);
+        const resolvedIndex = targetTile
+          ? effectiveZone === "right" ? targetPosition.index + 1 : targetPosition.index
+          : targetPosition.index;
         const action = createDropAction(outgoingDragSource, {
-          kind: "top-level-tile",
-          tileKind: targetTile?.type ?? "shortcut",
-          tileId: targetId,
-          pageId: targetPageId,
-          index: resolvedIndex,
-          zone: toDropZone(effectiveZone)
+          ...(targetTile
+            ? {
+                kind: "top-level-tile" as const,
+                tileKind: targetTile.type,
+                tileId: targetId,
+                zone: toDropZone(effectiveZone)
+              }
+            : { kind: "page-surface" as const }),
+          pageId: targetPosition.pageId,
+          index: resolvedIndex
         });
         if (action.type !== "CANCEL") {
           dispatchDropAction(action);
@@ -286,32 +489,43 @@ export function ShortcutGrid({
       return;
     }
 
-    const sourceTile = draggableTileByKey.get(dragState.sourceKey)?.tile;
+    const sourceId = getTileIdFromKey(dragState.sourceKey);
+    const sourceTileRecord = tabState.tiles[sourceId];
+    const sourceTileKind = sourceTileRecord?.kind;
     const targetTile = draggableTileByKey.get(targetKey)?.tile;
 
-    if (!sourceTile || !targetTile) {
+    if ((sourceTileKind !== "shortcut" && sourceTileKind !== "folder") || !targetTile) {
       clearDragSession();
       return;
     }
 
-    const sourceId = getTileIdFromKey(dragState.sourceKey);
     const targetId = getTileIdFromKey(targetKey);
-    const targetPageId = tabState.pages[activeShortcutPageIndex]?.id ?? "page-1";
-    const sourceIndex = visibleKeyIndexByKey.get(dragState.sourceKey) ?? dragState.sourceIndex;
-    const toIndex = position === "center" ? targetIndex : computeDropIndex(sourceIndex, targetIndex, position);
+    const targetPosition = getTilePagePosition(tabState, targetId) ?? {
+      pageId: tabState.pages[activeShortcutPageIndex]?.id ?? "page-1",
+      index: targetIndex
+    };
+    const sourceIndex = dragState.sourcePageTileIndex;
+    const toIndex =
+      position === "center"
+        ? targetPosition.index
+        : dragState.sourcePageId === targetPosition.pageId
+          ? computeDropIndex(sourceIndex, targetPosition.index, position)
+          : position === "right"
+            ? targetPosition.index + 1
+            : targetPosition.index;
     const action = createDropAction(
       {
         kind: "top-level",
-        tileKind: sourceTile.type,
+        tileKind: sourceTileKind,
         tileId: sourceId,
-        pageId: targetPageId,
+        pageId: dragState.sourcePageId,
         index: sourceIndex
       },
       {
         kind: "top-level-tile",
         tileKind: targetTile.type,
         tileId: targetId,
-        pageId: targetPageId,
+        pageId: targetPosition.pageId,
         index: toIndex,
         zone: toDropZone(position)
       }
@@ -330,7 +544,7 @@ export function ShortcutGrid({
   // Source is a shortcut if it's a regular grid shortcut OR a folder-child (always shortcuts)
   const sourceIsShortcut =
     dragState
-      ? draggableTileByKey.get(dragState.sourceKey)?.tile.type === "shortcut"
+      ? tabState.tiles[getTileIdFromKey(dragState.sourceKey)]?.kind === "shortcut"
       : outgoingDragSource?.kind === "folder-child";
   const isCombinePreview =
     sourceIsShortcut &&
@@ -342,7 +556,15 @@ export function ShortcutGrid({
   // Compute live shifting - which tiles should shift as we drag (FLIP-like animation)
   // Use dropPosition (immediate) not confirmedZone (debounced) for live feedback
   const getTileShift = (tileKey: string): { x: number, y: number } => {
+    if (outgoingDragSource && tileKey === "create:shortcut") {
+      return emptyShift;
+    }
+
     if (!dropTargetKey || !dropPosition || dropPosition === "center") {
+      return emptyShift;
+    }
+
+    if (dragState && dragState.sourcePageIndex !== activeShortcutPageIndex) {
       return emptyShift;
     }
     
@@ -419,6 +641,24 @@ export function ShortcutGrid({
 
   return (
     <>
+      {pageCount > 1 && pageEdgeStyle && (dragState || outgoingDragSource) ? (
+        <>
+          <div
+            className={["shortcut-page-edge", "shortcut-page-edge-prev", activePageEdge === "prev" ? "active" : ""]
+              .filter(Boolean)
+              .join(" ")}
+            style={pageEdgeStyle.prev}
+            aria-hidden="true"
+          />
+          <div
+            className={["shortcut-page-edge", "shortcut-page-edge-next", activePageEdge === "next" ? "active" : ""]
+              .filter(Boolean)
+              .join(" ")}
+            style={pageEdgeStyle.next}
+            aria-hidden="true"
+          />
+        </>
+      ) : null}
       <section
         className="quick-link-grid"
         aria-label="Quick links"
@@ -431,6 +671,7 @@ export function ShortcutGrid({
         }}
         onDragOver={(e) => {
           e.preventDefault();
+          handlePageEdgePointer(e.clientX, e.clientY);
           if (outgoingDragSource) {
             // Get the tile under the cursor using elementsFromPoint
             const elements = document.elementsFromPoint(e.clientX, e.clientY);
@@ -446,25 +687,37 @@ export function ShortcutGrid({
         }}
         onDrop={(e) => {
           e.preventDefault();
+          if (!isDropInsideGridElement(e)) {
+            cancelDragOutsideGrid();
+            return;
+          }
+
           if (dropHandledRef.current) return;
           // Handle folder-child promote when dropped on a known tile
           if (outgoingDragSource && dropTargetKey) {
             dropHandledRef.current = true;
             const targetIndex = visibleKeyIndexByKey.get(dropTargetKey) ?? 0;
-            const targetPageId = tabState.pages[activeShortcutPageIndex]?.id ?? "page-1";
             const targetTile = draggableTileByKey.get(dropTargetKey)?.tile;
             const targetId = getTileIdFromKey(dropTargetKey);
             const effectiveZone = confirmedZone ?? dropPosition;
+            const targetPosition = targetTile
+              ? getTilePagePosition(tabState, targetId) ?? getVisualPageEndPosition(tabState, activeShortcutPageIndex, pageCapacity)
+              : getVisualPageEndPosition(tabState, activeShortcutPageIndex, pageCapacity);
             const zone = effectiveZone === "center" ? "center" : effectiveZone === "right" ? "trailing" : "leading";
-            // Source is not in page — no shift needed; right zone means insert after
-            const resolvedIndex = effectiveZone === "right" ? targetIndex + 1 : targetIndex;
+            const resolvedIndex = targetTile
+              ? effectiveZone === "right" ? targetPosition.index + 1 : targetPosition.index
+              : targetPosition.index;
             const action = createDropAction(outgoingDragSource, {
-              kind: "top-level-tile",
-              tileKind: targetTile?.type ?? "shortcut",
-              tileId: targetId,
-              pageId: targetPageId,
-              index: resolvedIndex,
-              zone
+              ...(targetTile
+                ? {
+                    kind: "top-level-tile" as const,
+                    tileKind: targetTile.type,
+                    tileId: targetId,
+                    zone
+                  }
+                : { kind: "page-surface" as const }),
+              pageId: targetPosition.pageId,
+              index: resolvedIndex
             });
             if (action.type !== "CANCEL") {
               dispatchDropAction(action);
@@ -473,16 +726,46 @@ export function ShortcutGrid({
             clearDragSession();
           } else if (outgoingDragSource) {
             // Dropped on empty grid space — promote to end of current page
-            const targetPageId = tabState.pages[activeShortcutPageIndex]?.id ?? "page-1";
+            const targetPosition = getVisualPageEndPosition(tabState, activeShortcutPageIndex, pageCapacity);
             const action = createDropAction(outgoingDragSource, {
               kind: "page-surface",
-              pageId: targetPageId,
-              index: tabState.pages[activeShortcutPageIndex]?.tileIds.length ?? 0
+              pageId: targetPosition.pageId,
+              index: targetPosition.index
             });
             if (action.type !== "CANCEL") {
               dispatchDropAction(action);
             }
             onClearOutgoingDrag();
+            clearDragSession();
+          } else if (dragState && !dropTargetKey) {
+            const sourceId = getTileIdFromKey(dragState.sourceKey);
+            const sourceTile = tabState.tiles[sourceId];
+            const targetPosition = getVisualPageEndPosition(tabState, activeShortcutPageIndex, pageCapacity);
+
+            if (sourceTile?.kind === "shortcut" || sourceTile?.kind === "folder") {
+              const toIndex =
+                dragState.sourcePageId === targetPosition.pageId && dragState.sourcePageTileIndex < targetPosition.index
+                  ? Math.max(0, targetPosition.index - 1)
+                  : targetPosition.index;
+              const action = createDropAction(
+                {
+                  kind: "top-level",
+                  tileKind: sourceTile.kind,
+                  tileId: sourceId,
+                  pageId: dragState.sourcePageId,
+                  index: dragState.sourcePageTileIndex
+                },
+                {
+                  kind: "page-surface",
+                  pageId: targetPosition.pageId,
+                  index: toIndex
+                }
+              );
+              if (action.type !== "CANCEL") {
+                dispatchDropAction(action);
+              }
+            }
+
             clearDragSession();
           } else if (dropTargetKey && dragState) {
             const targetTile = draggableTileByKey.get(dropTargetKey)?.tile;
@@ -617,7 +900,7 @@ export function ShortcutGrid({
         })}
       </section>
       <nav className="shortcut-page-footer" aria-label="Shortcut pages">
-        {pageCount > 1 ? (
+        {showPageDots && pageCount > 1 ? (
           <div className="shortcut-page-dots">
             {Array.from({ length: pageCount }, (_, index) => (
               <button
@@ -634,7 +917,7 @@ export function ShortcutGrid({
       </nav>
       
       {/* Drag overlay - real tile following pointer with shadow (like Infinity Pro) */}
-      {dragOverlay && (
+      {dragOverlay && Number.isFinite(dragOverlay.x) && Number.isFinite(dragOverlay.y) && (
         <div
           className={["drag-overlay-tile", isCombinePreview ? "merge-active" : ""].filter(Boolean).join(" ")}
           style={{
@@ -676,4 +959,37 @@ function TileContent({ showLabels, tile }: { showLabels: boolean; tile: Resolved
       {showLabels ? <span className="quick-link-title">{tile.folder.title}</span> : null}
     </>
   );
+}
+
+function getTilePagePosition(state: TabState, tileId: string) {
+  for (const page of state.pages) {
+    const index = page.tileIds.indexOf(tileId);
+    if (index >= 0) {
+      return { pageId: page.id, index };
+    }
+  }
+
+  return null;
+}
+
+function getVisualPageEndPosition(state: TabState, visualPageIndex: number, pageCapacity: number) {
+  const topLevelCount = state.pages.reduce((count, page) => count + page.tileIds.length, 0);
+  const visualEndIndex = Math.min((visualPageIndex + 1) * pageCapacity, topLevelCount);
+  return getInsertionPositionFromGlobalIndex(state, visualEndIndex);
+}
+
+function getInsertionPositionFromGlobalIndex(state: TabState, globalIndex: number) {
+  let offset = 0;
+
+  for (const page of state.pages) {
+    const pageEnd = offset + page.tileIds.length;
+    if (globalIndex <= pageEnd) {
+      return { pageId: page.id, index: Math.max(0, globalIndex - offset) };
+    }
+
+    offset = pageEnd;
+  }
+
+  const fallbackPage = state.pages[state.pages.length - 1] ?? { id: "page-1", tileIds: [] };
+  return { pageId: fallbackPage.id, index: fallbackPage.tileIds.length };
 }

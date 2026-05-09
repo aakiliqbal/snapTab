@@ -1,18 +1,24 @@
 import { type SearchProviderId, type TabState } from "../domain/tabState";
+import type { SearchWidgetSettings, ShortcutGridWidgetSettings, WidgetId } from "../domain/canvas";
 import { BackupSettingsSection } from "./settings/BackupSettingsSection";
-import { GridLayoutSettingsSection } from "./settings/GridLayoutSettingsSection";
-import { SearchSettingsSection } from "./settings/SearchSettingsSection";
 import { WallpaperSettingsSection } from "./settings/WallpaperSettingsSection";
+import { WidgetSettingsSection } from "./settings/WidgetSettingsSection";
 
 type SettingsDrawerProps = {
   backupMessage: string | null;
   changeLayout: <K extends keyof TabState["layout"]>(key: K, value: TabState["layout"][K]) => void;
   changeSearchProvider: (providerId: SearchProviderId) => void;
+  changeSearchWidgetSetting: <K extends keyof SearchWidgetSettings>(key: K, value: SearchWidgetSettings[K]) => void;
+  changeShortcutGridWidgetSetting: <K extends keyof ShortcutGridWidgetSettings>(
+    key: K,
+    value: ShortcutGridWidgetSettings[K]
+  ) => void;
   changeWallpaperSetting: (key: "dim" | "blur", value: number) => void;
   close: () => void;
   exportBackup: () => void;
   importBackup: (file: File | null) => void;
   resetWallpaper: () => void;
+  setWidgetEnabled: (widgetId: WidgetId, enabled: boolean) => void;
   tabState: TabState;
   uploadWallpaper: (file: File | null) => void;
   wallpaperMessage: string | null;
@@ -20,13 +26,14 @@ type SettingsDrawerProps = {
 
 export function SettingsDrawer({
   backupMessage,
-  changeLayout,
-  changeSearchProvider,
+  changeSearchWidgetSetting,
+  changeShortcutGridWidgetSetting,
   changeWallpaperSetting,
   close,
   exportBackup,
   importBackup,
   resetWallpaper,
+  setWidgetEnabled,
   tabState,
   uploadWallpaper,
   wallpaperMessage
@@ -53,16 +60,27 @@ export function SettingsDrawer({
         </header>
 
         <div className="settings-drawer-body">
-          <SearchSettingsSection changeLayout={changeLayout} changeSearchProvider={changeSearchProvider} tabState={tabState} />
-          <GridLayoutSettingsSection changeLayout={changeLayout} tabState={tabState} />
-          <WallpaperSettingsSection
-            changeWallpaperSetting={changeWallpaperSetting}
-            resetWallpaper={resetWallpaper}
-            tabState={tabState}
-            uploadWallpaper={uploadWallpaper}
-            wallpaperMessage={wallpaperMessage}
-          />
-          <BackupSettingsSection backupMessage={backupMessage} exportBackup={exportBackup} importBackup={importBackup} />
+          <section className="settings-drawer-section">
+            <h2>Global Settings</h2>
+            <WallpaperSettingsSection
+              changeWallpaperSetting={changeWallpaperSetting}
+              resetWallpaper={resetWallpaper}
+              tabState={tabState}
+              uploadWallpaper={uploadWallpaper}
+              wallpaperMessage={wallpaperMessage}
+            />
+            <BackupSettingsSection backupMessage={backupMessage} exportBackup={exportBackup} importBackup={importBackup} />
+          </section>
+
+          <section className="settings-drawer-section">
+            <h2>Widget Settings</h2>
+            <WidgetSettingsSection
+              changeSearchWidgetSetting={changeSearchWidgetSetting}
+              changeShortcutGridWidgetSetting={changeShortcutGridWidgetSetting}
+              setWidgetEnabled={setWidgetEnabled}
+              tabState={tabState}
+            />
+          </section>
         </div>
       </aside>
     </div>

@@ -105,6 +105,15 @@ function createFolderChildDropAction(source: Extract<DragSource, { kind: "folder
   }
 
   if (target.kind === "top-level-tile") {
+    if (target.tileKind === "shortcut" && target.zone === "center") {
+      return {
+        type: "COMBINE",
+        sourceTileId: source.shortcutId,
+        targetTileId: target.tileId,
+        targetPageId: target.pageId
+      };
+    }
+
     // Cross-folder: dragging shortcut from Folder A and dropping onto Folder B (center zone)
     if (target.tileKind === "folder" && target.zone === "center") {
       return {

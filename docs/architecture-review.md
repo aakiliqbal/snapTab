@@ -10,6 +10,7 @@ Latest pass: 2026-05-06.
 - Grid layout rendering preserves configured columns and spacing on mobile.
 - Drop insertion indicators now have a rendered pseudo-element base.
 - Grid metric measurement reacts to column spacing changes.
+- Cross-page Top-Level Tile drag now uses page-edge hover navigation close to the reference extension.
 - Docs now reflect React 19, global CSS, active Zustand persistence, FolderPanel child drag, release automation, and current architecture docs.
 
 ## Remaining Deepening Opportunities
