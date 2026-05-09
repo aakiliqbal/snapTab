@@ -40,6 +40,7 @@ type ShortcutGridProps = {
   onSetActiveShortcutPage: (pageIndex: number | ((current: number) => number)) => void;
   pageCapacity: number;
   pageCount: number;
+  showPageDots?: boolean;
   showLabels: boolean;
   tabState: TabState;
   visibleShortcutPageItems: ShortcutPageItem[];
@@ -71,6 +72,7 @@ export function ShortcutGrid({
   onSetActiveShortcutPage,
   pageCapacity,
   pageCount,
+  showPageDots = true,
   showLabels,
   tabState,
   visibleShortcutPageItems
@@ -898,7 +900,7 @@ export function ShortcutGrid({
         })}
       </section>
       <nav className="shortcut-page-footer" aria-label="Shortcut pages">
-        {pageCount > 1 ? (
+        {showPageDots && pageCount > 1 ? (
           <div className="shortcut-page-dots">
             {Array.from({ length: pageCount }, (_, index) => (
               <button

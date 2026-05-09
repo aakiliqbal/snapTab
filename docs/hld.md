@@ -6,8 +6,8 @@ Infi Tab is a local-first Chrome Manifest V3 new-tab extension. Product shape co
 
 - Fixed full-viewport new tab page
 - Toolbar popup to add the current site
-- Configurable search box
-- Paged shortcut grid with folders
+- Canvas with movable/resizable Search and Shortcut Grid Widgets
+- Paged shortcut grid with folders inside the Shortcut Grid Widget
 - Wallpaper layer (image/GIF)
 - Right-side settings drawer
 - JSON backup import/export
@@ -20,7 +20,9 @@ Chrome Extension
       ├─ src/main.tsx           # New Tab Surface React entry point
       │   └─ src/ui/App.tsx     # New Tab Surface root component
       │       ├─ useNewTabController()    # Transient UI state
-      │       ├─ ShortcutGrid     # Paged tile grid
+      │       ├─ CanvasSurface    # Full-viewport widget canvas
+      │       ├─ WidgetFrame      # Common move/resize shell
+      │       ├─ ShortcutGrid     # Paged tile grid inside Shortcut Grid Widget
       │       ├─ SettingsDrawer  # Settings surface
       │       ├─ FolderModal   # Folder edit modal
       │       ├─ FolderPanel  # Folder child view
@@ -31,6 +33,7 @@ Chrome Extension
 
 Domain Layer (src/domain/)
   ├─ tabState.ts        # State schema & defaults
+  ├─ canvas.ts          # Widget placement and Snap Grid rules
   ├─ tabOperations.ts  # Resolved view models
   ├─ dropActions.ts   # DnD domain logic
   └─ backup.ts      # Import/export
@@ -51,6 +54,7 @@ TabState {
   schemaVersion: 2
   searchProvider: string
   layout: GridLayout
+  canvas: CanvasState
   wallpaper: Wallpaper
   tiles: Record<TileId, Shortcut | Folder>
   pages: ShortcutPage[]
@@ -78,7 +82,7 @@ Folder {
 }
 ```
 
-Persisted `pages[].tileIds` is top-level order. The visible Shortcut Pages are derived at render time by flattening that order, appending the Shortcut creation tile, and slicing by current Grid Layout capacity.
+Persisted `pages[].tileIds` is top-level order. The visible Shortcut Pages are derived at render time by flattening that order and slicing by the Shortcut Grid Widget capacity derived from its current rendered size.
 
 ## Key Invariants
 
@@ -88,12 +92,17 @@ Persisted `pages[].tileIds` is top-level order. The visible Shortcut Pages are d
 4. **Folder invariant**: folders with fewer than two valid children are dissolved
 5. **One store**: All persisted state in Zustand + immer store
 6. **Local-first**: No backend, chrome.storage.local persistence
+7. **Canvas bounds**: Widgets persist grid-unit placement and enabled Widgets cannot overlap
+8. **Widget ownership**: Search settings belong to Search Widget; Shortcut Grid settings belong to Shortcut Grid Widget
 
 ## Product Surfaces
 
 | Surface | Description |
 |---------|-----------|
 | New Tab Surface | Primary runtime page |
+| Canvas | Fixed full-viewport workspace containing Widgets |
+| Search Widget | Search input and provider controls |
+| Shortcut Grid Widget | Shortcut Pages, Top-Level Tiles, and tile drag/drop |
 | Toolbar Popup | Add current active website as a Shortcut |
 | Shortcut Grid | Paged top-level tile grid |
 | Settings Drawer | Right-side settings |
@@ -135,6 +144,7 @@ The extracted Infinity New Tab Pro extension confirms:
 | Decision | Location | Notes |
 |----------|----------|-------|
 | Native drag | ShortcutGrid.tsx | Custom overlay, no dnd-kit |
+| Canvas widget drag | CanvasSurface.tsx | Pointer-based move/resize in Canvas Edit Mode |
 | Zone timer | 200ms debounce | Timer in useRef |
 | Live shift | getTileShift() | FLIP-like animation |
 | Overlay | dragOverlay state | Fixed position following pointer |
@@ -148,6 +158,10 @@ The extracted Infinity New Tab Pro extension confirms:
 - [x] Add to folder (shortcut → folder)
 - [x] Cross-page Top-Level Tile drag via page-edge hover
 - [x] Folder child drag reorder and drag-out promotion
+- [x] Canvas Widget placement in grid units
+- [x] Canvas Edit Mode with dotted Snap Grid
+- [x] Debounced Widget placement persistence with pointer-up flush
+- [ ] Widget visual style customization controls
 - [ ] Keyboard drag
 - [ ] Touch drag
 
@@ -156,4 +170,4 @@ The extracted Infinity New Tab Pro extension confirms:
 1. Extract drag hook from ShortcutGrid
 2. Route native drag through resolveDrop()
 3. Extract drag session logic from ShortcutGrid
-4. Add keyboard/touch drag adapters
+4. Add touch drag adapters

@@ -48,6 +48,7 @@ export const useTabStore = create<TabStoreState>()(
       setSearchProvider: (providerId) =>
         set((draft) => {
           draft.searchProvider = providerId;
+          draft.canvas.widgets.search.settings.searchProvider = providerId;
         }),
       setWallpaper: (wallpaper) =>
         set((draft) => {
@@ -72,6 +73,7 @@ function stripActions(state: TabStoreState): TabState {
     schemaVersion: state.schemaVersion,
     searchProvider: state.searchProvider,
     layout: state.layout,
+    canvas: state.canvas,
     wallpaper: state.wallpaper,
     tiles: state.tiles,
     pages: state.pages

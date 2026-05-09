@@ -1,4 +1,5 @@
 import type { BrandIconId } from "./brandIcons";
+import { defaultCanvasState, type CanvasState } from "./canvas";
 
 export type SearchProviderId = "google" | "bing" | "yahoo" | "yandex" | "duckduckgo";
 
@@ -71,6 +72,7 @@ export type TabState = {
   schemaVersion: 2;
   searchProvider: SearchProviderId;
   layout: LayoutSettings;
+  canvas: CanvasState;
   wallpaper: {
     type: "none" | "dataUrl";
     value: string | null;
@@ -196,6 +198,7 @@ export const defaultTabState: TabState = {
   schemaVersion: 2,
   searchProvider: "google",
   layout: defaultLayout,
+  canvas: defaultCanvasState,
   wallpaper: defaultWallpaper,
   tiles: Object.fromEntries([...defaultShortcutTiles, defaultFolder].map((tile) => [tile.id, tile])),
   pages: [
@@ -293,6 +296,7 @@ export function migrateLegacyTabState(value: Partial<LegacyTabState> | null | un
       ...(value.layout ?? {}),
       gridLayout: normalizeGridLayout(value.layout?.gridLayout, value.layout)
     },
+    canvas: normalizeCanvasState(value.canvas, value),
     wallpaper: {
       ...defaultTabState.wallpaper,
       ...(value.wallpaper ?? {})
@@ -316,12 +320,152 @@ export function normalizeTabState(value: Partial<TabState>): TabState {
       ...(value.layout ?? {}),
       gridLayout: normalizeGridLayout(value.layout?.gridLayout, value.layout)
     },
+    canvas: normalizeCanvasState(value.canvas, value),
     wallpaper: {
       ...defaultTabState.wallpaper,
       ...(value.wallpaper ?? {})
     },
     tiles,
     pages
+  };
+}
+
+export function normalizeCanvasState(value: unknown, fallbackState?: Partial<TabState> | Partial<LegacyTabState>): CanvasState {
+  const fallback = defaultTabState.canvas;
+  const legacyLayout = fallbackState?.layout;
+  const legacySearchProvider = isSearchProviderId(fallbackState?.searchProvider)
+    ? fallbackState.searchProvider
+    : fallback.widgets.search.settings.searchProvider;
+
+  if (!isRecord(value)) {
+    return {
+      ...fallback,
+      widgets: {
+        search: {
+          ...fallback.widgets.search,
+          enabled: legacyLayout?.hideSearchBox === true ? false : fallback.widgets.search.enabled,
+          settings: {
+            ...fallback.widgets.search.settings,
+            searchProvider: legacySearchProvider,
+            showProviderTabs: legacyLayout?.hideSearchCategory === true ? false : fallback.widgets.search.settings.showProviderTabs,
+            showSearchMark: legacyLayout?.hideSearchButton === true ? false : fallback.widgets.search.settings.showSearchMark,
+            opacity: clampInteger(legacyLayout?.searchBoxOpacity, 0, 100, fallback.widgets.search.settings.opacity),
+            radius: clampInteger(legacyLayout?.searchBoxRadius, 0, 100, fallback.widgets.search.settings.radius)
+          }
+        },
+        shortcutGrid: {
+          ...fallback.widgets.shortcutGrid,
+          settings: {
+            ...fallback.widgets.shortcutGrid.settings,
+            iconSize: clampInteger(legacyLayout?.gridLayout?.iconSize, 50, 120, fallback.widgets.shortcutGrid.settings.iconSize),
+            columnSpacing: clampInteger(
+              legacyLayout?.gridLayout?.columnSpacing,
+              0,
+              100,
+              fallback.widgets.shortcutGrid.settings.columnSpacing
+            ),
+            lineSpacing: clampInteger(
+              legacyLayout?.gridLayout?.lineSpacing,
+              0,
+              100,
+              fallback.widgets.shortcutGrid.settings.lineSpacing
+            ),
+            showLabels: legacyLayout?.showLabels ?? fallback.widgets.shortcutGrid.settings.showLabels
+          }
+        }
+      }
+    };
+  }
+
+  const widgets = isRecord(value.widgets) ? value.widgets : {};
+  return {
+    targetCellSize: clampInteger(value.targetCellSize, 48, 72, fallback.targetCellSize),
+    widgets: {
+      search: normalizeSearchWidget(widgets.search, fallback.widgets.search, legacySearchProvider),
+      shortcutGrid: normalizeShortcutGridWidget(widgets.shortcutGrid, fallback.widgets.shortcutGrid)
+    }
+  };
+}
+
+function normalizeSearchWidget(
+  value: unknown,
+  fallback: CanvasState["widgets"]["search"],
+  fallbackSearchProvider: SearchProviderId
+): CanvasState["widgets"]["search"] {
+  if (!isRecord(value)) {
+    return fallback;
+  }
+
+  const settings = isRecord(value.settings) ? value.settings : {};
+  return {
+    enabled: typeof value.enabled === "boolean" ? value.enabled : fallback.enabled,
+    placement: normalizeWidgetPlacement(value.placement, fallback.placement),
+    settings: {
+      ...fallback.settings,
+      searchProvider: isSearchProviderId(settings.searchProvider) ? settings.searchProvider : fallbackSearchProvider,
+      showProviderTabs:
+        typeof settings.showProviderTabs === "boolean" ? settings.showProviderTabs : fallback.settings.showProviderTabs,
+      showSearchMark: typeof settings.showSearchMark === "boolean" ? settings.showSearchMark : fallback.settings.showSearchMark,
+      opacity: clampInteger(settings.opacity, 0, 100, fallback.settings.opacity),
+      radius: clampInteger(settings.radius, 0, 100, fallback.settings.radius),
+      visual: normalizeWidgetVisualSettings(settings.visual, fallback.settings.visual)
+    }
+  };
+}
+
+function normalizeShortcutGridWidget(
+  value: unknown,
+  fallback: CanvasState["widgets"]["shortcutGrid"]
+): CanvasState["widgets"]["shortcutGrid"] {
+  if (!isRecord(value)) {
+    return fallback;
+  }
+
+  const settings = isRecord(value.settings) ? value.settings : {};
+  return {
+    enabled: typeof value.enabled === "boolean" ? value.enabled : fallback.enabled,
+    placement: normalizeWidgetPlacement(value.placement, fallback.placement),
+    settings: {
+      ...fallback.settings,
+      iconSize: clampInteger(settings.iconSize, 50, 120, fallback.settings.iconSize),
+      columnSpacing: clampInteger(settings.columnSpacing, 0, 100, fallback.settings.columnSpacing),
+      lineSpacing: clampInteger(settings.lineSpacing, 0, 100, fallback.settings.lineSpacing),
+      showLabels: typeof settings.showLabels === "boolean" ? settings.showLabels : fallback.settings.showLabels,
+      showPageDots: typeof settings.showPageDots === "boolean" ? settings.showPageDots : fallback.settings.showPageDots,
+      visual: normalizeWidgetVisualSettings(settings.visual, fallback.settings.visual)
+    }
+  };
+}
+
+function normalizeWidgetPlacement(value: unknown, fallback: CanvasState["widgets"]["search"]["placement"]) {
+  if (!isRecord(value)) {
+    return fallback;
+  }
+
+  return {
+    x: clampInteger(value.x, 0, 80, fallback.x),
+    y: clampInteger(value.y, 0, 80, fallback.y),
+    width: clampInteger(value.width, 1, 80, fallback.width),
+    height: clampInteger(value.height, 1, 80, fallback.height),
+    zIndex: clampInteger(value.zIndex, 0, 100, fallback.zIndex)
+  };
+}
+
+function normalizeWidgetVisualSettings(value: unknown, fallback: CanvasState["widgets"]["search"]["settings"]["visual"]) {
+  if (!isRecord(value)) {
+    return fallback;
+  }
+
+  return {
+    showBackground: typeof value.showBackground === "boolean" ? value.showBackground : fallback.showBackground,
+    backgroundColor: typeof value.backgroundColor === "string" ? value.backgroundColor : fallback.backgroundColor,
+    backgroundOpacity: clampInteger(value.backgroundOpacity, 0, 100, fallback.backgroundOpacity),
+    showBorder: typeof value.showBorder === "boolean" ? value.showBorder : fallback.showBorder,
+    borderColor: typeof value.borderColor === "string" ? value.borderColor : fallback.borderColor,
+    borderOpacity: clampInteger(value.borderOpacity, 0, 100, fallback.borderOpacity),
+    radius: clampInteger(value.radius, 0, 40, fallback.radius),
+    shadow: clampInteger(value.shadow, 0, 60, fallback.shadow),
+    padding: clampInteger(value.padding, 0, 40, fallback.padding)
   };
 }
 
