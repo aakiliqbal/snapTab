@@ -78,7 +78,7 @@ export const defaultCanvasState: CanvasState = {
   widgets: {
     search: {
       enabled: true,
-      placement: { x: 7, y: 3, width: 20, height: 1, zIndex: 10 },
+      placement: { x: 8, y: 2, width: 11, height: 2, zIndex: 10 },
       settings: {
         searchProvider: "google",
         showProviderTabs: true,
@@ -90,7 +90,7 @@ export const defaultCanvasState: CanvasState = {
     },
     shortcutGrid: {
       enabled: true,
-      placement: { x: 4, y: 6, width: 26, height: 10, zIndex: 5 },
+      placement: { x: 7, y: 5, width: 13, height: 7, zIndex: 5 },
       settings: {
         iconSize: 100,
         columnSpacing: 100,
@@ -109,26 +109,16 @@ export function deriveCanvasGrid(width: number, height: number, targetCellSize =
   return { columns, rows };
 }
 
-export function snapPlacementToGrid(placement: WidgetPlacement): WidgetPlacement {
-  return {
-    x: Math.round(placement.x),
-    y: Math.round(placement.y),
-    width: Math.max(1, Math.round(placement.width)),
-    height: Math.max(1, Math.round(placement.height)),
-    zIndex: Math.round(placement.zIndex)
-  };
-}
-
 export function clampPlacementToCanvas(placement: WidgetPlacement, grid: CanvasGrid): WidgetPlacement {
-  const snapped = snapPlacementToGrid(placement);
-  const width = Math.min(Math.max(1, snapped.width), grid.columns);
-  const height = Math.min(Math.max(1, snapped.height), grid.rows);
+  const width = Math.min(Math.max(1, placement.width), grid.columns);
+  const height = Math.min(Math.max(1, placement.height), grid.rows);
   return {
-    ...snapped,
-    x: Math.min(Math.max(0, snapped.x), Math.max(0, grid.columns - width)),
-    y: Math.min(Math.max(0, snapped.y), Math.max(0, grid.rows - height)),
+    ...placement,
+    x: Math.min(Math.max(0, placement.x), Math.max(0, grid.columns - width)),
+    y: Math.min(Math.max(0, placement.y), Math.max(0, grid.rows - height)),
     width,
-    height
+    height,
+    zIndex: Math.round(placement.zIndex)
   };
 }
 

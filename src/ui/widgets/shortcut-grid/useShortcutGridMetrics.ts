@@ -1,5 +1,5 @@
 import { useEffect, useState, type RefObject } from "react";
-import type { GridLayoutSettings } from "../../domain/tabState";
+import type { GridLayoutSettings } from "../../../domain/tabState";
 
 type ShortcutGridMetrics = {
   maxFittedIconSize: number;
@@ -8,7 +8,7 @@ type ShortcutGridMetrics = {
 };
 
 const defaultMetrics: ShortcutGridMetrics = {
-  maxFittedIconSize: 104,
+  maxFittedIconSize: 220,
   fittedLabelSize: 16,
   fittedTileGap: 12
 };
@@ -45,7 +45,7 @@ export function useShortcutGridMetrics(
       setMetrics({
         fittedLabelSize: labelSize,
         fittedTileGap: tileGap,
-        maxFittedIconSize: Math.max(18, Math.floor(Math.min(104, widthAvailable, heightAvailable)))
+        maxFittedIconSize: Math.max(18, Math.floor(Math.min(220, widthAvailable, heightAvailable)))
       });
     }
 

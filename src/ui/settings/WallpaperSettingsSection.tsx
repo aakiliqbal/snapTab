@@ -24,17 +24,6 @@ export function WallpaperSettingsSection({
             <img src={tabState.wallpaper.value} alt="" />
           ) : null}
         </div>
-        <label className="wallpaper-preview-upload" aria-label="Upload wallpaper">
-          Upload
-          <input
-            accept="image/*"
-            type="file"
-            onChange={(event) => {
-              uploadWallpaper(event.target.files?.[0] ?? null);
-              event.currentTarget.value = "";
-            }}
-          />
-        </label>
       </div>
       <label>
         <span>Dim the wallpaper</span>
@@ -58,20 +47,22 @@ export function WallpaperSettingsSection({
           onChange={(event) => changeWallpaperSetting("blur", Number(event.target.value))}
         />
       </label>
-      <label className="upload-button">
-        Upload wallpaper
-        <input
-          accept="image/*"
-          type="file"
-          onChange={(event) => {
-            uploadWallpaper(event.target.files?.[0] ?? null);
-            event.currentTarget.value = "";
-          }}
-        />
-      </label>
-      <button className="launcher-action" type="button" onClick={resetWallpaper}>
-        Reset wallpaper
-      </button>
+      <div className="settings-action-row">
+        <label className="upload-button" aria-label="Upload wallpaper">
+          Upload
+          <input
+            accept="image/*"
+            type="file"
+            onChange={(event) => {
+              uploadWallpaper(event.target.files?.[0] ?? null);
+              event.currentTarget.value = "";
+            }}
+          />
+        </label>
+        <button className="launcher-action" type="button" onClick={resetWallpaper}>
+          Reset
+        </button>
+      </div>
       {wallpaperMessage ? <p className="launcher-message">{wallpaperMessage}</p> : null}
     </section>
   );

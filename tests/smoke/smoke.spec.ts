@@ -15,7 +15,7 @@ test("settings drawer renders backup controls", async ({ page }) => {
 
   await expect(page.getByRole("heading", { name: "Backup" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Export JSON backup" })).toBeVisible();
-  await expect(page.getByText("Import JSON backup")).toBeVisible();
+  await expect(page.getByLabel("Import JSON backup")).toBeVisible();
 });
 
 test("wallpaper upload accepts a GIF and renders it", async ({ page }) => {

@@ -8,17 +8,14 @@ The browser page rendered by Infi Tab when Chrome opens a new tab.
 **Canvas**  
 The fixed, full-viewport workspace inside the New Tab Surface. It never browser-scrolls and contains Widgets snapped to a logical grid.
 
-**Snap Grid**  
-The logical dotted grid used to place, move, and resize Widgets on the Canvas. Grid units are derived from viewport size so one row is roughly the height of the Search Widget.
-
 **Widget**  
-A user-configurable surface placed on the Canvas. Widgets have enabled state, grid-unit placement, visual settings, and type-specific settings.
+A user-configurable surface placed on the Canvas. Widgets have enabled state, freeform placement, visual settings, and type-specific settings.
 
 **Widget Placement**  
-A Widget's persisted grid-unit rectangle: x, y, width, height, and z-index. Placement must fit inside the Canvas and enabled Widgets must not overlap.
+A Widget's persisted Canvas-relative rectangle: x, y, width, height, and z-index. Placement can be fractional, must fit inside the Canvas, and enabled Widgets must not overlap.
 
 **Canvas Edit Mode**  
-Transient mode where the Snap Grid and Widget frames are visible and Widgets can be moved or resized. It is never persisted and always starts off on a new tab.
+Transient mode where Widget frames and alignment guides are visible and Widgets can be moved or resized. It is never persisted and always starts off on a new tab.
 
 **Search Widget**  
 The Widget containing the search input and search-provider controls.
@@ -97,7 +94,7 @@ A domain command produced from Drag Intent: `REORDER`, `COMBINE`, `ADD_TO_FOLDER
 - The Canvas is the whole interactive New Tab workspace and contains all user-arrangeable Widgets.
 - Infi Tab has exactly one Search Widget and exactly one Shortcut Grid Widget.
 - Widgets can be disabled; disabled Widgets keep settings and last placement but do not reserve Canvas space.
-- Canvas Edit Mode is toggled from the toolbar, shows the dotted Snap Grid, enables Widget movement/resizing, and disables tile drag.
+- Canvas Edit Mode is toggled from the toolbar, shows Widget frames/alignment guides, enables Widget movement/resizing, and disables tile drag.
 - The Toolbar Popup is a second React entry point that reuses the shortcut editor form and persisted store.
 - Folders are created by dragging one Shortcut onto another (gesture-based combine).
 - A Folder always contains at least two Shortcuts; removal that leaves one child promotes it to the page.
@@ -125,8 +122,8 @@ A domain command produced from Drag Intent: `REORDER`, `COMBINE`, `ADD_TO_FOLDER
 
 ### Grid Layout
 
-- Canvas Snap Grid dimensions are derived from viewport size with square-ish cells that fill the viewport.
-- Widget Placement is persisted in Snap Grid units, not pixels.
+- Canvas placement dimensions are derived from viewport size with square-ish logical cells that fill the viewport.
+- Widget Placement persists Canvas-relative units and can use fractional values for freeform placement.
 - Shortcut Grid Widget rows and columns are derived from its current rendered size.
 - Shortcut Grid Widget settings preserve icon size, column spacing, line spacing, labels, and page dots; fixed row/column presets are retired by the Canvas design.
 - The Canvas and Widgets are clamped to avoid browser scrolling.

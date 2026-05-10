@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef, useEffect, type CSSProperties, type RefObject } from "react";
 import { useReducedMotion } from "motion/react";
-import { Folder as FolderIcon } from "lucide-react";
+import { brandIcons } from "../domain/brandIcons";
 import type { DropAction } from "../domain/dropActions";
 import type { ResolvedFolder, ResolvedTopLevelTile } from "../domain/tabOperations";
 import type { Shortcut, TabState } from "../domain/tabState";
@@ -11,6 +11,7 @@ import {
   computeDropIndex,
   emptyShift,
   getDropPosition,
+  getHorizontalGridPageEdgeDirection,
   getShiftBetweenRects,
   getTileIdFromKey,
   toDropZone,
@@ -336,38 +337,20 @@ export function ShortcutGrid({
     return Boolean(grid && document.elementsFromPoint(event.clientX, event.clientY).some((element) => element === grid || grid.contains(element)));
   };
 
-  const isPointInsideDragArea = (clientX: number, clientY: number) => {
-    const rect = gridRef.current?.getBoundingClientRect();
-    if (!rect || clientY < rect.top || clientY > rect.bottom) {
-      return false;
-    }
-
-    const edgeWidth = getGridEdgeWidth();
-    return clientX >= rect.left - edgeWidth && clientX <= rect.right + edgeWidth;
-  };
-
   const getGridEdgeWidth = () => Math.min(window.innerWidth * 0.1, 130);
 
   const getGridPageEdgeDirection = (clientX: number, clientY: number | undefined): PageEdgeDirection | null => {
-    if (pageCount <= 1) {
+    if (clientY === undefined) {
       return null;
     }
 
     const rect = gridRef.current?.getBoundingClientRect();
-    if (!rect || (clientY !== undefined && (clientY < rect.top || clientY > rect.bottom))) {
-      return null;
-    }
+    return getHorizontalGridPageEdgeDirection(clientX, clientY, rect, pageCount, getGridEdgeWidth());
+  };
 
-    const edgeWidth = getGridEdgeWidth();
-    if (clientX >= rect.left - edgeWidth && clientX <= rect.left) {
-      return "prev";
-    }
-
-    if (clientX >= rect.right && clientX <= rect.right + edgeWidth) {
-      return "next";
-    }
-
-    return null;
+  const isPointVerticallyInsideGrid = (_clientX: number, clientY: number) => {
+    const rect = gridRef.current?.getBoundingClientRect();
+    return Boolean(rect && clientY >= rect.top && clientY <= rect.bottom);
   };
 
   const syncPageEdgeStyle = () => {
@@ -398,10 +381,10 @@ export function ShortcutGrid({
 
     const handleWindowDragOver = (event: DragEvent) => {
       const insideGrid = isPointInsideGrid(event.clientX, event.clientY);
-      const edgeDirection = getGridPageEdgeDirection(event.clientX, event.clientY);
 
-      if (!isPointInsideDragArea(event.clientX, event.clientY)) {
-        cancelDragOutsideGrid();
+      if (!isPointVerticallyInsideGrid(event.clientX, event.clientY)) {
+        clearDropPreview();
+        clearPageEdgeTimer();
         return;
       }
 
@@ -952,13 +935,36 @@ function TileContent({ showLabels, tile }: { showLabels: boolean; tile: Resolved
 
   return (
     <>
-      <span className="quick-link-icon folder-icon" style={{ backgroundColor: tile.folder.icon.background }} aria-hidden="true">
-        <FolderIcon strokeWidth={2.25} />
-        <span className="folder-count">{tile.folder.shortcuts.length}</span>
+      <span className="quick-link-icon folder-icon folder-preview-icon" aria-hidden="true">
+        <span className="folder-preview-grid">
+          {tile.folder.shortcuts.slice(0, 9).map((shortcut) => (
+            <span className="folder-preview-child" key={shortcut.id} style={{ backgroundColor: shortcut.icon.background }}>
+              {renderFolderPreviewChild(shortcut)}
+            </span>
+          ))}
+        </span>
       </span>
       {showLabels ? <span className="quick-link-title">{tile.folder.title}</span> : null}
     </>
   );
+}
+
+function renderFolderPreviewChild(shortcut: Shortcut) {
+  const brandIcon = shortcut.icon.type === "brand" && shortcut.icon.brandIconId ? brandIcons[shortcut.icon.brandIconId] : null;
+
+  if (shortcut.icon.type === "image" && shortcut.icon.imageDataUrl) {
+    return <img src={shortcut.icon.imageDataUrl} alt="" />;
+  }
+
+  if (brandIcon) {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d={brandIcon.path} />
+      </svg>
+    );
+  }
+
+  return shortcut.icon.label.slice(0, 1);
 }
 
 function getTilePagePosition(state: TabState, tileId: string) {
