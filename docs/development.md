@@ -12,7 +12,7 @@ Infi Tab is a local-first Chrome new tab extension inspired by Infinity New Tab 
 - React + Vite new tab UI plus toolbar action popup.
 - Quick-link grid with add, edit, delete, active-page drag reorder, drag-combine folder creation, drag-add-to-folder, and FolderPanel child drag-out promotion.
 - Canvas-based New Tab Surface with movable/resizable Search and Shortcut Grid Widgets.
-- Canvas edit toggle with dotted Snap Grid; tile drag is disabled while arranging Widgets.
+- Canvas edit toggle with Widget frames and alignment guides; tile drag is disabled while arranging Widgets.
 - Toolbar popup for adding the active browser tab as a shortcut with the shared shortcut editor form.
 - Folder tiles that open as modal overlays.
 - Shortcut editing with title, URL, fallback label/color, uploaded icon image, and Simple Icons recommendations.
@@ -45,18 +45,22 @@ newtab.html                   New Tab Surface HTML entry
 popup.html                    Toolbar popup HTML entry
 src/main.tsx                  New Tab Surface React entry point
 src/popup.tsx                 Toolbar popup React entry point
-src/ui/App.tsx                New Tab Surface composition
-src/ui/CanvasSurface.tsx      Canvas and WidgetFrame rendering
+src/ui/app/App.tsx            New Tab Surface composition
+src/ui/app/useNewTabController.ts  Transient UI state, store actions, and overlay actions
+src/ui/canvas/CanvasSurface.tsx    Canvas and WidgetFrame rendering
+src/ui/canvas/useCanvasMetrics.ts  Canvas viewport metrics
 src/ui/PopupApp.tsx           Toolbar add-current-site popup
-src/ui/hooks/useNewTabController.ts  Transient UI state, store actions, and overlay actions
 src/ui/ShortcutGrid.tsx       Shortcut Page rendering and native drag/drop
+src/ui/widgets/search/SearchWidget.tsx  Search Widget composition
+src/ui/widgets/shortcut-grid/ShortcutGridWidget.tsx  Shortcut Grid Widget composition
+src/ui/widgets/shortcut-grid/useShortcutGridMetrics.ts  Grid fitting calculations
+src/ui/widgets/WidgetContextMenu.tsx   Edit-mode Widget settings menu
 src/ui/ShortcutIcon.tsx       Shortcut icon rendering
 src/ui/SettingsDrawer.tsx     Settings Drawer composition
-src/ui/settings/*             Global and Widget settings sections
+src/ui/settings/*             Global settings sections
 src/ui/modals/*               Folder and shortcut modal overlays
 src/ui/ShortcutForm.tsx       Shared shortcut editing form
 src/ui/model/drafts.ts        Editor draft types and defaults
-src/ui/hooks/useShortcutGridMetrics.ts  Grid fitting calculations
 src/ui/styles.css             Application styling
 tests/smoke/smoke.spec.ts     Browser smoke test
 tests/unit/                   Vitest unit tests grouped by source area
@@ -94,7 +98,7 @@ Top-level fields:
 - `tiles`: flat map of all `Shortcut` and `Folder` records by ID.
 - `pages`: ordered Shortcut Pages. Each page owns a `tileIds[]` list for Top-Level Tile display order.
 
-The Canvas stores exactly one Search Widget and one Shortcut Grid Widget. Widget placement is persisted in Snap Grid units. Enabled Widgets cannot overlap; disabled Widgets keep settings and last placement but do not reserve Canvas space.
+The Canvas stores exactly one Search Widget and one Shortcut Grid Widget. Widget placement is persisted in Canvas-relative units and may be fractional for freeform placement. Enabled Widgets cannot overlap; disabled Widgets keep settings and last placement but do not reserve Canvas space.
 
 `Shortcut` icons support three modes:
 

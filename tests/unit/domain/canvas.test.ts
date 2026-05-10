@@ -7,8 +7,7 @@ import {
   doesPlacementOverlap,
   findNearestFreePlacement,
   isPlacementInsideCanvas,
-  resolveWidgetPlacement,
-  snapPlacementToGrid
+  resolveWidgetPlacement
 } from "../../../src/domain/canvas";
 
 describe("canvas placement", () => {
@@ -16,17 +15,27 @@ describe("canvas placement", () => {
     expect(deriveCanvasGrid(1920, 1080)).toEqual({ columns: 34, rows: 19 });
   });
 
-  it("snaps fractional placement to grid units", () => {
-    expect(snapPlacementToGrid({ x: 2.4, y: 3.6, width: 8.4, height: 1.2, zIndex: 4.8 })).toEqual({
-      x: 2,
-      y: 4,
-      width: 8,
-      height: 1,
-      zIndex: 5
+  it("keeps fractional placement while clamping inside the canvas", () => {
+    expect(clampPlacementToCanvas({ x: 30.25, y: 18.5, width: 8.4, height: 4.2, zIndex: 1.2 }, { columns: 34, rows: 19 })).toEqual({
+      x: 25.6,
+      y: 14.8,
+      width: 8.4,
+      height: 4.2,
+      zIndex: 1
     });
   });
 
-  it("clamps placement inside the canvas", () => {
+  it("clamps oversized placement to canvas size", () => {
+    expect(clampPlacementToCanvas({ x: 30, y: 18, width: 80, height: 40, zIndex: 1 }, { columns: 34, rows: 19 })).toEqual({
+      x: 0,
+      y: 0,
+      width: 34,
+      height: 19,
+      zIndex: 1
+    });
+  });
+
+  it("clamps integer placement inside the canvas", () => {
     expect(clampPlacementToCanvas({ x: 30, y: 18, width: 8, height: 4, zIndex: 1 }, { columns: 34, rows: 19 })).toEqual({
       x: 26,
       y: 15,

@@ -15,6 +15,13 @@ export type Shift = {
 
 export type PageEdgeDirection = "prev" | "next";
 
+export type RectBounds = {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+};
+
 export const emptyShift: Shift = { x: 0, y: 0 };
 
 export function getPageEdgeDirection(clientX: number, viewportWidth: number, pageCount: number): PageEdgeDirection | null {
@@ -28,6 +35,28 @@ export function getPageEdgeDirection(clientX: number, viewportWidth: number, pag
   }
 
   if (clientX >= viewportWidth - edgeWidth) {
+    return "next";
+  }
+
+  return null;
+}
+
+export function getHorizontalGridPageEdgeDirection(
+  clientX: number,
+  clientY: number,
+  rect: RectBounds | null | undefined,
+  pageCount: number,
+  edgeWidth: number
+): PageEdgeDirection | null {
+  if (pageCount <= 1 || !rect || clientY < rect.top || clientY > rect.bottom) {
+    return null;
+  }
+
+  if (clientX >= rect.left - edgeWidth && clientX <= rect.left) {
+    return "prev";
+  }
+
+  if (clientX >= rect.right && clientX <= rect.right + edgeWidth) {
     return "next";
   }
 

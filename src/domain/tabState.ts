@@ -357,7 +357,7 @@ export function normalizeCanvasState(value: unknown, fallbackState?: Partial<Tab
           ...fallback.widgets.shortcutGrid,
           settings: {
             ...fallback.widgets.shortcutGrid.settings,
-            iconSize: clampInteger(legacyLayout?.gridLayout?.iconSize, 50, 120, fallback.widgets.shortcutGrid.settings.iconSize),
+            iconSize: clampInteger(legacyLayout?.gridLayout?.iconSize, 50, 220, fallback.widgets.shortcutGrid.settings.iconSize),
             columnSpacing: clampInteger(
               legacyLayout?.gridLayout?.columnSpacing,
               0,
@@ -427,7 +427,7 @@ function normalizeShortcutGridWidget(
     placement: normalizeWidgetPlacement(value.placement, fallback.placement),
     settings: {
       ...fallback.settings,
-      iconSize: clampInteger(settings.iconSize, 50, 120, fallback.settings.iconSize),
+      iconSize: clampInteger(settings.iconSize, 50, 220, fallback.settings.iconSize),
       columnSpacing: clampInteger(settings.columnSpacing, 0, 100, fallback.settings.columnSpacing),
       lineSpacing: clampInteger(settings.lineSpacing, 0, 100, fallback.settings.lineSpacing),
       showLabels: typeof settings.showLabels === "boolean" ? settings.showLabels : fallback.settings.showLabels,
@@ -442,6 +442,19 @@ function normalizeWidgetPlacement(value: unknown, fallback: CanvasState["widgets
     return fallback;
   }
 
+  const oldSearchDefault = { x: 7, y: 3, width: 20, height: 1, zIndex: 10 };
+  const oldShortcutGridDefault = { x: 4, y: 6, width: 26, height: 10, zIndex: 5 };
+  const previousSearchDefault = { x: 10, y: 3, width: 14, height: 1, zIndex: 10 };
+  const previousShortcutGridDefault = { x: 12.5, y: 5.5, width: 9, height: 8, zIndex: 5 };
+  if (
+    matchesPlacement(value, oldSearchDefault) ||
+    matchesPlacement(value, oldShortcutGridDefault) ||
+    matchesPlacement(value, previousSearchDefault) ||
+    matchesPlacement(value, previousShortcutGridDefault)
+  ) {
+    return fallback;
+  }
+
   return {
     x: clampInteger(value.x, 0, 80, fallback.x),
     y: clampInteger(value.y, 0, 80, fallback.y),
@@ -449,6 +462,16 @@ function normalizeWidgetPlacement(value: unknown, fallback: CanvasState["widgets
     height: clampInteger(value.height, 1, 80, fallback.height),
     zIndex: clampInteger(value.zIndex, 0, 100, fallback.zIndex)
   };
+}
+
+function matchesPlacement(value: Record<string, unknown>, placement: CanvasState["widgets"]["search"]["placement"]) {
+  return (
+    value.x === placement.x &&
+    value.y === placement.y &&
+    value.width === placement.width &&
+    value.height === placement.height &&
+    value.zIndex === placement.zIndex
+  );
 }
 
 function normalizeWidgetVisualSettings(value: unknown, fallback: CanvasState["widgets"]["search"]["settings"]["visual"]) {

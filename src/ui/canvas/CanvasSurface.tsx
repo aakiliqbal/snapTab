@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import type { CanvasGrid, WidgetId, WidgetPlacement } from "../domain/canvas";
+import type { CanvasGrid, WidgetId, WidgetPlacement } from "../../domain/canvas";
 
 type CanvasMetrics = CanvasGrid & {
   cellWidth: number;
@@ -10,6 +10,7 @@ type CanvasSurfaceProps = {
   children: ReactNode;
   editMode: boolean;
   metrics: CanvasMetrics;
+  onCanvasContextMenu?: (event: React.MouseEvent<HTMLElement>) => void;
 };
 
 type WidgetFrameProps = {
@@ -21,10 +22,17 @@ type WidgetFrameProps = {
   onMove: (placement: WidgetPlacement) => void;
   onResize: (placement: WidgetPlacement) => void;
   placement: WidgetPlacement;
+  onWidgetContextMenu?: (widgetId: WidgetId, event: React.MouseEvent<HTMLElement>) => void;
   widgetId: WidgetId;
 };
 
-export function CanvasSurface({ children, editMode, metrics }: CanvasSurfaceProps) {
+type AlignmentGuide = {
+  axis: "x" | "y";
+  label: string;
+  position: number;
+};
+
+export function CanvasSurface({ children, editMode, metrics, onCanvasContextMenu }: CanvasSurfaceProps) {
   const style = {
     "--canvas-columns": metrics.columns,
     "--canvas-rows": metrics.rows,
@@ -33,7 +41,12 @@ export function CanvasSurface({ children, editMode, metrics }: CanvasSurfaceProp
   } as CSSProperties;
 
   return (
-    <section className={`canvas-surface${editMode ? " editing" : ""}`} aria-label="Canvas" style={style}>
+    <section
+      className={`canvas-surface${editMode ? " editing" : ""}`}
+      aria-label="Canvas"
+      onContextMenu={onCanvasContextMenu}
+      style={style}
+    >
       {children}
     </section>
   );
@@ -47,10 +60,12 @@ export function WidgetFrame({
   metrics,
   onMove,
   onResize,
+  onWidgetContextMenu,
   placement,
   widgetId
 }: WidgetFrameProps) {
   const [displayPlacement, setDisplayPlacement] = useState(placement);
+  const [isInteracting, setIsInteracting] = useState(false);
   const pendingPlacementRef = useRef<WidgetPlacement | null>(null);
   const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -77,6 +92,8 @@ export function WidgetFrame({
     height: `${displayPlacement.height * metrics.cellHeight}px`,
     zIndex: displayPlacement.zIndex
   } as CSSProperties;
+  const alignmentGuides = isInteracting ? getAlignmentGuides(displayPlacement, metrics) : [];
+  const cornerLabel = getCornerLabel(alignmentGuides);
 
   function schedulePersist(nextPlacement: WidgetPlacement, persist: (placement: WidgetPlacement) => void) {
     pendingPlacementRef.current = nextPlacement;
@@ -113,6 +130,7 @@ export function WidgetFrame({
     const startX = event.clientX;
     const startY = event.clientY;
     const startPlacement = placement;
+    setIsInteracting(true);
     event.currentTarget.setPointerCapture(event.pointerId);
 
     function handlePointerMove(moveEvent: PointerEvent) {
@@ -128,6 +146,7 @@ export function WidgetFrame({
     function handlePointerUp() {
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
+      setIsInteracting(false);
       flushPersist(onMove);
     }
 
@@ -144,6 +163,7 @@ export function WidgetFrame({
     const startX = event.clientX;
     const startY = event.clientY;
     const startPlacement = placement;
+    setIsInteracting(true);
     event.currentTarget.setPointerCapture(event.pointerId);
 
     function handlePointerMove(moveEvent: PointerEvent) {
@@ -159,6 +179,7 @@ export function WidgetFrame({
     function handlePointerUp() {
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
+      setIsInteracting(false);
       flushPersist(onResize);
     }
 
@@ -167,19 +188,85 @@ export function WidgetFrame({
   }
 
   return (
-    <article
-      className={`widget-frame${editMode ? " editing" : ""}${enabled ? "" : " disabled"}`}
-      data-widget-id={widgetId}
-      onPointerDown={startMove}
-      style={style}
-    >
-      {editMode ? <div className="widget-frame-label">{label}</div> : null}
-      <div className="widget-frame-content">
-        {children}
-      </div>
-      {editMode ? (
-        <button className="widget-resize-handle" type="button" aria-label={`Resize ${label}`} onPointerDown={startResize} />
-      ) : null}
-    </article>
+    <>
+      {alignmentGuides.map((guide) => (
+        <div
+          className={`canvas-alignment-guide ${guide.axis === "x" ? "vertical" : "horizontal"}`}
+          key={`${guide.axis}-${guide.label}`}
+          style={guide.axis === "x" ? { left: guide.position } : { top: guide.position }}
+        >
+          <span>{guide.label}</span>
+        </div>
+      ))}
+      {cornerLabel ? <div className="canvas-corner-guide-label">{cornerLabel}</div> : null}
+      <article
+        className={`widget-frame${editMode ? " editing" : ""}${enabled ? "" : " disabled"}`}
+        data-widget-id={widgetId}
+        onContextMenu={(event) => onWidgetContextMenu?.(widgetId, event)}
+        onPointerDown={startMove}
+        style={style}
+      >
+        {editMode ? <div className="widget-frame-label">{label}</div> : null}
+        <div className="widget-frame-content">
+          {children}
+        </div>
+        {editMode ? (
+          <button className="widget-resize-handle" type="button" aria-label={`Resize ${label}`} onPointerDown={startResize} />
+        ) : null}
+      </article>
+    </>
   );
+}
+
+function getAlignmentGuides(placement: WidgetPlacement, metrics: CanvasMetrics): AlignmentGuide[] {
+  const threshold = 0.35;
+  const xCandidates = [
+    { label: "Left", value: placement.x, target: 0, position: 0 },
+    {
+      label: "Center",
+      value: placement.x + placement.width / 2,
+      target: metrics.columns / 2,
+      position: (metrics.columns * metrics.cellWidth) / 2
+    },
+    {
+      label: "Right",
+      value: placement.x + placement.width,
+      target: metrics.columns,
+      position: metrics.columns * metrics.cellWidth
+    }
+  ];
+  const yCandidates = [
+    { label: "Top", value: placement.y, target: 0, position: 0 },
+    {
+      label: "Middle",
+      value: placement.y + placement.height / 2,
+      target: metrics.rows / 2,
+      position: (metrics.rows * metrics.cellHeight) / 2
+    },
+    {
+      label: "Bottom",
+      value: placement.y + placement.height,
+      target: metrics.rows,
+      position: metrics.rows * metrics.cellHeight
+    }
+  ];
+
+  return [
+    ...xCandidates
+      .filter((candidate) => Math.abs(candidate.value - candidate.target) <= threshold)
+      .map((candidate) => ({ axis: "x" as const, label: candidate.label, position: candidate.position })),
+    ...yCandidates
+      .filter((candidate) => Math.abs(candidate.value - candidate.target) <= threshold)
+      .map((candidate) => ({ axis: "y" as const, label: candidate.label, position: candidate.position }))
+  ];
+}
+
+function getCornerLabel(guides: AlignmentGuide[]) {
+  const xGuide = guides.find((guide) => guide.axis === "x" && guide.label !== "Center");
+  const yGuide = guides.find((guide) => guide.axis === "y" && guide.label !== "Middle");
+  if (!xGuide || !yGuide) {
+    return null;
+  }
+
+  return `${yGuide.label} ${xGuide.label}`;
 }

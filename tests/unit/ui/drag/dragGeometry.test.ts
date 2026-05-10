@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { computeDropIndex, getPageEdgeDirection, getTileIdFromKey, toDropZone } from "../../../../src/ui/drag/dragGeometry";
+import {
+  computeDropIndex,
+  getHorizontalGridPageEdgeDirection,
+  getPageEdgeDirection,
+  getTileIdFromKey,
+  toDropZone
+} from "../../../../src/ui/drag/dragGeometry";
 
 describe("dragGeometry", () => {
   it("converts tile keys to ids", () => {
@@ -32,5 +38,15 @@ describe("dragGeometry", () => {
     expect(getPageEdgeDirection(131, 2000, 2)).toBeNull();
     expect(getPageEdgeDirection(1871, 2000, 2)).toBe("next");
     expect(getPageEdgeDirection(1869, 2000, 2)).toBeNull();
+  });
+
+  it("detects grid page edges only inside grid vertical band", () => {
+    const rect = { left: 300, right: 900, top: 200, bottom: 500 };
+
+    expect(getHorizontalGridPageEdgeDirection(250, 250, rect, 2, 100)).toBe("prev");
+    expect(getHorizontalGridPageEdgeDirection(950, 250, rect, 2, 100)).toBe("next");
+    expect(getHorizontalGridPageEdgeDirection(250, 150, rect, 2, 100)).toBeNull();
+    expect(getHorizontalGridPageEdgeDirection(950, 550, rect, 2, 100)).toBeNull();
+    expect(getHorizontalGridPageEdgeDirection(250, 250, rect, 1, 100)).toBeNull();
   });
 });
