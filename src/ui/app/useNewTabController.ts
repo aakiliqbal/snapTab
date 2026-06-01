@@ -14,6 +14,7 @@ import {
   type SearchProviderId,
   type TabState
 } from "../../domain/tabState";
+import type { ThemeId } from "../../domain/themes";
 import {
   applyRecommendedIcon,
   createShortcutFromDraft,
@@ -45,6 +46,7 @@ export function useNewTabController() {
   const updateTabState = useTabStore((state) => state.updateState);
   const setLayout = useTabStore((state) => state.setLayout);
   const setSearchProvider = useTabStore((state) => state.setSearchProvider);
+  const setTheme = useTabStore((state) => state.setTheme);
   const setWallpaper = useTabStore((state) => state.setWallpaper);
   const [shortcutDraft, setShortcutDraft] = useState<ShortcutDraft | null>(null);
   const [folderDraft, setFolderDraft] = useState<FolderEditDraft | null>(null);
@@ -150,6 +152,10 @@ export function useNewTabController() {
 
   function changeLayout<K extends keyof TabState["layout"]>(key: K, value: TabState["layout"][K]) {
     setLayout(key, value);
+  }
+
+  function changeTheme(themeId: ThemeId) {
+    setTheme(themeId);
   }
 
   function openEditShortcutDialog(shortcut: Shortcut, folderId: string | null = null) {
@@ -359,6 +365,7 @@ export function useNewTabController() {
     changeSearchProvider,
     changeSearchWidgetSetting,
     changeShortcutGridWidgetSetting,
+    changeTheme,
     changeWallpaperSetting,
     chooseRecommendedIcon,
     deleteFolder,

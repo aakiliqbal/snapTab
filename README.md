@@ -4,6 +4,12 @@
 
 SnapTab is a local-first Chrome new tab extension for building a personalized, fast, and portable browser start surface.
 
+<img
+    alt="demo"
+    src="./assets/demo.gif"
+    width="100%"
+  />
+
 [![Chrome Extension](https://img.shields.io/badge/Chrome_Extension-Manifest_V3-4285F4?logo=googlechrome&logoColor=white)](https://developer.chrome.com/docs/extensions/develop/migrate/what-is-mv3)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)

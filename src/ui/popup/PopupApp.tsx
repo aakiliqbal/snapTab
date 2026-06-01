@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from "react";
 import { findBrandIconRecommendations, type BrandIcon } from "../../domain/brandIcons";
 import { emptyShortcutDraft, type ShortcutDraft } from "../../domain/drafts";
 import { applyRecommendedIcon, createShortcutFromDraft, upsertShortcut } from "../../domain/tabOperations";
 import { readFileAsDataUrl } from "../../infrastructure/fileData";
 import { useTabStore } from "../../stores/useTabStore";
+import { getThemePreset } from "../../domain/themes";
 import { ShortcutForm } from "../shortcut-editor";
 
 type ActiveTab = {
@@ -14,6 +15,7 @@ type ActiveTab = {
 export function PopupApp() {
   const tabState = useTabStore();
   const replaceState = useTabStore((state) => state.replaceState);
+  const theme = getThemePreset(tabState.themeId);
   const [draft, setDraft] = useState<ShortcutDraft>({ ...emptyShortcutDraft });
   const [message, setMessage] = useState("Loading current tab...");
   const iconRecommendations = useMemo(() => findBrandIconRecommendations(draft.title, draft.url), [draft.title, draft.url]);
@@ -79,7 +81,7 @@ export function PopupApp() {
   }
 
   return (
-    <main className="popup-root">
+    <main className="popup-root" data-theme={theme.id} style={theme.tokens as CSSProperties}>
       <section className="quick-link-modal popup-panel" aria-labelledby="popup-title">
         <div className="modal-header">
           <div>

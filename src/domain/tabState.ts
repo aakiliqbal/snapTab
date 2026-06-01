@@ -1,5 +1,6 @@
 import type { BrandIconId } from "./brandIcons";
 import { defaultCanvasState, type CanvasState } from "./canvas";
+import { defaultThemeId, isThemeId, type ThemeId } from "./themes";
 
 export type SearchProviderId = "google" | "bing" | "yahoo" | "yandex" | "duckduckgo";
 export type SearchVerticalId = "web" | "images" | "news" | "video" | "maps";
@@ -73,6 +74,7 @@ export type TabState = {
   schemaVersion: 2;
   searchProvider: SearchProviderId;
   layout: LayoutSettings;
+  themeId: ThemeId;
   canvas: CanvasState;
   wallpaper: {
     type: "none" | "dataUrl";
@@ -248,6 +250,7 @@ export const defaultTabState: TabState = {
   schemaVersion: 2,
   searchProvider: "google",
   layout: defaultLayout,
+  themeId: defaultThemeId,
   canvas: defaultCanvasState,
   wallpaper: defaultWallpaper,
   tiles: Object.fromEntries([...defaultShortcutTiles, defaultFolder].map((tile) => [tile.id, tile])),
@@ -365,6 +368,7 @@ export function normalizeTabState(value: Partial<TabState>): TabState {
     ...value,
     schemaVersion: 2,
     searchProvider: isSearchProviderId(value.searchProvider) ? value.searchProvider : defaultTabState.searchProvider,
+    themeId: isThemeId(value.themeId) ? value.themeId : defaultTabState.themeId,
     layout: {
       ...defaultTabState.layout,
       ...(value.layout ?? {}),

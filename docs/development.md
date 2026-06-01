@@ -90,6 +90,7 @@ Top-level fields:
 - `searchProvider`: legacy/global mirror of Search Widget provider for compatibility.
 - `layout`: legacy layout settings kept for migration and compatibility.
 - `canvas`: fixed-viewport Canvas settings, Widget enabled state, Widget placement, and Widget settings.
+- `themeId`: global visual preset applied through CSS variables.
 - `wallpaper`: wallpaper data URL plus stable media ID, dim, and blur settings.
 - `tiles`: flat map of all `Shortcut` and `Folder` records by ID.
 - `pages`: ordered Shortcut Pages. Each page owns a `tileIds[]` list for Top-Level Tile display order.

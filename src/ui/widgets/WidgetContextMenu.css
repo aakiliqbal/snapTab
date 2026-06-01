@@ -11,15 +11,13 @@
   max-height: min(680px, calc(100vh - 24px));
   gap: 12px;
   overflow: auto;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid var(--theme-border, rgba(255, 255, 255, 0.18));
   border-radius: 22px;
-  background:
-    linear-gradient(145deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.82)),
-    rgba(15, 23, 42, 0.84);
+  background: var(--theme-settings-bg, linear-gradient(145deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.82)), rgba(15, 23, 42, 0.84));
   box-shadow:
     0 28px 80px rgba(0, 0, 0, 0.42),
     inset 0 1px 0 rgba(255, 255, 255, 0.14);
-  color: #f8fafc;
+  color: var(--theme-text, #f8fafc);
   padding: 14px;
   left: min(var(--context-menu-x), calc(100vw - min(320px, calc(100vw - 24px)) - 12px));
   top: min(var(--context-menu-y), calc(100vh - min(680px, calc(100vh - 24px)) - 12px));
@@ -29,12 +27,12 @@
 .widget-context-header {
   display: grid;
   gap: 2px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid var(--theme-border, rgba(255, 255, 255, 0.12));
   padding: 4px 2px 12px;
 }
 
 .widget-context-header span {
-  color: rgba(226, 232, 240, 0.66);
+  color: var(--theme-muted-text, rgba(226, 232, 240, 0.66));
   font-size: 11px;
   font-weight: 900;
   letter-spacing: 0.08em;
@@ -42,7 +40,7 @@
 }
 
 .widget-context-header strong {
-  color: #ffffff;
+  color: var(--theme-text, #ffffff);
   font-size: 18px;
   font-weight: 900;
 }
@@ -51,13 +49,13 @@
   display: grid;
   gap: 7px;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--theme-settings-card-bg, rgba(255, 255, 255, 0.06));
   padding: 10px 12px;
 }
 
 .widget-context-menu label span,
 .widget-context-menu output {
-  color: rgba(241, 245, 249, 0.86);
+  color: var(--theme-muted-text, rgba(241, 245, 249, 0.86));
   font-size: 12px;
   font-weight: 800;
 }
@@ -80,21 +78,21 @@
 
 .widget-context-menu input[type="range"] {
   width: 100%;
-  accent-color: #7dd3fc;
+  accent-color: var(--theme-accent, #7dd3fc);
 }
 
 .widget-context-menu input[type="checkbox"] {
   width: 18px;
   height: 18px;
-  accent-color: #7dd3fc;
+  accent-color: var(--theme-accent, #7dd3fc);
 }
 
 .widget-context-menu select {
   width: 100%;
   height: 36px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid var(--theme-border, rgba(255, 255, 255, 0.16));
   border-radius: 12px;
-  background: rgba(15, 23, 42, 0.92);
-  color: #f8fafc;
+  background: var(--theme-input-bg, rgba(15, 23, 42, 0.92));
+  color: var(--theme-input-text, #f8fafc);
   padding: 0 10px;
 }

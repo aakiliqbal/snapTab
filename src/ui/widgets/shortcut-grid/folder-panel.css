@@ -5,16 +5,16 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgba(7, 12, 13, 0.68);
+  background: var(--theme-folder-backdrop-bg, rgba(7, 12, 13, 0.68));
 }
 
 .folder-backdrop.folder-drop-target {
-  background: rgba(7, 12, 13, 0.58);
+  background: color-mix(in srgb, var(--theme-folder-backdrop-bg, rgba(7, 12, 13, 0.58)) 86%, transparent);
 }
 
 .quick-link.cross-folder-target .quick-link-icon {
   animation: combine-pulse 700ms ease-in-out infinite;
-  box-shadow: 0 0 20px rgba(99, 102, 241, 0.6);
+  box-shadow: 0 0 20px var(--theme-drag-accent, rgba(99, 102, 241, 0.6));
   transform: scale(0.92);
 }
 
@@ -25,9 +25,9 @@
   bottom: 24px;
   max-width: min(320px, calc(100vw - 48px));
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--theme-modal-surface-bg, rgba(255, 255, 255, 0.92));
   box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
-  color: #1f2937;
+  color: var(--theme-modal-text, #1f2937);
   font-size: 13px;
   font-weight: 750;
   padding: 10px 14px;
@@ -40,7 +40,7 @@
   max-height: min(640px, calc(100vh - 48px));
   grid-template-rows: auto 1fr;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.78);
+  background: var(--theme-folder-panel-bg, rgba(255, 255, 255, 0.78));
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
   overflow: hidden;
   backdrop-filter: blur(6px);
@@ -52,7 +52,7 @@
   justify-content: space-between;
   gap: 18px;
   padding: 22px 26px 14px;
-  color: #1f2937;
+  color: var(--theme-folder-panel-text, #1f2937);
 }
 
 .folder-header h1 {
@@ -62,7 +62,7 @@
 }
 
 .folder-header span {
-  color: #6b7280;
+  color: var(--theme-folder-panel-muted-text, #6b7280);
   font-size: 14px;
 }
 
@@ -83,7 +83,7 @@
 
 .folder-item .quick-link-title,
 .folder-grid .quick-link-title {
-  color: rgba(31, 41, 55, 0.92);
+  color: var(--theme-folder-panel-text, rgba(31, 41, 55, 0.92));
   text-shadow: none;
 }
 

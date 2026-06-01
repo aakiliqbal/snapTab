@@ -1,5 +1,6 @@
 import { CSSProperties, useState } from "react";
 import { defaultTabState } from "../../domain/tabState";
+import { getThemePreset } from "../../domain/themes";
 import type { DragSource } from "../drag/dragModel";
 import { CanvasWidgetHost } from "../canvas";
 import { SettingsDrawer } from "../settings";
@@ -18,12 +19,14 @@ export function App() {
   const canvasMetrics = useCanvasMetrics(tabState.canvas.targetCellSize);
   const searchWidget = tabState.canvas.widgets.search;
   const searchSettings = searchWidget.settings;
+  const theme = getThemePreset(tabState.themeId);
 
   const searchBoxHeight = Math.max(44, searchWidget.placement.height * canvasMetrics.cellHeight);
   const searchBoxRoundness = Math.min(100, Math.max(0, searchSettings.radius));
   const searchBoxRadius = (searchBoxHeight / 2) * (searchBoxRoundness / 100);
 
   const layoutStyle = {
+    ...theme.tokens,
     "--search-box-size": "100%",
     "--search-box-height": `${searchBoxHeight}px`,
     "--search-box-mark-size": `${Math.max(24, (32 * tabState.layout.searchBoxSize) / 100)}px`,
@@ -41,7 +44,7 @@ export function App() {
   }
 
   return (
-    <main className="new-tab" style={layoutStyle}>
+    <main className="new-tab" data-theme={theme.id} style={layoutStyle}>
       <div className="wallpaper" aria-hidden="true">
         {tabState.wallpaper.type === "dataUrl" && tabState.wallpaper.value ? (
           <img className="wallpaper-media" src={tabState.wallpaper.value} alt="" />
@@ -86,6 +89,7 @@ export function App() {
       {controller.isSettingsDrawerOpen ? (
         <SettingsDrawer
           backupMessage={controller.backupMessage}
+          changeTheme={controller.changeTheme}
           changeWallpaperSetting={controller.changeWallpaperSetting}
           close={() => controller.setIsSettingsDrawerOpen(false)}
           exportBackup={controller.exportBackup}

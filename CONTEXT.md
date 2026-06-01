@@ -45,7 +45,10 @@ _Avoid_: automatic capacity, measured capacity, layout mode
 The user-selected background media for the New Tab Surface. It may be a static image or GIF and is currently persisted as a data URL in `TabState`.
 
 **Settings Drawer**  
-The right-side drawer that exposes Search, Grid Layout, Wallpaper, and Backup controls.
+The right-side drawer that exposes Wallpaper, Theme, and Backup controls.
+
+**Theme**  
+The user-selected global visual preset for the New Tab Surface. A Theme provides shared color tokens for the Canvas, Settings Drawer, Shortcut Grid Widget, Folder Panel, and Shortcut/Folder edit modals.
 
 **Toolbar Popup**  
 The Chrome extension action popup used to add the current active website as a Shortcut without opening the New Tab Surface.
@@ -87,6 +90,7 @@ A domain command produced from Drag Intent: `REORDER`, `COMBINE`, `ADD_TO_FOLDER
 - JSON Backup is replace-only on import.
 - Wallpapers and uploaded icons remain portable as data URLs.
 - IndexedDB media storage is not part of the MVP runtime persistence path.
+- Theme choice is persisted in `TabState` and applies globally through CSS variables.
 
 ### Product Structure
 

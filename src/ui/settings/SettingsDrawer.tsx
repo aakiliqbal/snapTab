@@ -1,9 +1,12 @@
 import { type TabState } from "../../domain/tabState";
+import type { ThemeId } from "../../domain/themes";
 import { BackupSettingsSection } from "./BackupSettingsSection";
+import { ThemeSettingsSection } from "./ThemeSettingsSection";
 import { WallpaperSettingsSection } from "./WallpaperSettingsSection";
 
 type SettingsDrawerProps = {
   backupMessage: string | null;
+  changeTheme: (themeId: ThemeId) => void;
   changeWallpaperSetting: (key: "dim" | "blur", value: number) => void;
   close: () => void;
   exportBackup: () => void;
@@ -16,6 +19,7 @@ type SettingsDrawerProps = {
 
 export function SettingsDrawer({
   backupMessage,
+  changeTheme,
   changeWallpaperSetting,
   close,
   exportBackup,
@@ -55,6 +59,7 @@ export function SettingsDrawer({
               uploadWallpaper={uploadWallpaper}
               wallpaperMessage={wallpaperMessage}
             />
+            <ThemeSettingsSection activeThemeId={tabState.themeId} changeTheme={changeTheme} />
             <BackupSettingsSection backupMessage={backupMessage} exportBackup={exportBackup} importBackup={importBackup} />
           </section>
         </div>
