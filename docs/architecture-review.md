@@ -44,15 +44,15 @@ Solution: decide whether UI adapter remains the seam or whether production route
 
 Benefit: one decision surface for Drag Source plus Drop Target -> Drop Action.
 
-3. **Persistence Adapter Choice**
+3. **Persistence Module Cleanup**
 
-Files: `src/stores/useTabStore.ts`, `src/infrastructure/tabStorage.ts`, `src/infrastructure/mediaStorage.ts`.
+Files: `src/stores/useTabStore.ts`.
 
-Problem: IndexedDB media infrastructure exists but active runtime persistence writes data URLs through Zustand persist.
+Problem: active runtime persistence writes data URLs through Zustand persist. The unused IndexedDB media path was removed so there is one persistence story for the MVP.
 
-Solution: either wire media materialization into the active store path or delete/defer unused infrastructure.
+Solution: keep the Persistence Module centered on Zustand persist with `chrome.storage.local` and localStorage fallback.
 
-Benefit: clearer persistence interface and docs; fewer false assumptions about storage size behaviour.
+Benefit: clearer persistence Interface and docs; fewer false assumptions about storage size behaviour.
 
 4. **Overlay Focus Module**
 

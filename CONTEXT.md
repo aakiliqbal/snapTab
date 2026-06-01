@@ -86,7 +86,7 @@ A domain command produced from Drag Intent: `REORDER`, `COMBINE`, `ADD_TO_FOLDER
 - The Toolbar Popup writes to the same persisted `TabState` as the New Tab Surface.
 - JSON Backup is replace-only on import.
 - Wallpapers and uploaded icons remain portable as data URLs.
-- IndexedDB media infrastructure exists but is not wired into the active runtime persistence path.
+- IndexedDB media storage is not part of the MVP runtime persistence path.
 
 ### Product Structure
 
