@@ -5,7 +5,7 @@ test("new tab shell renders core surfaces", async ({ page }) => {
   await page.goto("/newtab.html");
 
   await expect(page.getByRole("button", { name: "Open settings menu" })).toBeVisible();
-  await expect(page.getByLabel(/Search with/i)).toBeVisible();
+  await expect(page.getByLabel(/Search .* with/i)).toBeVisible();
   await expect(page.getByLabel("Quick links")).toBeVisible();
 });
 

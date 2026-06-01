@@ -2,6 +2,7 @@ import type { BrandIconId } from "./brandIcons";
 import { defaultCanvasState, type CanvasState } from "./canvas";
 
 export type SearchProviderId = "google" | "bing" | "yahoo" | "yandex" | "duckduckgo";
+export type SearchVerticalId = "web" | "images" | "news" | "video" | "maps";
 
 export type TileId = string;
 
@@ -103,28 +104,77 @@ export type LegacyTabState = Omit<TabState, "schemaVersion" | "tiles" | "pages">
   topLevelTiles?: LegacyTopLevelTile[];
 };
 
-export const searchProviders: Record<SearchProviderId, { label: string; url: string }> = {
+export const searchVerticals: Record<SearchVerticalId, { label: string }> = {
+  web: { label: "Web" },
+  images: { label: "Images" },
+  news: { label: "News" },
+  video: { label: "Video" },
+  maps: { label: "Maps" }
+};
+
+export const searchProviders: Record<SearchProviderId, { label: string; urls: Record<SearchVerticalId, string>; url: string }> = {
   google: {
     label: "Google",
-    url: "https://www.google.com/search?q="
+    url: "https://www.google.com/search?q=",
+    urls: {
+      web: "https://www.google.com/search?q=",
+      images: "https://www.google.com/search?tbm=isch&q=",
+      news: "https://www.google.com/search?tbm=nws&q=",
+      video: "https://www.google.com/search?tbm=vid&q=",
+      maps: "https://www.google.com/maps/search/"
+    }
   },
   bing: {
     label: "Bing",
-    url: "https://www.bing.com/search?q="
+    url: "https://www.bing.com/search?q=",
+    urls: {
+      web: "https://www.bing.com/search?q=",
+      images: "https://www.bing.com/images/search?q=",
+      news: "https://www.bing.com/news/search?q=",
+      video: "https://www.bing.com/videos/search?q=",
+      maps: "https://www.bing.com/maps?q="
+    }
   },
   yahoo: {
     label: "Yahoo",
-    url: "https://search.yahoo.com/search?p="
+    url: "https://search.yahoo.com/search?p=",
+    urls: {
+      web: "https://search.yahoo.com/search?p=",
+      images: "https://images.search.yahoo.com/search/images?p=",
+      news: "https://news.search.yahoo.com/search?p=",
+      video: "https://video.search.yahoo.com/search/video?p=",
+      maps: "https://maps.yahoo.com/search/?q="
+    }
   },
   yandex: {
     label: "Yandex",
-    url: "https://yandex.com/search/?text="
+    url: "https://yandex.com/search/?text=",
+    urls: {
+      web: "https://yandex.com/search/?text=",
+      images: "https://yandex.com/images/search?text=",
+      news: "https://yandex.com/news/search?text=",
+      video: "https://yandex.com/video/search?text=",
+      maps: "https://yandex.com/maps/?text="
+    }
   },
   duckduckgo: {
     label: "DuckDuckGo",
-    url: "https://duckduckgo.com/?q="
+    url: "https://duckduckgo.com/?q=",
+    urls: {
+      web: "https://duckduckgo.com/?q=",
+      images: "https://duckduckgo.com/?iax=images&ia=images&q=",
+      news: "https://duckduckgo.com/?iar=news&ia=news&q=",
+      video: "https://duckduckgo.com/?iax=videos&ia=videos&q=",
+      maps: "https://duckduckgo.com/?iaxm=maps&ia=maps&q="
+    }
   }
 };
+
+export function buildSearchUrl(providerId: SearchProviderId, verticalId: SearchVerticalId, query: string) {
+  const provider = searchProviders[providerId];
+  const urlPrefix = provider.urls[verticalId] ?? provider.urls.web;
+  return `${urlPrefix}${encodeURIComponent(query)}`;
+}
 
 export const gridLayoutPresets: Record<GridLayoutPresetId, { label: string; rows: number; columns: number }> = {
   "2x4": { label: "2x4", rows: 2, columns: 4 },
@@ -347,6 +397,7 @@ export function normalizeCanvasState(value: unknown, fallbackState?: Partial<Tab
           settings: {
             ...fallback.widgets.search.settings,
             searchProvider: legacySearchProvider,
+            searchVertical: fallback.widgets.search.settings.searchVertical,
             showProviderTabs: legacyLayout?.hideSearchCategory === true ? false : fallback.widgets.search.settings.showProviderTabs,
             showSearchMark: legacyLayout?.hideSearchButton === true ? false : fallback.widgets.search.settings.showSearchMark,
             opacity: clampInteger(legacyLayout?.searchBoxOpacity, 0, 100, fallback.widgets.search.settings.opacity),
@@ -399,10 +450,11 @@ function normalizeSearchWidget(
   const settings = isRecord(value.settings) ? value.settings : {};
   return {
     enabled: typeof value.enabled === "boolean" ? value.enabled : fallback.enabled,
-    placement: normalizeWidgetPlacement(value.placement, fallback.placement),
+    placement: normalizeSearchWidgetPlacement(value.placement, fallback.placement),
     settings: {
       ...fallback.settings,
       searchProvider: isSearchProviderId(settings.searchProvider) ? settings.searchProvider : fallbackSearchProvider,
+      searchVertical: isSearchVerticalId(settings.searchVertical) ? settings.searchVertical : fallback.settings.searchVertical,
       showProviderTabs:
         typeof settings.showProviderTabs === "boolean" ? settings.showProviderTabs : fallback.settings.showProviderTabs,
       showSearchMark: typeof settings.showSearchMark === "boolean" ? settings.showSearchMark : fallback.settings.showSearchMark,
@@ -410,6 +462,13 @@ function normalizeSearchWidget(
       radius: clampInteger(settings.radius, 0, 100, fallback.settings.radius),
       visual: normalizeWidgetVisualSettings(settings.visual, fallback.settings.visual)
     }
+  };
+}
+
+function normalizeSearchWidgetPlacement(value: unknown, fallback: CanvasState["widgets"]["search"]["placement"]) {
+  return {
+    ...normalizeWidgetPlacement(value, fallback),
+    height: 1
   };
 }
 
@@ -734,6 +793,10 @@ function isLegacyTopLevelTile(value: unknown): value is LegacyTopLevelTile {
 
 function isSearchProviderId(value: unknown): value is SearchProviderId {
   return typeof value === "string" && value in searchProviders;
+}
+
+function isSearchVerticalId(value: unknown): value is SearchVerticalId {
+  return typeof value === "string" && value in searchVerticals;
 }
 
 function isGridLayoutPresetId(value: unknown): value is GridLayoutPresetId {

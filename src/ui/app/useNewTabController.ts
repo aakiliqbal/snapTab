@@ -102,8 +102,9 @@ export function useNewTabController() {
     updateTabState((state) =>
       produce(state, (draft) => {
         const widget = draft.canvas.widgets[widgetId];
+        const nextPlacement = widgetId === "search" ? { ...placement, height: 1 } : placement;
         // Placement validation stays in the domain so Canvas UI cannot persist overlap or out-of-bounds Widgets.
-        widget.placement = resolveWidgetPlacement(placement, grid, draft.canvas.widgets, widgetId, widget.placement);
+        widget.placement = resolveWidgetPlacement(nextPlacement, grid, draft.canvas.widgets, widgetId, widget.placement);
       })
     );
   }
