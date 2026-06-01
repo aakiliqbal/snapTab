@@ -37,7 +37,6 @@ import {
   resolveWidgetPlacement
 } from "../../domain/canvas";
 import { readFileAsDataUrl } from "../../infrastructure/fileData";
-import { deleteMediaDataUrl } from "../../infrastructure/mediaStorage";
 import { useTabStore } from "../../stores/useTabStore";
 
 export function useNewTabController() {
@@ -176,7 +175,7 @@ export function useNewTabController() {
     });
   }
 
-  async function saveShortcut(event: FormEvent<HTMLFormElement>) {
+  function saveShortcut(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!shortcutDraft) {
@@ -190,25 +189,18 @@ export function useNewTabController() {
 
     const nextState = upsertShortcut(tabState, nextShortcut, shortcutDraft);
     persistState(nextState);
-    if (shortcutDraft.iconMediaId && nextShortcut.icon.type !== "image") {
-      // If the user replaced an uploaded icon with brand/fallback, remove the orphaned media payload.
-      await deleteMediaDataUrl(shortcutDraft.iconMediaId);
-    }
     if (!shortcutDraft.id && !shortcutDraft.folderId) {
       moveToTilePage(nextState, "shortcut", nextShortcut.id);
     }
     setShortcutDraft(null);
   }
 
-  async function deleteShortcut() {
+  function deleteShortcut() {
     if (!shortcutDraft?.id) {
       return;
     }
 
     persistState(deleteShortcutFromState(tabState, shortcutDraft));
-    if (shortcutDraft.iconMediaId) {
-      await deleteMediaDataUrl(shortcutDraft.iconMediaId);
-    }
     setShortcutDraft(null);
   }
 
@@ -300,22 +292,15 @@ export function useNewTabController() {
     setShortcutDraft(applyRecommendedIcon(shortcutDraft, icon));
   }
 
-  async function resetWallpaper() {
-    try {
-      setWallpaper({
-        type: "none",
-        value: null,
-        mediaId: null,
-        dim: tabState.wallpaper.dim,
-        blur: tabState.wallpaper.blur
-      });
-      if (tabState.wallpaper.mediaId) {
-        await deleteMediaDataUrl(tabState.wallpaper.mediaId);
-      }
-      setWallpaperMessage("Wallpaper reset.");
-    } catch {
-      setWallpaperMessage("Could not reset wallpaper.");
-    }
+  function resetWallpaper() {
+    setWallpaper({
+      type: "none",
+      value: null,
+      mediaId: null,
+      dim: tabState.wallpaper.dim,
+      blur: tabState.wallpaper.blur
+    });
+    setWallpaperMessage("Wallpaper reset.");
   }
 
   async function changeWallpaperSetting(key: "dim" | "blur", value: number) {

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import type { CanvasGrid, WidgetId, WidgetPlacement } from "../../domain/canvas";
 
 type CanvasMetrics = CanvasGrid & {
@@ -46,6 +46,8 @@ export function WidgetFrame({
 }: WidgetFrameProps) {
   const [displayPlacement, setDisplayPlacement] = useState(placement);
   const [isInteracting, setIsInteracting] = useState(false);
+  const [contentHeight, setContentHeight] = useState<number | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
   const pendingPlacementRef = useRef<WidgetPlacement | null>(null);
   const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -61,6 +63,24 @@ export function WidgetFrame({
     };
   }, []);
 
+  useLayoutEffect(() => {
+    const contentElement = contentRef.current;
+    if (!contentElement) {
+      setContentHeight(null);
+      return;
+    }
+    const measuredContent = contentElement;
+
+    function measure() {
+      setContentHeight(Math.ceil(measuredContent.scrollHeight));
+    }
+
+    measure();
+    const resizeObserver = new ResizeObserver(measure);
+    resizeObserver.observe(measuredContent);
+    return () => resizeObserver.disconnect();
+  }, [children, editMode, metrics.cellHeight, metrics.cellWidth]);
+
   if (!enabled && !editMode) {
     return null;
   }
@@ -69,7 +89,7 @@ export function WidgetFrame({
     left: `${displayPlacement.x * metrics.cellWidth}px`,
     top: `${displayPlacement.y * metrics.cellHeight}px`,
     width: `${displayPlacement.width * metrics.cellWidth}px`,
-    height: `${displayPlacement.height * metrics.cellHeight}px`,
+    height: `${Math.max(displayPlacement.height * metrics.cellHeight, contentHeight ?? 0)}px`,
     zIndex: displayPlacement.zIndex
   } as CSSProperties;
   const alignmentGuides = isInteracting ? getAlignmentGuides(displayPlacement, metrics, centerSnapAxes) : [];
@@ -201,7 +221,7 @@ export function WidgetFrame({
         style={style}
       >
         {editMode ? <div className="widget-frame-label">{label}</div> : null}
-        <div className="widget-frame-content">{children}</div>
+        <div className="widget-frame-content" ref={contentRef}>{children}</div>
         {editMode
           ? getResizeDirections(resizeAxis).map((direction) => (
               <button

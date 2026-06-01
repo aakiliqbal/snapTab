@@ -40,8 +40,6 @@ Domain Layer (src/domain/)
   └─ backup.ts      # Import/export
 
 Infrastructure Layer (src/infrastructure/)
-  ├─ tabStorage.ts   # chrome.storage.local adapter, not active runtime path
-  ├─ mediaStorage.ts # IndexedDB media adapter, not active runtime path
   └─ fileData.ts    # Browser File API
 
 Store Layer (src/stores/)

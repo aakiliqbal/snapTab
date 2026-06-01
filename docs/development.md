@@ -72,8 +72,6 @@ src/domain/dropActions.ts     Drag/drop actions and folder cleanup reducer
 src/domain/backup.ts          Backup parsing and compatibility defaults
 src/stores/useTabStore.ts     Zustand + immer persisted state store
 src/infrastructure/fileData.ts  File-to-data-URL adapter
-src/infrastructure/mediaStorage.ts  IndexedDB media adapter, not active runtime path
-src/infrastructure/tabStorage.ts  Unused storage adapter for media materialization path
 CONTEXT.md                    Domain glossary and current decisions
 docs/hld.md                   High-level design
 docs/lld-drag-drop.md         Drag/drop low-level design
@@ -110,7 +108,7 @@ Folders store child shortcuts by ID through `childIds[]`; child shortcut records
 
 Runtime state is persisted by Zustand persist in `src/stores/useTabStore.ts`. In Chrome extension context it writes to `chrome.storage.local`; in Vite dev it falls back to `window.localStorage`.
 
-Wallpaper and uploaded shortcut icons are currently stored as portable data URLs inside `TabState`. `src/infrastructure/mediaStorage.ts` and `src/infrastructure/tabStorage.ts` contain IndexedDB media infrastructure, but that path is not wired into active runtime persistence.
+Wallpaper and uploaded shortcut icons are stored as portable data URLs inside `TabState`. IndexedDB media storage is intentionally not part of the MVP runtime persistence path.
 
 The manifest includes:
 

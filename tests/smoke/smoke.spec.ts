@@ -9,6 +9,29 @@ test("new tab shell renders core surfaces", async ({ page }) => {
   await expect(page.getByLabel("Quick links")).toBeVisible();
 });
 
+test("Search Widget edit frame wraps tabs and search bar", async ({ page }) => {
+  await page.goto("/newtab.html");
+  await page.getByRole("button", { name: "Turn on canvas edit mode" }).click();
+
+  const frame = page.locator('[data-widget-id="search"]');
+  const tabs = page.locator(".search-tabs");
+  const searchBox = page.locator(".search-box");
+
+  await expect(frame).toBeVisible();
+  await expect(tabs).toBeVisible();
+  await expect(searchBox).toBeVisible();
+
+  const frameBox = await frame.boundingBox();
+  const tabsBox = await tabs.boundingBox();
+  const searchBoxBox = await searchBox.boundingBox();
+
+  expect(frameBox).not.toBeNull();
+  expect(tabsBox).not.toBeNull();
+  expect(searchBoxBox).not.toBeNull();
+  expect(frameBox!.y).toBeLessThanOrEqual(tabsBox!.y + 1);
+  expect(frameBox!.y + frameBox!.height).toBeGreaterThanOrEqual(searchBoxBox!.y + searchBoxBox!.height - 1);
+});
+
 test("settings drawer renders backup controls", async ({ page }) => {
   await page.goto("/newtab.html");
   await page.getByRole("button", { name: "Open settings menu" }).click();
