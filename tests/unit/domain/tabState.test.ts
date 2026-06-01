@@ -171,6 +171,11 @@ describe("normalizeTabState", () => {
     expect(normalized.pages.map((page) => page.id)).toEqual(["page-1", "page-2"]);
   });
 
+  it("normalizes persisted global themes", () => {
+    expect(normalizeTabState({ ...defaultTabState, themeId: "neon" }).themeId).toBe("neon");
+    expect(normalizeTabState({ ...defaultTabState, themeId: "unknown" }).themeId).toBe("dark");
+  });
+
   it("normalizes Search Widget height to one Canvas unit", () => {
     const normalized = normalizeTabState({
       ...defaultTabState,

@@ -53,11 +53,11 @@
 }
 
 .shortcut-page-edge-prev {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.12));
+  background: linear-gradient(90deg, color-mix(in srgb, var(--theme-accent, #ffffff) 42%, transparent), color-mix(in srgb, var(--theme-accent, #ffffff) 12%, transparent));
 }
 
 .shortcut-page-edge-next {
-  background: linear-gradient(270deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.12));
+  background: linear-gradient(270deg, color-mix(in srgb, var(--theme-accent, #ffffff) 42%, transparent), color-mix(in srgb, var(--theme-accent, #ffffff) 12%, transparent));
 }
 
 .shortcut-page-dots {
@@ -72,14 +72,14 @@
   height: 12px;
   border: 0;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.38);
+  background: color-mix(in srgb, var(--theme-tile-label-text, #ffffff) 38%, transparent);
   cursor: pointer;
   padding: 0;
 }
 
 .shortcut-page-dots button.active,
 .shortcut-page-dots button[aria-current="page"] {
-  background: rgba(255, 255, 255, 0.96);
+  background: var(--theme-tile-label-text, rgba(255, 255, 255, 0.96));
 }
 
 @keyframes shortcut-page-enter {

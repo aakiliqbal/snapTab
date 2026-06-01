@@ -36,6 +36,8 @@ test("settings drawer renders backup controls", async ({ page }) => {
   await page.goto("/newtab.html");
   await page.getByRole("button", { name: "Open settings menu" }).click();
 
+  await expect(page.getByRole("heading", { name: "Theme" })).toBeVisible();
+  await expect(page.getByRole("radio", { name: /Neon/i })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Backup" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Export JSON backup" })).toBeVisible();
   await expect(page.getByLabel("Import JSON backup")).toBeVisible();

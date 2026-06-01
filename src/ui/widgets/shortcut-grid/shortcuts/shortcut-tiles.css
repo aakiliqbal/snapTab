@@ -7,7 +7,7 @@
   align-content: start;
   justify-items: center;
   gap: var(--quick-link-tile-gap);
-  color: #ffffff;
+  color: var(--theme-tile-text, #ffffff);
   text-align: center;
   text-decoration: none;
   position: relative;
@@ -32,18 +32,18 @@
 .quick-link.drop-center .quick-link-icon {
   transform: scale(0.92);
   animation: combine-pulse 700ms ease-in-out infinite;
-  box-shadow: 0 0 20px rgba(99, 102, 241, 0.6);
+  box-shadow: 0 0 20px var(--theme-drag-accent, rgba(99, 102, 241, 0.6));
 }
 
 @keyframes combine-pulse {
   0%, 100% {
     transform: scale(0.92);
-    box-shadow: 0 0 20px rgba(99, 102, 241, 0.6);
+    box-shadow: 0 0 20px var(--theme-drag-accent, rgba(99, 102, 241, 0.6));
   }
 
   50% {
     transform: scale(1);
-    box-shadow: 0 0 30px rgba(99, 102, 241, 0.8);
+    box-shadow: 0 0 30px var(--theme-drag-accent-strong, rgba(99, 102, 241, 0.8));
   }
 }
 
@@ -54,14 +54,14 @@
 
 .quick-link.combine-preview .quick-link-icon {
   transform: scale(0.85);
-  box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
+  box-shadow: 0 0 15px var(--theme-drag-accent, rgba(99, 102, 241, 0.5));
 }
 
 .drag-overlay-tile {
   display: grid;
   justify-items: center;
   gap: var(--quick-link-tile-gap);
-  color: #ffffff;
+  color: var(--theme-tile-text, #ffffff);
   text-align: center;
   text-decoration: none;
   pointer-events: none;
@@ -84,8 +84,8 @@
   height: 30px;
   place-items: center;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.94);
-  color: #1f2937;
+  background: var(--theme-tile-edit-bg, rgba(255, 255, 255, 0.94));
+  color: var(--theme-tile-edit-text, #1f2937);
   font-size: 22px;
   font-weight: 900;
   line-height: 1;
@@ -97,7 +97,7 @@
   height: var(--icon-size);
   place-items: center;
   border-radius: 50%;
-  color: #ffffff;
+  color: var(--theme-tile-text, #ffffff);
   font-size: calc(var(--icon-size) * 0.42);
   font-weight: 800;
   overflow: hidden;
@@ -116,11 +116,11 @@
 .quick-link-icon svg {
   width: 52%;
   height: 52%;
-  fill: #ffffff;
+  fill: var(--theme-tile-text, #ffffff);
 }
 
 .quick-link-icon.image-icon {
-  background: #111827;
+  background: var(--theme-icon-fallback-bg, #111827);
 }
 
 .quick-link:hover .quick-link-icon {
@@ -130,11 +130,11 @@
 .quick-link-title {
   max-width: 100%;
   overflow: hidden;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--theme-tile-label-text, rgba(255, 255, 255, 0.9));
   font-size: var(--quick-link-label-font-size);
   line-height: 1.2;
   text-overflow: ellipsis;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.42);
+  text-shadow: 0 1px 3px var(--theme-tile-label-shadow, rgba(0, 0, 0, 0.42));
   white-space: nowrap;
 }
 
@@ -144,8 +144,8 @@
   right: calc(50% - var(--icon-size) / 2 - 8px);
   border: 0;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.96);
-  color: #1f2937;
+  background: var(--theme-tile-edit-bg, rgba(255, 255, 255, 0.96));
+  color: var(--theme-tile-edit-text, #1f2937);
   cursor: pointer;
   font-size: 12px;
   line-height: 1;
@@ -174,9 +174,9 @@
 }
 
 .add-link-icon {
-  border: 2px dashed rgba(255, 255, 255, 0.72);
-  background: rgba(255, 255, 255, 0.16);
-  color: rgba(255, 255, 255, 0.92);
+  border: 2px dashed var(--theme-folder-border, rgba(255, 255, 255, 0.72));
+  background: var(--theme-folder-bg, rgba(255, 255, 255, 0.16));
+  color: var(--theme-tile-label-text, rgba(255, 255, 255, 0.92));
   font-size: calc(var(--icon-size) * 0.5);
   font-weight: 300;
 }
@@ -186,8 +186,8 @@
 }
 
 .folder-preview-icon {
-  background: rgba(255, 255, 255, 0.16);
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: var(--theme-folder-bg, rgba(255, 255, 255, 0.16));
+  border: 1px solid var(--theme-folder-border, rgba(255, 255, 255, 0.22));
   backdrop-filter: none;
   box-shadow: none;
   overflow: visible;
@@ -206,7 +206,7 @@
   min-width: 0;
   place-items: center;
   border-radius: 50%;
-  color: #ffffff;
+  color: var(--theme-tile-text, #ffffff);
   font-size: max(6px, calc(var(--icon-size) * 0.075));
   font-weight: 900;
   line-height: 1;
@@ -222,7 +222,7 @@
 .folder-preview-child svg {
   width: 58%;
   height: 58%;
-  fill: #ffffff;
+  fill: var(--theme-tile-text, #ffffff);
 }
 
 @media (max-width: 760px) {

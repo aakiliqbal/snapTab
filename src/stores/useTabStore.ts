@@ -12,6 +12,7 @@ import {
   type ShortcutPage,
   type TabState
 } from "../domain/tabState";
+import type { ThemeId } from "../domain/themes";
 
 const storageKey = "snapTabState";
 const legacyStorageKey = ["in", "fi", "TabState"].join("");
@@ -21,6 +22,7 @@ type TabStoreState = TabState & {
   updateState: (update: (state: TabState) => TabState) => TabState;
   setLayout: <K extends keyof LayoutSettings>(key: K, value: LayoutSettings[K]) => void;
   setSearchProvider: (providerId: SearchProviderId) => void;
+  setTheme: (themeId: ThemeId) => void;
   setWallpaper: (wallpaper: TabState["wallpaper"]) => void;
 };
 
@@ -51,6 +53,10 @@ export const useTabStore = create<TabStoreState>()(
           draft.searchProvider = providerId;
           draft.canvas.widgets.search.settings.searchProvider = providerId;
         }),
+      setTheme: (themeId) =>
+        set((draft) => {
+          draft.themeId = themeId;
+        }),
       setWallpaper: (wallpaper) =>
         set((draft) => {
           draft.wallpaper = wallpaper;
@@ -74,6 +80,7 @@ function stripActions(state: TabStoreState): TabState {
     schemaVersion: state.schemaVersion,
     searchProvider: state.searchProvider,
     layout: state.layout,
+    themeId: state.themeId,
     canvas: state.canvas,
     wallpaper: state.wallpaper,
     tiles: state.tiles,
