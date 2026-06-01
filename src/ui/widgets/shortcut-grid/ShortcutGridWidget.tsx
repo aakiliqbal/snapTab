@@ -1,10 +1,11 @@
 import { CSSProperties, WheelEvent, useEffect, useRef, type RefObject } from "react";
 import type { DropAction } from "../../../domain/dropActions";
 import type { ResolvedFolder, ResolvedTopLevelTile } from "../../../domain/tabOperations";
-import type { GridLayoutSettings, Shortcut, TabState } from "../../../domain/tabState";
+import type { Shortcut, TabState } from "../../../domain/tabState";
 import type { DragSource } from "../../drag/dragModel";
+import { deriveShortcutGridWidgetModel } from "./shortcutPageModel";
 import { useShortcutGridMetrics } from "./useShortcutGridMetrics";
-import { ShortcutGrid, type ShortcutPageItem } from "../../ShortcutGrid";
+import { ShortcutGrid } from "./ShortcutGrid";
 
 type CanvasMetrics = {
   cellWidth: number;
@@ -20,7 +21,6 @@ type ShortcutGridWidgetProps = {
   onClearOutgoingDrag: () => void;
   onEditFolder: (folder: ResolvedFolder) => void;
   onEditShortcut: (shortcut: Shortcut) => void;
-  onOpenNewShortcutDialog: () => void;
   onSetActiveFolderId: (folderId: string | null) => void;
   outgoingDragSource: DragSource | null;
   setActiveShortcutPage: (pageIndex: number | ((current: number) => number)) => void;
@@ -41,7 +41,6 @@ export function ShortcutGridWidget({
   onClearOutgoingDrag,
   onEditFolder,
   onEditShortcut,
-  onOpenNewShortcutDialog,
   onSetActiveFolderId,
   outgoingDragSource,
   setActiveShortcutPage,
@@ -52,26 +51,8 @@ export function ShortcutGridWidget({
 }: ShortcutGridWidgetProps) {
   const wheelDeltaRef = useRef(0);
   const wheelLockUntilRef = useRef(0);
-  const shortcutWidgetWidth = widgetPlacement.width * canvasMetrics.cellWidth;
-  const shortcutWidgetHeight = widgetPlacement.height * canvasMetrics.cellHeight;
-  const shortcutIconScale = settings.iconSize / 100;
-  const estimatedTileWidth = Math.max(84, 86 * shortcutIconScale + 30);
-  const estimatedTileHeight = Math.max(84, 86 * shortcutIconScale + (settings.showLabels ? 42 : 18));
-  const gridLayout: GridLayoutSettings = {
-    ...tabState.layout.gridLayout,
-    rows: Math.max(1, Math.floor((shortcutWidgetHeight - 56) / estimatedTileHeight)),
-    columns: Math.max(1, Math.floor(shortcutWidgetWidth / estimatedTileWidth)),
-    iconSize: settings.iconSize,
-    columnSpacing: settings.columnSpacing,
-    lineSpacing: settings.lineSpacing
-  };
-  const pageCapacity = gridLayout.rows * gridLayout.columns;
-  const pageCount = Math.max(1, Math.ceil(topLevelTiles.length / pageCapacity));
-  const activeShortcutPageIndex = Math.min(activeShortcutPage, pageCount - 1);
-  const visibleShortcutPageItems: ShortcutPageItem[] = topLevelTiles.slice(
-    activeShortcutPageIndex * pageCapacity,
-    (activeShortcutPageIndex + 1) * pageCapacity
-  );
+  const { activeShortcutPageIndex, gridLayout, pageCapacity, pageCount, visibleShortcutPageItems } =
+    deriveShortcutGridWidgetModel({ activeShortcutPage, canvasMetrics, settings, tabState, topLevelTiles, widgetPlacement });
   const { maxFittedIconSize, fittedLabelSize, fittedTileGap } = useShortcutGridMetrics(
     gridRef,
     gridLayout,
@@ -135,7 +116,6 @@ export function ShortcutGridWidget({
         onClearOutgoingDrag={onClearOutgoingDrag}
         onEditFolder={onEditFolder}
         onEditShortcut={onEditShortcut}
-        onOpenNewShortcutDialog={onOpenNewShortcutDialog}
         onSetActiveFolderId={onSetActiveFolderId}
         onSetActiveShortcutPage={setActiveShortcutPage}
         pageCapacity={pageCapacity}

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { produce } from "immer";
 import { findBrandIconRecommendations, type BrandIcon } from "../../domain/brandIcons";
+import { type FolderEditDraft, type ShortcutDraft } from "../../domain/drafts";
 import {
   describeBackupReplacement,
   getBackupImportErrorMessage,
@@ -38,7 +39,6 @@ import {
 import { readFileAsDataUrl } from "../../infrastructure/fileData";
 import { deleteMediaDataUrl } from "../../infrastructure/mediaStorage";
 import { useTabStore } from "../../stores/useTabStore";
-import { emptyShortcutDraft, type FolderEditDraft, type ShortcutDraft } from "../model/drafts";
 
 export function useNewTabController() {
   const tabState = useTabStore();
@@ -47,7 +47,6 @@ export function useNewTabController() {
   const setLayout = useTabStore((state) => state.setLayout);
   const setSearchProvider = useTabStore((state) => state.setSearchProvider);
   const setWallpaper = useTabStore((state) => state.setWallpaper);
-  const [query, setQuery] = useState("");
   const [shortcutDraft, setShortcutDraft] = useState<ShortcutDraft | null>(null);
   const [folderDraft, setFolderDraft] = useState<FolderEditDraft | null>(null);
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
@@ -103,6 +102,7 @@ export function useNewTabController() {
     updateTabState((state) =>
       produce(state, (draft) => {
         const widget = draft.canvas.widgets[widgetId];
+        // Placement validation stays in the domain so Canvas UI cannot persist overlap or out-of-bounds Widgets.
         widget.placement = resolveWidgetPlacement(placement, grid, draft.canvas.widgets, widgetId, widget.placement);
       })
     );
@@ -113,6 +113,7 @@ export function useNewTabController() {
       produce(state, (draft) => {
         const widget = draft.canvas.widgets[widgetId];
         if (enabled && grid) {
+          // Re-enabling a Widget may need a nearby free slot because disabled Widgets do not reserve Canvas space.
           const nextPlacement = findNearestFreePlacement(widget.placement, grid, draft.canvas.widgets, widgetId);
           if (nextPlacement) {
             widget.placement = nextPlacement;
@@ -129,6 +130,7 @@ export function useNewTabController() {
       produce(state, (draft) => {
         draft.canvas.widgets.search.settings[key] = value;
         if (key === "searchProvider") {
+          // Keep the legacy top-level provider mirror in sync for persisted-state compatibility.
           draft.searchProvider = value as SearchProviderId;
         }
       })
@@ -148,10 +150,6 @@ export function useNewTabController() {
 
   function changeLayout<K extends keyof TabState["layout"]>(key: K, value: TabState["layout"][K]) {
     setLayout(key, value);
-  }
-
-  function openNewShortcutDialog() {
-    setShortcutDraft({ ...emptyShortcutDraft, folderId: activeFolderId });
   }
 
   function openEditShortcutDialog(shortcut: Shortcut, folderId: string | null = null) {
@@ -192,6 +190,7 @@ export function useNewTabController() {
     const nextState = upsertShortcut(tabState, nextShortcut, shortcutDraft);
     persistState(nextState);
     if (shortcutDraft.iconMediaId && nextShortcut.icon.type !== "image") {
+      // If the user replaced an uploaded icon with brand/fallback, remove the orphaned media payload.
       await deleteMediaDataUrl(shortcutDraft.iconMediaId);
     }
     if (!shortcutDraft.id && !shortcutDraft.folderId) {
@@ -332,7 +331,7 @@ export function useNewTabController() {
     const objectUrl = URL.createObjectURL(backupBlob);
     const link = document.createElement("a");
     link.href = objectUrl;
-    link.download = `infi-tab-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    link.download = `snaptab-backup-${new Date().toISOString().slice(0, 10)}.json`;
     link.click();
     URL.revokeObjectURL(objectUrl);
     setBackupMessage("Backup exported.");
@@ -387,8 +386,6 @@ export function useNewTabController() {
     isSettingsDrawerOpen,
     openEditFolderDialog,
     openEditShortcutDialog,
-    openNewShortcutDialog,
-    query,
     shortcutDraft,
     shortcutIconRecommendations,
     resetWallpaper,
@@ -399,7 +396,6 @@ export function useNewTabController() {
     setBackupMessage,
     setFolderDraft,
     setIsSettingsDrawerOpen,
-    setQuery,
     setShortcutDraft,
     setWidgetEnabled,
     tabState,

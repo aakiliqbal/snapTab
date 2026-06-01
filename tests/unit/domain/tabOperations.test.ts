@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { deleteFolderFromState, deleteShortcutFromState } from "../../../src/domain/tabOperations";
 import type { TabState } from "../../../src/domain/tabState";
-import type { ShortcutDraft } from "../../../src/ui/model/drafts";
+import type { ShortcutDraft } from "../../../src/domain/drafts";
 
 describe("tabOperations", () => {
   it("promotes the remaining child when deleting a shortcut from a two-child folder", () => {

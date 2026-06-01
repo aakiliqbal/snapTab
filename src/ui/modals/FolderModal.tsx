@@ -1,6 +1,6 @@
 import type { FormEvent } from "react";
 import { Folder as FolderIcon } from "lucide-react";
-import { type FolderEditDraft } from "../model/drafts";
+import { type FolderEditDraft } from "../../domain/drafts";
 
 type FolderModalProps = {
   draft: FolderEditDraft;

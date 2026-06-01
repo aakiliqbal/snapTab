@@ -2,7 +2,7 @@
 
 ## Product Overview
 
-Infi Tab is a local-first Chrome Manifest V3 new-tab extension. Product shape confirmed by reference extension analysis:
+SnapTab is a local-first Chrome Manifest V3 new-tab extension. Product shape confirmed by reference extension analysis:
 
 - Fixed full-viewport new tab page
 - Toolbar popup to add the current site
@@ -20,22 +20,21 @@ Chrome Extension
       ├─ src/main.tsx           # New Tab Surface React entry point
       │   └─ src/ui/app/App.tsx # New Tab Surface root component
       │       ├─ app/useNewTabController() # Transient UI state and store actions
-      │       ├─ canvas/CanvasSurface      # Full-viewport widget canvas
-      │       ├─ canvas/WidgetFrame        # Common move/resize shell
-      │       ├─ widgets/search/SearchWidget
-      │       ├─ widgets/shortcut-grid/ShortcutGridWidget
-      │       ├─ ShortcutGrid     # Tile grid content inside Shortcut Grid Widget
-      │       ├─ SettingsDrawer  # Settings surface
-      │       ├─ FolderModal   # Folder edit modal
-      │       ├─ FolderPanel  # Folder child view
-      │       └─ ShortcutModal # Shortcut add/edit
+      │       ├─ canvas/CanvasWidgetHost   # Widget mounting, placement wiring, context menu shell
+      │       ├─ canvas/CanvasSurface      # Full-viewport Canvas shell
+      │       ├─ widgets/WidgetFrame       # Common Widget move/resize frame
+      │       ├─ widgets/search/*          # Search Widget rendering and settings menu section
+      │       ├─ widgets/shortcut-grid/*   # Shortcut Grid Widget, Shortcut Pages, folders, native drag, tile/icon UI
+      │       ├─ settings/*                # Settings Drawer and settings sections
+      │       ├─ modals/*                  # Shortcut and Folder edit overlays
+      │       └─ shortcut-editor/*         # Shared Shortcut editor form
       └─ src/popup.tsx          # Toolbar popup React entry point
-          ├─ src/ui/PopupApp.tsx
-          └─ src/ui/ShortcutForm.tsx # Shared shortcut editor form
+          └─ src/ui/popup/PopupApp.tsx
 
 Domain Layer (src/domain/)
   ├─ tabState.ts        # State schema & defaults
   ├─ canvas.ts          # Widget placement and Canvas bounds rules
+  ├─ drafts.ts          # Shortcut/Folder edit command drafts
   ├─ tabOperations.ts  # Resolved view models
   ├─ dropActions.ts   # DnD domain logic
   └─ backup.ts      # Import/export
@@ -48,6 +47,16 @@ Infrastructure Layer (src/infrastructure/)
 Store Layer (src/stores/)
   └─ useTabStore.ts  # Zustand + immer persisted store
 ```
+
+## Current Seams
+
+| Seam | Interface | Adapter / Implementation |
+|------|-----------|--------------------------|
+| Canvas to Widgets | Widget Placement, enabled state, Widget settings | `src/ui/canvas/CanvasWidgetHost.tsx`, `src/ui/widgets/WidgetFrame.tsx` |
+| Shortcut Grid Widget to Shortcut Pages | Grid Layout Capacity, active Shortcut Page, visible Top-Level Tiles | `src/ui/widgets/shortcut-grid/shortcutPageModel.ts` |
+| Drag Source / Drop Target to Drop Action | `createDropAction()` UI Adapter | `src/ui/drag/dropActionAdapter.ts`, `src/domain/dropActions.ts` |
+| Shortcut editing | `ShortcutDraft` and shared editor form | `src/domain/drafts.ts`, `src/ui/shortcut-editor/ShortcutForm.tsx` |
+| Persistence | Zustand persisted `TabState` | `src/stores/useTabStore.ts` with Chrome/localStorage fallback |
 
 ## State Model
 
@@ -120,15 +129,15 @@ Persisted `pages[].tileIds` is top-level order. The visible Shortcut Pages are d
 | UI Framework | React 19 | Reference uses Vue; React chosen for ecosystem |
 | Build Tool | Vite | Fast HMR, extension-friendly |
 | State | Zustand + Immer | Store shape from ADR 0004 |
-| Drag | Native HTML | dnd-kit deferred; native fits current behavior |
-| Styling | Global CSS | Single stylesheet at `src/ui/styles.css` |
+| Drag | Native HTML | Native fits current desktop Chrome behavior; dnd-kit is deferred and not installed |
+| Styling | Global CSS index | Runtime imports `src/ui/styles.css`; selectors live beside owning UI Modules |
 | Persistence | Zustand persist to chrome.storage.local | localStorage fallback in dev |
 | Animation | Motion (Framer Motion) | Reduced motion support |
 | Icons | Lucide + Simple Icons | Brand matching |
 
 ## Reference Extension Learnings
 
-The extracted Infinity New Tab Pro extension confirms:
+The extracted reference extension confirms:
 
 1. Fixed full-viewport with `overflow: hidden`
 2. Wallpaper as base layer (CSS background)
@@ -145,8 +154,10 @@ The extracted Infinity New Tab Pro extension confirms:
 
 | Decision | Location | Notes |
 |----------|----------|-------|
-| Native drag | ShortcutGrid.tsx | Custom overlay, no dnd-kit |
-| Canvas widget drag | CanvasSurface.tsx | Pointer-based move/resize in Canvas Edit Mode |
+| Native drag | widgets/shortcut-grid/ShortcutGrid.tsx + useNativeDragOverlay | Custom overlay, no dnd-kit |
+| Canvas widget drag | widgets/WidgetFrame.tsx | Pointer-based move/resize in Canvas Edit Mode |
+| Widget mounting | canvas/CanvasWidgetHost.tsx | Canvas-owned Widget frames and context menu shell |
+| Shortcut Page model | widgets/shortcut-grid/shortcutPageModel.ts | Pure Grid Layout Capacity and page slicing math |
 | Zone timer | 200ms debounce | Timer in useRef |
 | Live shift | getTileShift() | FLIP-like animation |
 | Overlay | dragOverlay state | Fixed position following pointer |
@@ -163,13 +174,17 @@ The extracted Infinity New Tab Pro extension confirms:
 - [x] Canvas Widget freeform placement
 - [x] Canvas Edit Mode with Widget frames and alignment guides
 - [x] Debounced Widget placement persistence with pointer-up flush
+- [x] Toolbar Popup-only Shortcut creation flow
 - [ ] Widget visual style customization controls
 - [ ] Keyboard drag
 - [ ] Touch drag
 
+## Near-Task Done
+
+1. **Extracted**: Native drag session logic now lives in `useGridDragSession` hook (`src/ui/widgets/shortcut-grid/useGridDragSession.ts`). ShortcutGrid is now pure rendering (~385 lines).
+
 ## Near-Term Direction
 
-1. Extract drag hook from ShortcutGrid
-2. Route native drag through resolveDrop()
-3. Extract drag session logic from ShortcutGrid
-4. Add touch drag adapters
+1. Route native drag through resolveDrop() or document the UI Adapter as the chosen seam
+2. Add focus management for overlays
+3. Add touch drag adapters

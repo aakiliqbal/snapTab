@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { findBrandIconRecommendations, type BrandIcon } from "../domain/brandIcons";
-import { applyRecommendedIcon, createShortcutFromDraft, upsertShortcut } from "../domain/tabOperations";
-import { readFileAsDataUrl } from "../infrastructure/fileData";
-import { useTabStore } from "../stores/useTabStore";
-import { ShortcutForm } from "./ShortcutForm";
-import { emptyShortcutDraft, type ShortcutDraft } from "./model/drafts";
+import { findBrandIconRecommendations, type BrandIcon } from "../../domain/brandIcons";
+import { emptyShortcutDraft, type ShortcutDraft } from "../../domain/drafts";
+import { applyRecommendedIcon, createShortcutFromDraft, upsertShortcut } from "../../domain/tabOperations";
+import { readFileAsDataUrl } from "../../infrastructure/fileData";
+import { useTabStore } from "../../stores/useTabStore";
+import { ShortcutForm } from "../shortcut-editor";
 
 type ActiveTab = {
   title?: string;
@@ -39,7 +39,7 @@ export function PopupApp() {
         url,
         iconLabel: title.slice(0, 2).toUpperCase()
       });
-      setMessage(url ? "Review and save this site to Infi Tab." : "Could not read the current tab URL.");
+      setMessage(url ? "Review and save this site to SnapTab." : "Could not read the current tab URL.");
     });
 
     return () => {
@@ -74,7 +74,7 @@ export function PopupApp() {
     }
 
     replaceState(upsertShortcut(tabState, shortcut, draft));
-    setMessage("Saved to Infi Tab.");
+    setMessage("Saved to SnapTab.");
     window.setTimeout(() => window.close(), 550);
   }
 

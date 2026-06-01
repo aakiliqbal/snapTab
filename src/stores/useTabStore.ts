@@ -13,7 +13,8 @@ import {
   type TabState
 } from "../domain/tabState";
 
-const storageKey = "infiTabState";
+const storageKey = "snapTabState";
+const legacyStorageKey = ["in", "fi", "TabState"].join("");
 
 type TabStoreState = TabState & {
   replaceState: (state: TabState) => void;
@@ -105,8 +106,8 @@ function createChromeStorage(): StateStorage {
 
       if (chromeLocal) {
         return new Promise((resolve) => {
-          chromeLocal.get([key], (items) => {
-            const value = items[key];
+          chromeLocal.get([key, legacyStorageKey], (items) => {
+            const value = items[key] ?? items[legacyStorageKey];
             if (!value) {
               resolve(null);
               return;
@@ -123,7 +124,7 @@ function createChromeStorage(): StateStorage {
         });
       }
 
-      const value = window.localStorage.getItem(key);
+      const value = window.localStorage.getItem(key) ?? window.localStorage.getItem(legacyStorageKey);
       if (!value) {
         return null;
       }

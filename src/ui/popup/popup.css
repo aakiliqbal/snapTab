@@ -1,0 +1,24 @@
+.popup-root {
+  width: 420px;
+  min-height: 520px;
+  background: linear-gradient(180deg, #f8fafc, #eef2f7);
+  padding: 0;
+}
+
+.popup-panel {
+  width: 420px;
+  min-height: 520px;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.popup-panel .modal-header {
+  padding-bottom: 0;
+}
+
+.popup-panel .modal-header p {
+  margin: 6px 0 0;
+  color: #6b7280;
+  font-size: 13px;
+  line-height: 1.4;
+}

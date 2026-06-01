@@ -1,6 +1,6 @@
 # Roadmap Issues
 
-Current backlog after architecture analysis. Reference extension extracted to `references/infinity-new-tab-pro/`.
+Current backlog after architecture analysis. Reference extension extracted to `references/reference-new-tab/`.
 
 ## Implemented Features
 

@@ -123,7 +123,7 @@ describe("parseTabStateBackup", () => {
       "This backup uses an unsupported schema version."
     );
     expect(getBackupImportErrorMessage(new Error("Legacy backup schema"))).toBe(
-      "This backup uses the old v1 format. Export a new backup after opening the latest version of Infi Tab."
+      "This backup uses the old v1 format. Export a new backup after opening the latest version of SnapTab."
     );
     expect(getBackupImportErrorMessage(new Error("Invalid backup shape"))).toBe(
       "This backup file is missing required fields."

@@ -2,12 +2,14 @@
 
 ## Overview
 
-Drag-and-drop in Infi Tab uses native HTML drag events with a custom pointer-following overlay. The domain layer provides `DropAction` types and `resolveDrop()` decision logic.
+Drag-and-drop in SnapTab uses native HTML drag events with a custom pointer-following overlay. The domain layer provides `DropAction` types and `resolveDrop()` decision logic.
+
+See ADR `0006-native-drag-intent-shell.md` for the current native drag decision.
 
 ## Current Architecture
 
 ```
-ShortcutGrid.tsx (UI Layer)
+widgets/shortcut-grid/ShortcutGrid.tsx (UI Layer)
   ├── dragState: source tracking
   ├── dropTargetKey: current target
   ├── dropPosition: left/center/right
@@ -34,15 +36,16 @@ dropActions.ts (Domain Layer)
 
 | File | Responsibility |
 |------|-------------|
-| `src/ui/ShortcutGrid.tsx` | UI session, native drag events |
-| `src/ui/modals/FolderPanel.tsx` | Folder child drag session and outgoing drag handoff |
+| `src/ui/widgets/shortcut-grid/ShortcutGrid.tsx` | UI session, native drag events |
+| `src/ui/widgets/shortcut-grid/FolderPanel.tsx` | Folder child drag session and outgoing drag handoff |
+| `src/ui/widgets/shortcut-grid/useNativeDragOverlay.ts` | Native dragover pointer adapter for custom overlays |
 | `src/ui/drag/dropActionAdapter.ts` | Drag Source + Drop Target to Drop Action adapter |
 | `src/domain/dropActions.ts` | Domain logic, reducer |
 | `src/stores/useTabStore.ts` | State persistence |
 
 ## UI Session State
 
-Located in `ShortcutGrid.tsx`:
+Located in `src/ui/widgets/shortcut-grid/ShortcutGrid.tsx`:
 
 ```typescript
 type DragState = {
@@ -116,7 +119,7 @@ const [dragOverlay, setDragOverlay] = useState<{
 
 - Renders same tile content as source
 - Positioned with `fixed`, `pointerEvents: none`
-- Coordinates updated via `window.addEventListener('dragover')`
+- Coordinates updated by `src/ui/widgets/shortcut-grid/useNativeDragOverlay.ts`
 
 ## Cross-Page Drag
 

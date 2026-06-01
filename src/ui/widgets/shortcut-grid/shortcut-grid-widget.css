@@ -1,0 +1,111 @@
+.quick-link-grid {
+  display: grid;
+  grid-row: 3;
+  width: min(920px, 100%);
+  height: 100%;
+  max-height: 100%;
+  grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr));
+  column-gap: var(--grid-column-gap);
+  row-gap: var(--grid-row-gap);
+  align-content: start;
+  align-self: stretch;
+  justify-items: center;
+  margin-top: 0;
+  padding-top: clamp(58px, 9vh, 86px);
+  animation: shortcut-page-enter 180ms ease-out;
+}
+
+.shortcut-grid-widget {
+  width: 100%;
+  height: 100%;
+  padding: 18px 18px 8px;
+}
+
+.shortcut-grid-widget .quick-link-grid {
+  width: 100%;
+  height: calc(100% - 56px);
+  max-height: none;
+  padding-top: 18px;
+}
+
+.shortcut-grid-widget .shortcut-page-footer {
+  min-height: 56px;
+}
+
+.shortcut-page-footer {
+  display: grid;
+  grid-row: 4;
+  min-height: 56px;
+  align-items: center;
+  justify-items: center;
+}
+
+.shortcut-page-edge {
+  position: fixed;
+  z-index: 35;
+  opacity: 0.22;
+  pointer-events: none;
+  transition: opacity 300ms ease;
+}
+
+.shortcut-page-edge.active {
+  opacity: 0.75;
+}
+
+.shortcut-page-edge-prev {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.12));
+}
+
+.shortcut-page-edge-next {
+  background: linear-gradient(270deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.12));
+}
+
+.shortcut-page-dots {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  padding-top: 18px;
+}
+
+.shortcut-page-dots button {
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.38);
+  cursor: pointer;
+  padding: 0;
+}
+
+.shortcut-page-dots button.active,
+.shortcut-page-dots button[aria-current="page"] {
+  background: rgba(255, 255, 255, 0.96);
+}
+
+@keyframes shortcut-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quick-link-grid {
+    animation: none;
+  }
+
+  .quick-link.drop-center .quick-link-icon {
+    animation: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .quick-link-grid {
+    width: min(100%, 920px);
+  }
+}

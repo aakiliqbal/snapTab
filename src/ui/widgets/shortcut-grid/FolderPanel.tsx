@@ -1,12 +1,12 @@
 import { useState, useRef, useCallback, useEffect, type DragEvent } from "react";
-import type { DropAction } from "../../domain/dropActions";
-import { type ResolvedFolder } from "../../domain/tabOperations";
-import { type Shortcut, type TabState } from "../../domain/tabState";
-import { createDropAction } from "../drag/dropActionAdapter";
-import { hideNativeDragImage } from "../drag/dragImage";
-import { captureTileRects, computeDropIndex, emptyShift, getDropPosition, getShiftBetweenRects } from "../drag/dragGeometry";
-import type { DragSource, DropTarget } from "../drag/dragModel";
-import { ShortcutIcon } from "../ShortcutIcon";
+import type { DropAction } from "../../../domain/dropActions";
+import { type ResolvedFolder } from "../../../domain/tabOperations";
+import { type Shortcut, type TabState } from "../../../domain/tabState";
+import { createDropAction } from "../../drag/dropActionAdapter";
+import { hideNativeDragImage } from "../../drag/dragImage";
+import { captureTileRects, computeDropIndex, emptyShift, getDropPosition, getShiftBetweenRects } from "../../drag/dragGeometry";
+import type { DragSource, DropTarget } from "../../drag/dragModel";
+import { ShortcutIcon } from "./shortcuts";
 
 type FolderPanelProps = {
   activeFolder: ResolvedFolder;
@@ -15,7 +15,6 @@ type FolderPanelProps = {
   onClose: () => void;
   onEditFolder: (folder: ResolvedFolder) => void;
   onEditShortcut: (shortcut: Shortcut) => void;
-  onOpenNewShortcutDialog: () => void;
   onStartOutgoingDrag: (source: DragSource) => void;
   tabState: TabState;
 };
@@ -29,7 +28,6 @@ export function FolderPanel({
   onClose,
   onEditFolder,
   onEditShortcut,
-  onOpenNewShortcutDialog,
   onStartOutgoingDrag,
   tabState
 }: FolderPanelProps) {
@@ -141,6 +139,7 @@ export function FolderPanel({
       }
 
       let shift = 0;
+      // Simulate the final order with FLIP-style offsets so siblings preview the reorder before drop commit.
       if (sourceIndex < targetIndex) {
         if (dropPosition === "right" && tileIndex > sourceIndex && tileIndex <= targetIndex) shift = -1;
         if (dropPosition === "left" && tileIndex > sourceIndex && tileIndex < targetIndex) shift = -1;
@@ -211,7 +210,7 @@ export function FolderPanel({
   /**
    * As soon as the cursor reaches the dimmed backdrop area (outside the folder
    * panel dialog), we immediately close the folder and hand off to ShortcutGrid
-   * via outgoingDragSource — exactly like Infinity Pro.
+   * via outgoingDragSource, matching the drag session used by the Shortcut Grid Widget.
    *
    * The outgoingDragStartedRef guard ensures we call onClose / onStartOutgoingDrag
    * only once even though dragOver fires continuously.
@@ -254,22 +253,22 @@ export function FolderPanel({
       const targetPageId = activePageId;
       const targetPage = tabState.pages[activeShortcutPageIndex];
 
-        if (tileKey) {
-          const tileId = tileKey.includes(":") ? tileKey.split(":").slice(1).join(":") : tileKey;
-          const tile = tabState.tiles[tileId];
-          const dropPos = tileEl ? getDropPosition(event.clientX, tileEl.getBoundingClientRect()) : "right";
+      if (tileKey) {
+        const tileId = tileKey.includes(":") ? tileKey.split(":").slice(1).join(":") : tileKey;
+        const tile = tabState.tiles[tileId];
+        const dropPos = tileEl ? getDropPosition(event.clientX, tileEl.getBoundingClientRect()) : "right";
 
-          if (tile?.kind === "folder" && tileId !== activeFolder.id && dropPos === "center") {
-            dispatchDropAction({
-              type: "ADD_TO_FOLDER",
-              sourceTileId: draggedShortcutId,
-              folderId: tileId
-            });
-          } else {
-            const tileIndex = targetPage?.tileIds.indexOf(tileId) ?? -1;
-            const atIndex =
-              dropPos === "right"
-                ? tileIndex >= 0 ? tileIndex + 1 : (targetPage?.tileIds.length ?? 0)
+        if (tile?.kind === "folder" && tileId !== activeFolder.id && dropPos === "center") {
+          dispatchDropAction({
+            type: "ADD_TO_FOLDER",
+            sourceTileId: draggedShortcutId,
+            folderId: tileId
+          });
+        } else {
+          const tileIndex = targetPage?.tileIds.indexOf(tileId) ?? -1;
+          const atIndex =
+            dropPos === "right"
+              ? tileIndex >= 0 ? tileIndex + 1 : (targetPage?.tileIds.length ?? 0)
               : tileIndex >= 0 ? tileIndex : 0;
           dispatchDropAction({
             type: "PROMOTE",
@@ -484,13 +483,6 @@ export function FolderPanel({
             </a>
           );
           })}
-
-          <button className="quick-link add-link" type="button" onClick={onOpenNewShortcutDialog}>
-            <span className="quick-link-icon add-link-icon" aria-hidden="true">
-              +
-            </span>
-            <span className="quick-link-title">Add</span>
-          </button>
         </div>
       </section>
 

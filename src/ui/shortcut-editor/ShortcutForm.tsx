@@ -1,6 +1,6 @@
 import type { FormEvent } from "react";
-import type { BrandIcon } from "../domain/brandIcons";
-import type { ShortcutDraft } from "./model/drafts";
+import type { BrandIcon } from "../../domain/brandIcons";
+import type { ShortcutDraft } from "../../domain/drafts";
 
 type ShortcutFormProps = {
   draft: ShortcutDraft;

@@ -2,7 +2,7 @@ import { produce } from "immer";
 import { brandIcons, matchBrandIcon, type BrandIcon } from "./brandIcons";
 import { runFolderCleanup } from "./dropActions";
 import { compactShortcutPages, type Folder, type Shortcut, type TabState, type TileId } from "./tabState";
-import type { FolderEditDraft, ShortcutDraft } from "../ui/model/drafts";
+import type { FolderEditDraft, ShortcutDraft } from "./drafts";
 
 export type ResolvedFolder = Folder & {
   shortcuts: Shortcut[];

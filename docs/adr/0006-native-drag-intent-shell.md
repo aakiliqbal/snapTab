@@ -13,7 +13,7 @@ When handling mixed drag sources (top-level tile drag + folder-child outgoing dr
 - `ShortcutGrid` owns geometry and transient drag session state.
 - `dropActions.ts` owns durable meaning and folder lifecycle rules.
 - Cross-page drag, folder-child promote, touch drag, and keyboard drag are not solved by native drag today.
-- dnd-kit dependencies are not part of the active implementation and should either be removed or reintroduced through a deliberate future ADR.
+- dnd-kit dependencies are not part of the active implementation and were removed; reintroduce them only through a deliberate future ADR.
 - Before adding more drag flows, extract the native drag session into a hook and route UI drops through `resolveDrop()`.
 - Mixed drag sessions (folder-child PROMOTE + top-level reorder) require proactive state cleanup.
 

@@ -1,0 +1,1 @@
+export { ShortcutIcon } from "./ShortcutIcon";

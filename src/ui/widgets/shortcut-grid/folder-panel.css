@@ -1,0 +1,108 @@
+.folder-backdrop {
+  position: fixed;
+  z-index: 8;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(7, 12, 13, 0.68);
+}
+
+.folder-backdrop.folder-drop-target {
+  background: rgba(7, 12, 13, 0.58);
+}
+
+.quick-link.cross-folder-target .quick-link-icon {
+  animation: combine-pulse 700ms ease-in-out infinite;
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.6);
+  transform: scale(0.92);
+}
+
+.folder-backdrop.folder-drop-target::after {
+  content: "Drop outside the folder to move shortcut to this page";
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  max-width: min(320px, calc(100vw - 48px));
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
+  color: #1f2937;
+  font-size: 13px;
+  font-weight: 750;
+  padding: 10px 14px;
+  pointer-events: none;
+}
+
+.folder-panel {
+  display: grid;
+  width: min(840px, 100%);
+  max-height: min(640px, calc(100vh - 48px));
+  grid-template-rows: auto 1fr;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+  overflow: hidden;
+  backdrop-filter: blur(6px);
+}
+
+.folder-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 22px 26px 14px;
+  color: #1f2937;
+}
+
+.folder-header h1 {
+  margin: 0 0 4px;
+  font-size: 26px;
+  font-weight: 750;
+}
+
+.folder-header span {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.folder-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.folder-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(88px, 1fr));
+  gap: 30px 24px;
+  align-content: start;
+  overflow: auto;
+  padding: 24px 34px 36px;
+}
+
+.folder-item .quick-link-title,
+.folder-grid .quick-link-title {
+  color: rgba(31, 41, 55, 0.92);
+  text-shadow: none;
+}
+
+@media (max-width: 760px) {
+  .folder-backdrop {
+    padding: 14px;
+  }
+
+  .folder-panel {
+    max-height: calc(100vh - 28px);
+  }
+
+  .folder-header {
+    padding: 18px 18px 10px;
+  }
+
+  .folder-grid {
+    grid-template-columns: repeat(3, minmax(74px, 1fr));
+    gap: 28px 16px;
+    padding: 20px 18px 30px;
+  }
+}

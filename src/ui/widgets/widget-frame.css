@@ -1,0 +1,127 @@
+.widget-frame {
+  position: absolute;
+  min-width: var(--canvas-cell-width);
+  min-height: var(--canvas-cell-height);
+}
+
+.widget-frame.editing {
+  border: 1px solid rgba(125, 211, 252, 0.86);
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.18);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+    0 18px 50px rgba(15, 23, 42, 0.22);
+  cursor: move;
+}
+
+.widget-frame.editing[data-widget-id="shortcutGrid"] {
+  background: transparent;
+  box-shadow: none;
+}
+
+.widget-frame.disabled {
+  opacity: 0.45;
+}
+
+.widget-frame-content {
+  width: 100%;
+  height: 100%;
+}
+
+.widget-frame.editing .widget-frame-content {
+  pointer-events: none;
+}
+
+.widget-frame-label {
+  position: absolute;
+  z-index: 3;
+  top: -28px;
+  left: 10px;
+  border-radius: 999px;
+  background: rgba(14, 165, 233, 0.92);
+  color: #f8fafc;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  padding: 5px 10px;
+  pointer-events: none;
+}
+
+.widget-resize-handle {
+  position: absolute;
+  right: -7px;
+  bottom: -7px;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(15, 23, 42, 0.88);
+  border-radius: 6px;
+  background: #7dd3fc;
+  cursor: nwse-resize;
+}
+
+.canvas-alignment-guide {
+  position: absolute;
+  z-index: 26;
+  pointer-events: none;
+}
+
+.canvas-alignment-guide.vertical {
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 2px solid rgba(125, 211, 252, 0.92);
+  box-shadow: 0 0 18px rgba(125, 211, 252, 0.55);
+}
+
+.canvas-alignment-guide.horizontal {
+  right: 0;
+  left: 0;
+  height: 0;
+  border-top: 2px solid rgba(125, 211, 252, 0.92);
+  box-shadow: 0 0 18px rgba(125, 211, 252, 0.55);
+}
+
+.canvas-alignment-guide span {
+  position: absolute;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.86);
+  color: #e0f2fe;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  padding: 4px 8px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  backdrop-filter: blur(10px);
+}
+
+.canvas-alignment-guide.vertical span {
+  top: 14px;
+  left: 8px;
+}
+
+.canvas-alignment-guide.horizontal span {
+  top: 8px;
+  left: 14px;
+}
+
+.canvas-corner-guide-label {
+  position: absolute;
+  z-index: 27;
+  top: 50%;
+  left: 50%;
+  border: 1px solid rgba(125, 211, 252, 0.42);
+  border-radius: 999px;
+  background: rgba(8, 47, 73, 0.86);
+  box-shadow: 0 14px 40px rgba(8, 47, 73, 0.32);
+  color: #e0f2fe;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  padding: 7px 12px;
+  pointer-events: none;
+  text-transform: uppercase;
+  transform: translate(-50%, -50%);
+  backdrop-filter: blur(10px);
+}

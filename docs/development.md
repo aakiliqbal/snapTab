@@ -1,10 +1,10 @@
 # Development Notes
 
-This document captures current Infi Tab implementation notes. Detailed architecture docs live in `docs/hld.md` and `docs/lld-drag-drop.md`.
+This document captures current SnapTab implementation notes. Detailed architecture docs live in `docs/hld.md` and `docs/lld-drag-drop.md`.
 
 ## Product Direction
 
-Infi Tab is a local-first Chrome new tab extension inspired by Infinity New Tab Pro. The first version intentionally avoids account sync and backend services. User data lives locally and can be exported/imported as a portable JSON backup.
+SnapTab is a local-first Chrome new tab extension shaped by familiar new tab productivity patterns. The first version intentionally avoids account sync and backend services. User data lives locally and can be exported/imported as a portable JSON backup.
 
 ## Current Feature Set
 
@@ -45,23 +45,20 @@ newtab.html                   New Tab Surface HTML entry
 popup.html                    Toolbar popup HTML entry
 src/main.tsx                  New Tab Surface React entry point
 src/popup.tsx                 Toolbar popup React entry point
-src/ui/app/App.tsx            New Tab Surface composition
+src/ui/app/App.tsx            New Tab Surface composition and overlays
 src/ui/app/useNewTabController.ts  Transient UI state, store actions, and overlay actions
-src/ui/canvas/CanvasSurface.tsx    Canvas and WidgetFrame rendering
+src/ui/canvas/CanvasWidgetHost.tsx Canvas-owned Widget mounting, frames, and context menu shell
+src/ui/canvas/CanvasSurface.tsx    Full-viewport Canvas shell
 src/ui/canvas/useCanvasMetrics.ts  Canvas viewport metrics
-src/ui/PopupApp.tsx           Toolbar add-current-site popup
-src/ui/ShortcutGrid.tsx       Shortcut Page rendering and native drag/drop
-src/ui/widgets/search/SearchWidget.tsx  Search Widget composition
-src/ui/widgets/shortcut-grid/ShortcutGridWidget.tsx  Shortcut Grid Widget composition
-src/ui/widgets/shortcut-grid/useShortcutGridMetrics.ts  Grid fitting calculations
-src/ui/widgets/WidgetContextMenu.tsx   Edit-mode Widget settings menu
-src/ui/ShortcutIcon.tsx       Shortcut icon rendering
-src/ui/SettingsDrawer.tsx     Settings Drawer composition
-src/ui/settings/*             Global settings sections
+src/ui/popup/PopupApp.tsx     Toolbar add-current-site popup
+src/ui/widgets/search/*       Search Widget rendering, settings menu section, and styles
+src/ui/widgets/shortcut-grid/* Shortcut Grid Widget, Shortcut Pages, FolderPanel, drag shell, Shortcut tile/icon UI, and styles
+src/ui/widgets/WidgetFrame.tsx Common Widget move/resize frame
+src/ui/widgets/WidgetContextMenu.tsx Common edit-mode Widget context menu shell
+src/ui/settings/*             Settings Drawer and settings sections
 src/ui/modals/*               Folder and shortcut modal overlays
-src/ui/ShortcutForm.tsx       Shared shortcut editing form
-src/ui/model/drafts.ts        Editor draft types and defaults
-src/ui/styles.css             Application styling
+src/ui/shortcut-editor/*      Shared Shortcut editor form and styling
+src/ui/styles.css             Global CSS import index; Module CSS lives beside owning Modules
 tests/smoke/smoke.spec.ts     Browser smoke test
 tests/unit/                   Vitest unit tests grouped by source area
 vitest.config.ts              Unit test runner config
@@ -69,6 +66,7 @@ playwright.config.ts          Browser smoke test config
 src/domain/tabState.ts        App state types and default state
 src/domain/canvas.ts          Canvas grid, Widget placement, and overlap rules
 src/domain/brandIcons.ts      Curated Simple Icons registry and matching
+src/domain/drafts.ts          Shortcut and Folder edit draft contracts
 src/domain/tabOperations.ts   Shortcut, Folder, and layout mutation operations
 src/domain/dropActions.ts     Drag/drop actions and folder cleanup reducer
 src/domain/backup.ts          Backup parsing and compatibility defaults
@@ -161,7 +159,7 @@ Current bundled icon set:
 
 When a shortcut is saved, the app tries to match a bundled Simple Icon using the title and URL. The shortcut editor also shows recommended icons based on the same matcher. If no match is found, the app uses fallback label/color. If the user uploads an icon image, the uploaded image wins.
 
-The New Tab Surface shortcut modal and Toolbar Popup share `src/ui/ShortcutForm.tsx`, so title/URL editing, icon uploads, fallback colors, and brand icon recommendations stay aligned across both surfaces.
+The New Tab Surface shortcut modal and Toolbar Popup share `src/ui/shortcut-editor/ShortcutForm.tsx`, so title/URL editing, icon uploads, fallback colors, and brand icon recommendations stay aligned across both surfaces. Shortcut tile/icon rendering belongs to the Shortcut Grid Widget under `src/ui/widgets/shortcut-grid/shortcuts/`.
 
 Simple Icons is CC0 as a package, but individual brand marks remain subject to their trademark guidelines.
 
@@ -171,9 +169,12 @@ Shortcut and Folder editing rules live in `src/domain/tabOperations.ts`. Drag/dr
 
 - Main app is a single new-tab surface rather than separate extension pages.
 - The New Tab Surface is a fixed Canvas containing Widgets; it never browser-scrolls.
+- `CanvasWidgetHost` is the seam where Canvas mounts Widgets, wires Widget Placement changes, and hosts the common Widget Context Menu shell.
+- Widget-specific context menu controls live with their Widget Modules; the shared `WidgetContextMenu` owns only shell positioning and Canvas-level Widget toggles.
 - Canvas Edit Mode is transient, starts off on new tabs, and enables Widget movement/resizing.
 - Shortcut Pages live inside the Shortcut Grid Widget. Wheel navigation applies only while hovering that Widget in normal mode.
 - The New Tab Surface no longer renders a Shortcut creation tile; the Toolbar Popup is the shortcut creation flow.
+- FolderPanel does not create Shortcuts directly; adding Shortcuts remains a Toolbar Popup flow so persisted Shortcut creation stays in one place.
 - Toolbar popup is a small secondary entry point for adding the active browser tab to the same persisted `TabState`.
 - Settings open in a right-side drawer so more controls fit without covering the whole page.
 - Folder contents open in modal overlays.
@@ -209,13 +210,13 @@ The workflow is manual-only, must run from `main`, installs with `npm ci`, auto-
 
 ## Current Known Gaps
 
-- Drag/drop session logic still lives inside `ShortcutGrid`; it should be extracted before touch or keyboard drag is added.
+- **Done**: Drag/drop session logic extracted to `useGridDragSession` hook.
 - Drag UI routes most drops through `createDropAction()` but does not use domain `resolveDrop()` in production.
 - Touch drag is not implemented.
 - Favicon lookup for unknown websites is not implemented.
 - Keyboard focus trapping for modals/drawer is not complete.
 - Chrome Web Store assets and privacy text are not prepared.
-- `@dnd-kit/*` packages are installed but inactive; current drag implementation is native HTML drag.
+- dnd-kit is not installed; current drag implementation is native HTML drag. Reintroduce it only through a deliberate future ADR.
 
 See `docs/roadmap-issues.md` for issue-ready future slices.
 

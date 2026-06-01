@@ -1,5 +1,5 @@
-import { brandIcons } from "../domain/brandIcons";
-import type { Shortcut } from "../domain/tabState";
+import { brandIcons } from "../../../../domain/brandIcons";
+import type { Shortcut } from "../../../../domain/tabState";
 
 export function ShortcutIcon({ shortcut }: { shortcut: Shortcut }) {
   const brandIcon =
