@@ -49,13 +49,63 @@
 
 .widget-resize-handle {
   position: absolute;
-  right: -7px;
-  bottom: -7px;
   width: 18px;
   height: 18px;
   border: 2px solid rgba(15, 23, 42, 0.88);
   border-radius: 6px;
   background: #7dd3fc;
+  z-index: 4;
+}
+
+.widget-resize-handle.resize-n {
+  top: -9px;
+  left: 50%;
+  cursor: ns-resize;
+  transform: translateX(-50%);
+}
+
+.widget-resize-handle.resize-ne {
+  top: -7px;
+  right: -7px;
+  cursor: nesw-resize;
+}
+
+.widget-resize-handle.resize-e {
+  top: 50%;
+  right: -9px;
+  cursor: ew-resize;
+  transform: translateY(-50%);
+}
+
+.widget-resize-handle.resize-se {
+  right: -7px;
+  bottom: -7px;
+  cursor: nwse-resize;
+}
+
+.widget-resize-handle.resize-s {
+  bottom: -9px;
+  left: 50%;
+  cursor: ns-resize;
+  transform: translateX(-50%);
+}
+
+.widget-resize-handle.resize-sw {
+  bottom: -7px;
+  left: -7px;
+  cursor: nesw-resize;
+}
+
+.widget-resize-handle.resize-w {
+  top: 50%;
+  left: -9px;
+  cursor: ew-resize;
+  transform: translateY(-50%);
+}
+
+.widget-resize-handle.resize-nw {
+  top: -7px;
+  left: -7px;
   cursor: nwse-resize;
 }
 

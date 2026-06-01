@@ -2,17 +2,40 @@ import { describe, expect, it } from "vitest";
 import {
   clampPlacementToCanvas,
   defaultCanvasState,
+  deriveDefaultWidgetPlacements,
   deriveCanvasGrid,
   doPlacementsOverlap,
   doesPlacementOverlap,
   findNearestFreePlacement,
   isPlacementInsideCanvas,
+  resolveResponsiveDefaultWidgetPlacement,
   resolveWidgetPlacement
 } from "../../../src/domain/canvas";
 
 describe("canvas placement", () => {
   it("derives square-ish grid dimensions from viewport size", () => {
     expect(deriveCanvasGrid(1920, 1080)).toEqual({ columns: 34, rows: 19 });
+  });
+
+  it("derives centered default Widget placements from Canvas size", () => {
+    expect(deriveDefaultWidgetPlacements({ columns: 34, rows: 19 })).toEqual({
+      search: { x: 11.5, y: 2, width: 11, height: 1, zIndex: 10 },
+      shortcutGrid: { x: 10.5, y: 5, width: 13, height: 7, zIndex: 5 }
+    });
+
+    expect(deriveDefaultWidgetPlacements({ columns: 20, rows: 12 })).toEqual({
+      search: { x: 4.5, y: 2, width: 11, height: 1, zIndex: 10 },
+      shortcutGrid: { x: 3.5, y: 5, width: 13, height: 6, zIndex: 5 }
+    });
+  });
+
+  it("resolves only known default placements responsively", () => {
+    expect(
+      resolveResponsiveDefaultWidgetPlacement("search", { x: 8, y: 2, width: 11, height: 2, zIndex: 10 }, { columns: 20, rows: 12 })
+    ).toEqual({ x: 4.5, y: 2, width: 11, height: 1, zIndex: 10 });
+
+    const customPlacement = { x: 2, y: 4, width: 11, height: 1, zIndex: 10 };
+    expect(resolveResponsiveDefaultWidgetPlacement("search", customPlacement, { columns: 20, rows: 12 })).toBe(customPlacement);
   });
 
   it("keeps fractional placement while clamping inside the canvas", () => {

@@ -38,7 +38,7 @@ export function SearchWidgetContextMenu({
         </select>
       </label>
       <label className="context-toggle-row">
-        <span>Provider tabs</span>
+        <span>Search categories</span>
         <input
           checked={searchWidget.settings.showProviderTabs}
           onChange={(event) => changeSearchWidgetSetting("showProviderTabs", event.target.checked)}

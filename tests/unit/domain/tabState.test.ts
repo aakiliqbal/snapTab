@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { defaultTabState, migrateLegacyTabState, normalizeTabState } from "../../../src/domain/tabState";
+import { buildSearchUrl, defaultTabState, migrateLegacyTabState, normalizeTabState } from "../../../src/domain/tabState";
 
 const baseLegacyState = {
   schemaVersion: 1 as const,
@@ -169,6 +169,58 @@ describe("normalizeTabState", () => {
     });
 
     expect(normalized.pages.map((page) => page.id)).toEqual(["page-1", "page-2"]);
+  });
+
+  it("normalizes Search Widget height to one Canvas unit", () => {
+    const normalized = normalizeTabState({
+      ...defaultTabState,
+      canvas: {
+        ...defaultTabState.canvas,
+        widgets: {
+          ...defaultTabState.canvas.widgets,
+          search: {
+            ...defaultTabState.canvas.widgets.search,
+            placement: {
+              ...defaultTabState.canvas.widgets.search.placement,
+              height: 4
+            }
+          }
+        }
+      }
+    });
+
+    expect(normalized.canvas.widgets.search.placement.height).toBe(1);
+  });
+
+  it("normalizes invalid Search Widget verticals", () => {
+    const normalized = normalizeTabState({
+      ...defaultTabState,
+      canvas: {
+        ...defaultTabState.canvas,
+        widgets: {
+          ...defaultTabState.canvas.widgets,
+          search: {
+            ...defaultTabState.canvas.widgets.search,
+            settings: {
+              ...defaultTabState.canvas.widgets.search.settings,
+              searchVertical: "shopping"
+            }
+          }
+        }
+      }
+    });
+
+    expect(normalized.canvas.widgets.search.settings.searchVertical).toBe("web");
+  });
+});
+
+describe("buildSearchUrl", () => {
+  it("builds provider-specific vertical search URLs", () => {
+    expect(buildSearchUrl("google", "images", "red panda")).toBe("https://www.google.com/search?tbm=isch&q=red%20panda");
+    expect(buildSearchUrl("yahoo", "news", "market open")).toBe("https://news.search.yahoo.com/search?p=market%20open");
+    expect(buildSearchUrl("duckduckgo", "maps", "coffee near me")).toBe(
+      "https://duckduckgo.com/?iaxm=maps&ia=maps&q=coffee%20near%20me"
+    );
   });
 });
 

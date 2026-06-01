@@ -1,8 +1,15 @@
 import { MouseEvent, useEffect, useState, type RefObject } from "react";
-import type { CanvasGrid, SearchWidgetSettings, ShortcutGridWidgetSettings, WidgetId, WidgetPlacement } from "../../domain/canvas";
+import {
+  resolveResponsiveDefaultWidgetPlacement,
+  type CanvasGrid,
+  type SearchWidgetSettings,
+  type ShortcutGridWidgetSettings,
+  type WidgetId,
+  type WidgetPlacement
+} from "../../domain/canvas";
 import type { DropAction } from "../../domain/dropActions";
 import type { ResolvedFolder, ResolvedTopLevelTile } from "../../domain/tabOperations";
-import { searchProviders, type SearchProviderId, type Shortcut, type TabState } from "../../domain/tabState";
+import { searchProviders, type SearchProviderId, type SearchVerticalId, type Shortcut, type TabState } from "../../domain/tabState";
 import type { DragSource } from "../drag/dragModel";
 import { WidgetContextMenu, type ContextMenuState } from "../widgets/WidgetContextMenu";
 import { WidgetFrame } from "../widgets/WidgetFrame";
@@ -58,6 +65,12 @@ export function CanvasWidgetHost({
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
   const shortcutGridWidget = tabState.canvas.widgets.shortcutGrid;
   const searchWidget = tabState.canvas.widgets.search;
+  const searchPlacement = resolveResponsiveDefaultWidgetPlacement("search", searchWidget.placement, canvasMetrics);
+  const shortcutGridPlacement = resolveResponsiveDefaultWidgetPlacement(
+    "shortcutGrid",
+    shortcutGridWidget.placement,
+    canvasMetrics
+  );
 
   useEffect(() => {
     if (!contextMenu) {
@@ -104,12 +117,13 @@ export function CanvasWidgetHost({
           onMove={(placement) => controller.updateWidgetPlacement("search", placement, canvasMetrics)}
           onResize={(placement) => controller.updateWidgetPlacement("search", placement, canvasMetrics)}
           onWidgetContextMenu={openWidgetContextMenu}
-          placement={searchWidget.placement}
+          placement={searchPlacement}
+          resizeAxis="horizontal"
           widgetId="search"
         >
           <SearchWidget
             activeProvider={controller.activeSearchProvider}
-            changeSearchProvider={controller.changeSearchProvider}
+            changeSearchVertical={(verticalId: SearchVerticalId) => controller.changeSearchWidgetSetting("searchVertical", verticalId)}
             query={query}
             setQuery={setQuery}
             settings={searchWidget.settings}
@@ -117,6 +131,7 @@ export function CanvasWidgetHost({
         </WidgetFrame>
 
         <WidgetFrame
+          centerSnapAxes={{ x: true, y: false }}
           editMode={isCanvasEditMode}
           enabled={shortcutGridWidget.enabled}
           label="Shortcut Grid Widget"
@@ -124,7 +139,7 @@ export function CanvasWidgetHost({
           onMove={(placement) => controller.updateWidgetPlacement("shortcutGrid", placement, canvasMetrics)}
           onResize={(placement) => controller.updateWidgetPlacement("shortcutGrid", placement, canvasMetrics)}
           onWidgetContextMenu={openWidgetContextMenu}
-          placement={shortcutGridWidget.placement}
+          placement={shortcutGridPlacement}
           widgetId="shortcutGrid"
         >
           <ShortcutGridWidget
@@ -143,7 +158,7 @@ export function CanvasWidgetHost({
             settings={shortcutGridWidget.settings}
             tabState={tabState}
             topLevelTiles={controller.topLevelTiles}
-            widgetPlacement={shortcutGridWidget.placement}
+            widgetPlacement={shortcutGridPlacement}
           />
         </WidgetFrame>
       </CanvasSurface>
