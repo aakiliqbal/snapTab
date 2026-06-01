@@ -331,7 +331,7 @@ export function useNewTabController() {
     const objectUrl = URL.createObjectURL(backupBlob);
     const link = document.createElement("a");
     link.href = objectUrl;
-    link.download = `infi-tab-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    link.download = `snaptab-backup-${new Date().toISOString().slice(0, 10)}.json`;
     link.click();
     URL.revokeObjectURL(objectUrl);
     setBackupMessage("Backup exported.");

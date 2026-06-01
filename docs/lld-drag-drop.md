@@ -2,7 +2,7 @@
 
 ## Overview
 
-Drag-and-drop in Infi Tab uses native HTML drag events with a custom pointer-following overlay. The domain layer provides `DropAction` types and `resolveDrop()` decision logic.
+Drag-and-drop in SnapTab uses native HTML drag events with a custom pointer-following overlay. The domain layer provides `DropAction` types and `resolveDrop()` decision logic.
 
 See ADR `0006-native-drag-intent-shell.md` for the current native drag decision.
 

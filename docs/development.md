@@ -1,10 +1,10 @@
 # Development Notes
 
-This document captures current Infi Tab implementation notes. Detailed architecture docs live in `docs/hld.md` and `docs/lld-drag-drop.md`.
+This document captures current SnapTab implementation notes. Detailed architecture docs live in `docs/hld.md` and `docs/lld-drag-drop.md`.
 
 ## Product Direction
 
-Infi Tab is a local-first Chrome new tab extension inspired by Infinity New Tab Pro. The first version intentionally avoids account sync and backend services. User data lives locally and can be exported/imported as a portable JSON backup.
+SnapTab is a local-first Chrome new tab extension shaped by familiar new tab productivity patterns. The first version intentionally avoids account sync and backend services. User data lives locally and can be exported/imported as a portable JSON backup.
 
 ## Current Feature Set
 

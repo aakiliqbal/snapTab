@@ -78,7 +78,7 @@ jobs:
       - name: Package extension
         run: |
           cd dist
-          zip -r ../infi-tab-${{ steps.version.outputs.tag }}.zip .
+          zip -r ../snaptab-${{ steps.version.outputs.tag }}.zip .
 
       - name: Generate changelog
         id: changelog
@@ -86,7 +86,7 @@ jobs:
           PREVIOUS_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
 
           {
-            echo "## Infi Tab ${{ steps.version.outputs.tag }}"
+            echo "## SnapTab ${{ steps.version.outputs.tag }}"
             echo
             if [ -n "$PREVIOUS_TAG" ]; then
               echo "Changes since $PREVIOUS_TAG:"
@@ -103,6 +103,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
-          name: Infi Tab ${{ steps.version.outputs.tag }}
+          name: SnapTab ${{ steps.version.outputs.tag }}
           body_path: RELEASE_NOTES.md
-          files: infi-tab-${{ steps.version.outputs.tag }}.zip
+          files: snaptab-${{ steps.version.outputs.tag }}.zip

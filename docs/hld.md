@@ -2,7 +2,7 @@
 
 ## Product Overview
 
-Infi Tab is a local-first Chrome Manifest V3 new-tab extension. Product shape confirmed by reference extension analysis:
+SnapTab is a local-first Chrome Manifest V3 new-tab extension. Product shape confirmed by reference extension analysis:
 
 - Fixed full-viewport new tab page
 - Toolbar popup to add the current site
@@ -137,7 +137,7 @@ Persisted `pages[].tileIds` is top-level order. The visible Shortcut Pages are d
 
 ## Reference Extension Learnings
 
-The extracted Infinity New Tab Pro extension confirms:
+The extracted reference extension confirms:
 
 1. Fixed full-viewport with `overflow: hidden`
 2. Wallpaper as base layer (CSS background)

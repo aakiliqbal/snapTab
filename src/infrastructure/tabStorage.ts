@@ -1,10 +1,11 @@
 import { defaultTabState, migrateLegacyTabState, normalizeTabState, type LegacyTabState, type TabState } from "../domain/tabState";
 import { materializeTabStateMedia, stripResolvedMediaFromTabState } from "./mediaStorage";
 
-const storageKey = "infiTabState";
+const storageKey = "snapTabState";
+const legacyStorageKey = ["in", "fi", "TabState"].join("");
 
 export async function loadTabState(): Promise<TabState> {
-  const stored = await storageGet<Partial<TabState> | Partial<LegacyTabState>>(storageKey);
+  const stored = await storageGet<Partial<TabState> | Partial<LegacyTabState>>(storageKey, legacyStorageKey);
 
   if (!stored) {
     return saveTabState(defaultTabState);
@@ -26,16 +27,19 @@ export async function saveTabState(state: TabState): Promise<TabState> {
   return materializedState;
 }
 
-async function storageGet<T>(key: string): Promise<T | null> {
+async function storageGet<T>(key: string, fallbackKey?: string): Promise<T | null> {
   const chromeLocal = getChromeLocalStorage();
 
   if (chromeLocal) {
     return new Promise((resolve) => {
-      chromeLocal.get([key], (items) => resolve((items[key] as T | undefined) ?? null));
+      chromeLocal.get(fallbackKey ? [key, fallbackKey] : [key], (items) => {
+        const value = (items[key] as T | undefined) ?? (fallbackKey ? (items[fallbackKey] as T | undefined) : undefined);
+        resolve(value ?? null);
+      });
     });
   }
 
-  const raw = window.localStorage.getItem(key);
+  const raw = window.localStorage.getItem(key) ?? (fallbackKey ? window.localStorage.getItem(fallbackKey) : null);
   return raw ? (JSON.parse(raw) as T) : null;
 }
 

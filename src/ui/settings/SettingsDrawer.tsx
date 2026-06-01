@@ -38,7 +38,7 @@ export function SettingsDrawer({
       <aside className="settings-drawer" role="dialog" aria-modal="true" aria-labelledby="settings-drawer-title">
         <header className="settings-drawer-header">
           <div>
-            <span className="settings-drawer-kicker">Infi Tab</span>
+            <span className="settings-drawer-kicker">SnapTab</span>
             <h1 id="settings-drawer-title">Settings</h1>
           </div>
           <button className="drawer-close" type="button" onClick={close} aria-label="Close settings">

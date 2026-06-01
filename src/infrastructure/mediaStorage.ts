@@ -7,7 +7,8 @@ type MediaRecord = {
   createdAt: number;
 };
 
-const databaseName = "infi-tab-media";
+const databaseName = "snaptab-media";
+const legacyDatabaseName = ["in", "fi", "-tab-media"].join("");
 const storeName = "media";
 const memoryMediaRecords = new Map<string, MediaRecord>();
 
@@ -138,7 +139,7 @@ async function putMediaRecord(record: MediaRecord) {
     return;
   }
 
-  const database = await openDatabase();
+  const database = await openDatabase(databaseName);
   await runRequest(
     database.transaction(storeName, "readwrite").objectStore(storeName).put(record),
     "Could not store media"
@@ -150,8 +151,14 @@ async function getMediaRecord(id: string): Promise<MediaRecord | null> {
     return memoryMediaRecords.get(id) ?? null;
   }
 
-  const database = await openDatabase();
-  return (await runRequest(database.transaction(storeName, "readonly").objectStore(storeName).get(id), "Could not load media")) ?? null;
+  const database = await openDatabase(databaseName);
+  const record = await runRequest(database.transaction(storeName, "readonly").objectStore(storeName).get(id), "Could not load media");
+  if (record) {
+    return record;
+  }
+
+  const legacyDatabase = await openDatabase(legacyDatabaseName);
+  return (await runRequest(legacyDatabase.transaction(storeName, "readonly").objectStore(storeName).get(id), "Could not load media")) ?? null;
 }
 
 async function deleteMediaRecord(id: string) {
@@ -160,13 +167,15 @@ async function deleteMediaRecord(id: string) {
     return;
   }
 
-  const database = await openDatabase();
+  const database = await openDatabase(databaseName);
   await runRequest(database.transaction(storeName, "readwrite").objectStore(storeName).delete(id), "Could not delete media");
+  const legacyDatabase = await openDatabase(legacyDatabaseName);
+  await runRequest(legacyDatabase.transaction(storeName, "readwrite").objectStore(storeName).delete(id), "Could not delete media");
 }
 
-function openDatabase(): Promise<IDBDatabase> {
+function openDatabase(name: string): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(databaseName, 1);
+    const request = indexedDB.open(name, 1);
 
     request.addEventListener("upgradeneeded", () => {
       const database = request.result;

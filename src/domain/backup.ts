@@ -45,7 +45,7 @@ export function getBackupImportErrorMessage(error: unknown): string {
     }
 
     if (error.message === "Legacy backup schema") {
-      return "This backup uses the old v1 format. Export a new backup after opening the latest version of Infi Tab.";
+      return "This backup uses the old v1 format. Export a new backup after opening the latest version of SnapTab.";
     }
 
     if (error.message === "Invalid backup shape") {

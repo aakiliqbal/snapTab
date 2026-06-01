@@ -210,7 +210,7 @@ export function FolderPanel({
   /**
    * As soon as the cursor reaches the dimmed backdrop area (outside the folder
    * panel dialog), we immediately close the folder and hand off to ShortcutGrid
-   * via outgoingDragSource — exactly like Infinity Pro.
+   * via outgoingDragSource, matching the drag session used by the Shortcut Grid Widget.
    *
    * The outgoingDragStartedRef guard ensures we call onClose / onStartOutgoingDrag
    * only once even though dragOver fires continuously.

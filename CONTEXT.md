@@ -3,7 +3,7 @@
 ## Glossary
 
 **New Tab Surface**  
-The browser page rendered by Infi Tab when Chrome opens a new tab.
+The browser page rendered by SnapTab when Chrome opens a new tab.
 
 **Canvas**  
 The fixed, full-viewport workspace inside the New Tab Surface. It never browser-scrolls and contains Widgets snapped to a logical grid.
@@ -81,7 +81,7 @@ A domain command produced from Drag Intent: `REORDER`, `COMBINE`, `ADD_TO_FOLDER
 
 ### Persistence
 
-- Infi Tab is local-first; no backend or account sync exists in the MVP.
+- SnapTab is local-first; no backend or account sync exists in the MVP.
 - Zustand persist writes runtime state to `chrome.storage.local`; localStorage is the dev fallback.
 - The Toolbar Popup writes to the same persisted `TabState` as the New Tab Surface.
 - JSON Backup is replace-only on import.
@@ -92,7 +92,7 @@ A domain command produced from Drag Intent: `REORDER`, `COMBINE`, `ADD_TO_FOLDER
 
 - The New Tab Surface is a single React app, not multiple extension pages.
 - The Canvas is the whole interactive New Tab workspace and contains all user-arrangeable Widgets.
-- Infi Tab has exactly one Search Widget and exactly one Shortcut Grid Widget.
+- SnapTab has exactly one Search Widget and exactly one Shortcut Grid Widget.
 - Widgets can be disabled; disabled Widgets keep settings and last placement but do not reserve Canvas space.
 - Canvas Edit Mode is toggled from the toolbar, shows Widget frames/alignment guides, enables Widget movement/resizing, and disables tile drag.
 - The Toolbar Popup is a second React entry point that reuses the shortcut editor form and persisted store.
@@ -173,7 +173,7 @@ A domain command produced from Drag Intent: `REORDER`, `COMBINE`, `ADD_TO_FOLDER
 
 ### Reference Extension
 
-- Extracted to `references/infinity-new-tab-pro/`
+- Extracted to `references/reference-new-tab/`
 - Used for product behavior evidence only
 - Not for copying implementation, assets, or code
 - Confirms product shape: full-viewport, search, paged grid, folders, wallpaper, settings
