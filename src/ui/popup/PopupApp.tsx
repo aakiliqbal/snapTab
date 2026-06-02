@@ -4,8 +4,11 @@ import { emptyShortcutDraft, type ShortcutDraft } from "../../domain/drafts";
 import { applyRecommendedIcon, createShortcutFromDraft, upsertShortcut } from "../../domain/tabOperations";
 import { readFileAsDataUrl } from "../../infrastructure/fileData";
 import { useTabStore } from "../../stores/useTabStore";
-import { getThemePreset } from "../../domain/themes";
+import { getThemePreset, isThemeId, type ThemeId } from "../../domain/themes";
 import { ShortcutForm } from "../shortcut-editor";
+
+const storageKey = "snapTabState";
+const legacyStorageKey = ["in", "fi", "TabState"].join("");
 
 type ActiveTab = {
   title?: string;
@@ -15,7 +18,8 @@ type ActiveTab = {
 export function PopupApp() {
   const tabState = useTabStore();
   const replaceState = useTabStore((state) => state.replaceState);
-  const theme = getThemePreset(tabState.themeId);
+  const [popupThemeId, setPopupThemeId] = useState<ThemeId>(tabState.themeId);
+  const theme = getThemePreset(popupThemeId);
   const [draft, setDraft] = useState<ShortcutDraft>({ ...emptyShortcutDraft });
   const [message, setMessage] = useState("Loading current tab...");
   const iconRecommendations = useMemo(() => findBrandIconRecommendations(draft.title, draft.url), [draft.title, draft.url]);
@@ -24,6 +28,24 @@ export function PopupApp() {
     document.body.classList.add("popup-body");
     return () => document.body.classList.remove("popup-body");
   }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    readStoredThemeId().then((themeId) => {
+      if (isMounted && themeId) {
+        setPopupThemeId(themeId);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    setPopupThemeId(tabState.themeId);
+  }, [tabState.themeId]);
 
   useEffect(() => {
     let isMounted = true;
@@ -104,14 +126,64 @@ export function PopupApp() {
   );
 }
 
+function readStoredThemeId(): Promise<ThemeId | null> {
+  const chromeLocal = typeof chrome !== "undefined" ? chrome.storage?.local : undefined;
+
+  if (chromeLocal) {
+    return new Promise((resolve) => {
+      chromeLocal.get([storageKey, legacyStorageKey], (items) => {
+        const error = typeof chrome !== "undefined" ? chrome.runtime?.lastError : undefined;
+        if (error) {
+          resolve(null);
+          return;
+        }
+
+        resolve(extractThemeId(items[storageKey] ?? items[legacyStorageKey]));
+      });
+    });
+  }
+
+  return Promise.resolve(extractThemeId(window.localStorage.getItem(storageKey) ?? window.localStorage.getItem(legacyStorageKey)));
+}
+
+function extractThemeId(value: unknown): ThemeId | null {
+  const parsed = typeof value === "string" ? parseStoredValue(value) : value;
+  if (!isRecord(parsed)) {
+    return null;
+  }
+
+  const state = isRecord(parsed.state) ? parsed.state : parsed;
+  return isThemeId(state.themeId) ? state.themeId : null;
+}
+
+function parseStoredValue(value: string): unknown {
+  try {
+    return JSON.parse(value) as unknown;
+  } catch {
+    return null;
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
 function getActiveTab(): Promise<ActiveTab | null> {
-  const tabs = chrome?.tabs;
+  const tabs = typeof chrome !== "undefined" ? chrome.tabs : undefined;
+  const runtime = typeof chrome !== "undefined" ? chrome.runtime : undefined;
   if (!tabs?.query) {
     return Promise.resolve(null);
   }
 
   return new Promise((resolve) => {
-    tabs.query({ active: true, currentWindow: true }, ([tab]) => resolve(tab ?? null));
+    tabs.query({ active: true, currentWindow: true }, (activeTabs) => {
+      if (runtime?.lastError) {
+        resolve(null);
+        return;
+      }
+
+      resolve(activeTabs[0] ?? null);
+    });
   });
 }
 

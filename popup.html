@@ -5,8 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Add to SnapTab</title>
   </head>
-  <body>
-    <div id="root"></div>
+  <body class="popup-body">
+    <div id="root">
+      <main class="popup-root">
+        <section class="quick-link-modal popup-panel" aria-labelledby="popup-title">
+          <div class="modal-header">
+            <div>
+              <h1 id="popup-title">Add current site</h1>
+              <p>Loading current tab...</p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
     <script type="module" src="/src/popup.tsx"></script>
   </body>
 </html>

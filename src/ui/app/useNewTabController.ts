@@ -286,7 +286,8 @@ export function useNewTabController() {
     setShortcutDraft({
       ...shortcutDraft,
       iconImageDataUrl: iconDataUrl,
-      iconMediaId: shortcutDraft.iconMediaId
+      iconMediaId: shortcutDraft.iconMediaId,
+      brandIconId: null
     });
   }
 
