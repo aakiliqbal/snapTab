@@ -38,7 +38,8 @@ export function ShortcutModal({
         <div className="modal-header">
           <h1 id="quick-link-title">{draft.id ? "Edit shortcut" : "Add shortcut"}</h1>
           <button className="modal-close" type="button" onClick={onClose} aria-label="Close">
-            x
+            <span>Close</span>
+            <span aria-hidden="true">×</span>
           </button>
         </div>
 

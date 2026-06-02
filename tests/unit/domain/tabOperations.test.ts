@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { deleteFolderFromState, deleteShortcutFromState } from "../../../src/domain/tabOperations";
+import { createShortcutFromDraft, deleteFolderFromState, deleteShortcutFromState } from "../../../src/domain/tabOperations";
 import type { TabState } from "../../../src/domain/tabState";
 import type { ShortcutDraft } from "../../../src/domain/drafts";
 
@@ -20,6 +20,37 @@ describe("tabOperations", () => {
     expect(next.tiles.c).toBeUndefined();
     expect(next.tiles.d).toBeUndefined();
     expect(next.pages[0].tileIds).toEqual(["a", "folder-2"]);
+  });
+
+  it("preserves manual fallback icon edits for an existing shortcut", () => {
+    const next = createShortcutFromDraft({
+      ...draft("docs"),
+      title: "Docs",
+      url: "https://docs.google.com",
+      iconLabel: "DX",
+      iconBackground: "#123456"
+    });
+
+    expect(next?.icon).toEqual({
+      type: "fallback",
+      label: "DX",
+      background: "#123456",
+      imageDataUrl: null,
+      imageMediaId: null,
+      brandIconId: null
+    });
+  });
+
+  it("auto-matches a brand icon for new shortcuts", () => {
+    const next = createShortcutFromDraft({
+      ...draft("docs"),
+      id: null,
+      title: "Docs",
+      url: "https://docs.google.com"
+    });
+
+    expect(next?.icon.type).toBe("brand");
+    expect(next?.icon.brandIconId).not.toBeNull();
   });
 });
 

@@ -32,16 +32,43 @@
 }
 
 .modal-close {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  place-items: center;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
+  display: inline-flex;
+  min-width: 82px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid color-mix(in srgb, var(--theme-input-border, #d1d5db) 70%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--theme-secondary-bg, #e5e7eb) 72%, transparent);
   color: var(--theme-modal-muted-text, #6b7280);
   cursor: pointer;
-  font-size: 20px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  padding: 0 10px 0 12px;
+}
+
+.modal-close span[aria-hidden="true"] {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--theme-modal-muted-text, #6b7280) 14%, transparent);
+  font-size: 17px;
+  line-height: 1;
+}
+
+.modal-close:hover,
+.modal-close:focus-visible {
+  border-color: var(--theme-primary-bg, #2563eb);
+  color: var(--theme-modal-text, #1f2937);
+  outline: none;
+}
+
+.modal-close:focus-visible {
+  box-shadow: 0 0 0 3px var(--theme-focus-ring, rgba(37, 99, 235, 0.18));
 }
 
 .modal-actions {

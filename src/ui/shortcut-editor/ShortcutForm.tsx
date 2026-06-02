@@ -48,26 +48,46 @@ export function ShortcutForm({
         />
       </label>
 
-      <div className="form-row">
-        <label>
-          <span>Icon label</span>
-          <input
-            maxLength={2}
-            value={draft.iconLabel}
-            onChange={(event) => onChangeDraft({ ...draft, iconLabel: event.target.value })}
-          />
-        </label>
+      <section className="icon-editor" aria-label="Shortcut icon">
+        <div className="icon-preview-card">
+          <span
+            className={`quick-link-icon ${draft.iconImageDataUrl ? "image-icon" : ""}`}
+            style={{ backgroundColor: draft.iconBackground }}
+            aria-hidden="true"
+          >
+            {draft.iconImageDataUrl ? (
+              <img src={draft.iconImageDataUrl} alt="" />
+            ) : (
+              (draft.iconLabel || draft.title.slice(0, 1) || "?").slice(0, 2).toUpperCase()
+            )}
+          </span>
+          <div>
+            <strong>Shortcut icon</strong>
+            <p>Use initials, a brand icon, or upload your own image.</p>
+          </div>
+        </div>
 
-        <label>
-          <span>Icon color</span>
-          <input
-            className="color-input"
-            type="color"
-            value={draft.iconBackground}
-            onChange={(event) => onChangeDraft({ ...draft, iconBackground: event.target.value })}
-          />
-        </label>
-      </div>
+        <div className="icon-control-row">
+          <label>
+            <span>Icon label</span>
+            <input
+              maxLength={2}
+              value={draft.iconLabel}
+              onChange={(event) => onChangeDraft({ ...draft, iconLabel: event.target.value, iconImageDataUrl: null, iconMediaId: null, brandIconId: null })}
+            />
+          </label>
+
+          <label>
+            <span>Icon color</span>
+            <input
+              className="color-input"
+              type="color"
+              value={draft.iconBackground}
+              onChange={(event) => onChangeDraft({ ...draft, iconBackground: event.target.value, iconImageDataUrl: null, iconMediaId: null, brandIconId: null })}
+            />
+          </label>
+        </div>
+      </section>
 
       {iconRecommendations.length > 0 ? (
         <div className="recommended-icons" aria-label="Recommended icons">
@@ -90,20 +110,6 @@ export function ShortcutForm({
           </div>
         </div>
       ) : null}
-
-      <div className="form-preview">
-        <span
-          className={`quick-link-icon ${draft.iconImageDataUrl ? "image-icon" : ""}`}
-          style={{ backgroundColor: draft.iconBackground }}
-          aria-hidden="true"
-        >
-          {draft.iconImageDataUrl ? (
-            <img src={draft.iconImageDataUrl} alt="" />
-          ) : (
-            (draft.iconLabel || draft.title.slice(0, 1) || "?").slice(0, 2).toUpperCase()
-          )}
-        </span>
-      </div>
 
       <div className="icon-image-actions">
         <label className="secondary-button file-button">

@@ -2,6 +2,7 @@ node_modules/
 dist/
 test-results/
 .codex/
+.opencode/
 references/
 .DS_Store
 *.log

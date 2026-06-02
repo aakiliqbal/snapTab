@@ -1,5 +1,5 @@
 import type { FormEvent, MouseEvent } from "react";
-import { siDuckduckgo, siGoogle, type SimpleIcon } from "simple-icons";
+import { brandIcons, type BrandIcon } from "../../../domain/brandIcons";
 import { buildSearchUrl, searchVerticals, type SearchProviderId, type SearchVerticalId } from "../../../domain/tabState";
 import type { SearchWidgetSettings } from "../../../domain/canvas";
 
@@ -12,15 +12,15 @@ type SearchWidgetProps = {
 };
 
 type ProviderMark =
-  | { type: "icon"; icon: SimpleIcon }
+  | { type: "icon"; icon: Pick<BrandIcon, "hex" | "path"> }
   | { type: "image"; src: string };
 
 const providerMarks: Record<SearchProviderId, ProviderMark> = {
-  google: { type: "icon", icon: siGoogle },
+  google: { type: "icon", icon: brandIcons.google },
   bing: { type: "image", src: "https://www.bing.com/favicon.ico" },
   yahoo: { type: "image", src: "https://www.yahoo.com/favicon.ico" },
   yandex: { type: "image", src: "https://yandex.com/favicon.ico" },
-  duckduckgo: { type: "icon", icon: siDuckduckgo }
+  duckduckgo: { type: "icon", icon: brandIcons.duckduckgo }
 };
 
 export function SearchWidget({ activeProvider, changeSearchVertical, query, setQuery, settings }: SearchWidgetProps) {

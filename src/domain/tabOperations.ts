@@ -47,7 +47,9 @@ export function createShortcutFromDraft(draft: ShortcutDraft): Shortcut | null {
     ? null
     : draft.brandIconId
       ? brandIcons[draft.brandIconId]
-      : matchBrandIcon(title, url);
+      : draft.id
+        ? null
+        : matchBrandIcon(title, url);
 
   return {
     kind: "shortcut",

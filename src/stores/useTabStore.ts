@@ -67,6 +67,10 @@ export const useTabStore = create<TabStoreState>()(
       storage: createJSONStorage(() => createChromeStorage()),
       version: 2,
       partialize: (state) => stripActions(state),
+      merge: (persistedState, currentState) => ({
+        ...currentState,
+        ...normalizeTabState(toRecord(persistedState))
+      }),
       migrate: (persistedState, version) =>
         version === 1
           ? migrateLegacyTabState(persistedState as Partial<LegacyTabState>)

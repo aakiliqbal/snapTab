@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
 import type { CanvasGrid, WidgetId, WidgetPlacement } from "../../domain/canvas";
 
 type CanvasMetrics = CanvasGrid & {
@@ -46,10 +46,10 @@ export function WidgetFrame({
 }: WidgetFrameProps) {
   const [displayPlacement, setDisplayPlacement] = useState(placement);
   const [isInteracting, setIsInteracting] = useState(false);
-  const [contentHeight, setContentHeight] = useState<number | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
-  const pendingPlacementRef = useRef<WidgetPlacement | null>(null);
-  const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activePointerCleanupRef = useRef<(() => void) | null>(null);
+  const contentHeight = useMeasuredContentHeight(contentRef, editMode, metrics.cellHeight, metrics.cellWidth);
+  const { flushPersist, schedulePersist } = useDebouncedPlacementPersistence();
 
   useEffect(() => {
     setDisplayPlacement(placement);
@@ -57,29 +57,9 @@ export function WidgetFrame({
 
   useEffect(() => {
     return () => {
-      if (persistTimerRef.current) {
-        clearTimeout(persistTimerRef.current);
-      }
+      activePointerCleanupRef.current?.();
     };
   }, []);
-
-  useLayoutEffect(() => {
-    const contentElement = contentRef.current;
-    if (!contentElement) {
-      setContentHeight(null);
-      return;
-    }
-    const measuredContent = contentElement;
-
-    function measure() {
-      setContentHeight(Math.ceil(measuredContent.scrollHeight));
-    }
-
-    measure();
-    const resizeObserver = new ResizeObserver(measure);
-    resizeObserver.observe(measuredContent);
-    return () => resizeObserver.disconnect();
-  }, [children, editMode, metrics.cellHeight, metrics.cellWidth]);
 
   if (!enabled && !editMode) {
     return null;
@@ -95,35 +75,6 @@ export function WidgetFrame({
   const alignmentGuides = isInteracting ? getAlignmentGuides(displayPlacement, metrics, centerSnapAxes) : [];
   const cornerLabel = getCornerLabel(alignmentGuides);
 
-  function schedulePersist(nextPlacement: WidgetPlacement, persist: (placement: WidgetPlacement) => void) {
-    // Keep pointer movement visually immediate, but avoid writing every pointermove to persisted state.
-    pendingPlacementRef.current = nextPlacement;
-    if (persistTimerRef.current) {
-      clearTimeout(persistTimerRef.current);
-    }
-
-    persistTimerRef.current = setTimeout(() => {
-      if (pendingPlacementRef.current) {
-        persist(pendingPlacementRef.current);
-        pendingPlacementRef.current = null;
-      }
-      persistTimerRef.current = null;
-    }, 180);
-  }
-
-  function flushPersist(persist: (placement: WidgetPlacement) => void) {
-    // Pointer-up must persist the final placement even if the debounce timer has not fired yet.
-    if (persistTimerRef.current) {
-      clearTimeout(persistTimerRef.current);
-      persistTimerRef.current = null;
-    }
-
-    if (pendingPlacementRef.current) {
-      persist(pendingPlacementRef.current);
-      pendingPlacementRef.current = null;
-    }
-  }
-
   function startMove(event: React.PointerEvent<HTMLElement>) {
     if (!editMode || event.button !== 0) {
       return;
@@ -134,6 +85,7 @@ export function WidgetFrame({
     const startPlacement = placement;
     setIsInteracting(true);
     event.currentTarget.setPointerCapture(event.pointerId);
+    activePointerCleanupRef.current?.();
 
     function handlePointerMove(moveEvent: PointerEvent) {
       const nextPlacement = snapPlacementToCenterGuides(
@@ -149,13 +101,19 @@ export function WidgetFrame({
       schedulePersist(nextPlacement, onMove);
     }
 
-    function handlePointerUp() {
+    function cleanupPointerListeners() {
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
+      activePointerCleanupRef.current = null;
+    }
+
+    function handlePointerUp() {
+      cleanupPointerListeners();
       setIsInteracting(false);
       flushPersist(onMove);
     }
 
+    activePointerCleanupRef.current = cleanupPointerListeners;
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("pointerup", handlePointerUp, { once: true });
   }
@@ -172,6 +130,7 @@ export function WidgetFrame({
     const startPlacement = placement;
     setIsInteracting(true);
     event.currentTarget.setPointerCapture(event.pointerId);
+    activePointerCleanupRef.current?.();
 
     function handlePointerMove(moveEvent: PointerEvent) {
       const nextPlacement = snapPlacementToCenterGuides(
@@ -190,13 +149,19 @@ export function WidgetFrame({
       schedulePersist(nextPlacement, onResize);
     }
 
-    function handlePointerUp() {
+    function cleanupPointerListeners() {
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
+      activePointerCleanupRef.current = null;
+    }
+
+    function handlePointerUp() {
+      cleanupPointerListeners();
       setIsInteracting(false);
       flushPersist(onResize);
     }
 
+    activePointerCleanupRef.current = cleanupPointerListeners;
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("pointerup", handlePointerUp, { once: true });
   }
@@ -237,6 +202,79 @@ export function WidgetFrame({
       </article>
     </>
   );
+}
+
+function useMeasuredContentHeight(
+  ref: RefObject<HTMLElement | null>,
+  editMode: boolean,
+  cellHeight: number,
+  cellWidth: number
+) {
+  const [contentHeight, setContentHeight] = useState<number | null>(null);
+
+  useLayoutEffect(() => {
+    const contentElement = ref.current;
+    if (!contentElement) {
+      setContentHeight(null);
+      return;
+    }
+    const measuredContent = contentElement;
+
+    function measure() {
+      setContentHeight(Math.ceil(measuredContent.scrollHeight));
+    }
+
+    measure();
+    const resizeObserver = new ResizeObserver(measure);
+    resizeObserver.observe(measuredContent);
+    return () => resizeObserver.disconnect();
+  }, [cellHeight, cellWidth, editMode, ref]);
+
+  return contentHeight;
+}
+
+function useDebouncedPlacementPersistence() {
+  const pendingPlacementRef = useRef<WidgetPlacement | null>(null);
+  const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const flushPersist = useCallback((persist: (placement: WidgetPlacement) => void) => {
+    // Pointer-up must persist the final placement even if the debounce timer has not fired yet.
+    if (persistTimerRef.current) {
+      clearTimeout(persistTimerRef.current);
+      persistTimerRef.current = null;
+    }
+
+    if (pendingPlacementRef.current) {
+      persist(pendingPlacementRef.current);
+      pendingPlacementRef.current = null;
+    }
+  }, []);
+
+  const schedulePersist = useCallback((nextPlacement: WidgetPlacement, persist: (placement: WidgetPlacement) => void) => {
+    // Keep pointer movement visually immediate, but avoid writing every pointermove to persisted state.
+    pendingPlacementRef.current = nextPlacement;
+    if (persistTimerRef.current) {
+      clearTimeout(persistTimerRef.current);
+    }
+
+    persistTimerRef.current = setTimeout(() => {
+      if (pendingPlacementRef.current) {
+        persist(pendingPlacementRef.current);
+        pendingPlacementRef.current = null;
+      }
+      persistTimerRef.current = null;
+    }, 180);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (persistTimerRef.current) {
+        clearTimeout(persistTimerRef.current);
+      }
+    };
+  }, []);
+
+  return { flushPersist, schedulePersist };
 }
 
 function getResizeDirections(resizeAxis: WidgetFrameProps["resizeAxis"]): ResizeDirection[] {

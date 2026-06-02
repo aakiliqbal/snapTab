@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect, type DragEvent } from "react";
 import type { DropAction } from "../../../domain/dropActions";
+import { openShortcutUrl } from "../../../infrastructure/openShortcutUrl";
 import { type ResolvedFolder } from "../../../domain/tabOperations";
 import { type Shortcut, type TabState } from "../../../domain/tabState";
 import { createDropAction } from "../../drag/dropActionAdapter";
@@ -424,7 +425,8 @@ export function FolderPanel({
               Edit
             </button>
             <button className="modal-close" type="button" onClick={onClose} aria-label="Close">
-              x
+              <span>Close</span>
+              <span aria-hidden="true">×</span>
             </button>
           </div>
         </div>
@@ -435,7 +437,7 @@ export function FolderPanel({
             const shiftStyle = shift.x !== 0 || shift.y !== 0 ? { transform: `translate(${shift.x}px, ${shift.y}px)` } : {};
 
             return (
-            <a
+            <div
               className={[
                 "quick-link",
                 "folder-item",
@@ -446,7 +448,6 @@ export function FolderPanel({
                 .join(" ")}
               draggable={true}
               data-tile-key={shortcut.id}
-              href={shortcut.url}
               key={shortcut.id}
               onDragEnd={clearDrag}
               onDragStart={(event) => {
@@ -467,20 +468,34 @@ export function FolderPanel({
               onDrop={(event) => handleChildDrop(event, shortcut.id)}
               style={shiftStyle}
             >
-              <ShortcutIcon shortcut={shortcut} />
-              <span className="quick-link-title">{shortcut.title}</span>
+              <a
+                className="quick-link-launch"
+                href={shortcut.url}
+                draggable={false}
+                onClick={(event) => {
+                  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+                    return;
+                  }
+
+                  event.preventDefault();
+                  openShortcutUrl(shortcut.url);
+                }}
+              >
+                <ShortcutIcon shortcut={shortcut} />
+                <span className="quick-link-title">{shortcut.title}</span>
+              </a>
               <button
                 className="quick-link-edit"
                 type="button"
                 aria-label={`Edit ${shortcut.title}`}
                 onClick={(event) => {
-                  event.preventDefault();
+                  event.stopPropagation();
                   onEditShortcut(shortcut);
                 }}
               >
-                Edit
+                Edit shortcut
               </button>
-            </a>
+            </div>
           );
           })}
         </div>

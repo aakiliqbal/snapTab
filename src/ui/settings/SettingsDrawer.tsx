@@ -12,7 +12,8 @@ type SettingsDrawerProps = {
   exportBackup: () => void;
   importBackup: (file: File | null) => void;
   resetWallpaper: () => void;
-  tabState: TabState;
+  activeThemeId: ThemeId;
+  wallpaper: TabState["wallpaper"];
   uploadWallpaper: (file: File | null) => void;
   wallpaperMessage: string | null;
 };
@@ -25,7 +26,8 @@ export function SettingsDrawer({
   exportBackup,
   importBackup,
   resetWallpaper,
-  tabState,
+  activeThemeId,
+  wallpaper,
   uploadWallpaper,
   wallpaperMessage
 }: SettingsDrawerProps) {
@@ -55,11 +57,11 @@ export function SettingsDrawer({
             <WallpaperSettingsSection
               changeWallpaperSetting={changeWallpaperSetting}
               resetWallpaper={resetWallpaper}
-              tabState={tabState}
+              wallpaper={wallpaper}
               uploadWallpaper={uploadWallpaper}
               wallpaperMessage={wallpaperMessage}
             />
-            <ThemeSettingsSection activeThemeId={tabState.themeId} changeTheme={changeTheme} />
+            <ThemeSettingsSection activeThemeId={activeThemeId} changeTheme={changeTheme} />
             <BackupSettingsSection backupMessage={backupMessage} exportBackup={exportBackup} importBackup={importBackup} />
           </section>
         </div>

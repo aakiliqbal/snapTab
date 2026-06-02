@@ -4,6 +4,7 @@ import { brandIcons } from "../../../domain/brandIcons";
 import type { DropAction } from "../../../domain/dropActions";
 import type { ResolvedFolder, ResolvedTopLevelTile } from "../../../domain/tabOperations";
 import type { Shortcut, TabState } from "../../../domain/tabState";
+import { openShortcutUrl } from "../../../infrastructure/openShortcutUrl";
 import type { DragSource } from "../../drag/dragModel";
 import { ShortcutIcon } from "./shortcuts";
 import { getTilePagePosition, type ShortcutPageItem } from "./shortcutPageModel";
@@ -114,8 +115,7 @@ export function ShortcutGrid({
 
           if (tile.type === "shortcut") {
             return (
-              <a
-                href={tile.shortcut.url}
+              <div
                 key={tile.key}
                 data-tile-key={tile.key}
                 className={tileClassName}
@@ -130,19 +130,33 @@ export function ShortcutGrid({
                 onDrop={(e) => onTileDrop(e as unknown as React.DragEvent<HTMLElement>, tile.key, index)}
                 onDragEnd={(e) => onTileDragEnd(e as unknown as React.DragEvent<HTMLElement>)}
               >
-                <TileContent tile={tile} showLabels={showLabels} />
+                <a
+                  className="quick-link-launch"
+                  href={tile.shortcut.url}
+                  draggable={false}
+                  onClick={(event) => {
+                    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+                      return;
+                    }
+
+                    event.preventDefault();
+                    openShortcutUrl(tile.shortcut.url);
+                  }}
+                >
+                  <TileContent tile={tile} showLabels={showLabels} />
+                </a>
                 <button
                   className="quick-link-edit"
                   type="button"
                   aria-label={`Edit ${tile.shortcut.title}`}
                   onClick={(event: React.MouseEvent) => {
-                    event.preventDefault();
+                    event.stopPropagation();
                     onEditShortcut(tile.shortcut);
                   }}
                 >
-                  Edit
+                  Edit shortcut
                 </button>
-              </a>
+              </div>
             );
           }
 
@@ -180,9 +194,9 @@ export function ShortcutGrid({
                   event.stopPropagation();
                   onEditFolder(tile.folder);
                 }}
-              >
-                Edit
-              </button>
+                >
+                  Edit folder
+                </button>
             </div>
           );
         })}
