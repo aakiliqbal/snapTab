@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { produce } from "immer";
+import { useShallow } from "zustand/react/shallow";
 import { findBrandIconRecommendations, type BrandIcon } from "../../domain/brandIcons";
 import { type FolderEditDraft, type ShortcutDraft } from "../../domain/drafts";
 import {
@@ -41,7 +42,20 @@ import { readFileAsDataUrl } from "../../infrastructure/fileData";
 import { useTabStore } from "../../stores/useTabStore";
 
 export function useNewTabController() {
-  const tabState = useTabStore();
+  const tabState = useTabStore(
+    useShallow(
+      (state): TabState => ({
+        canvas: state.canvas,
+        layout: state.layout,
+        pages: state.pages,
+        schemaVersion: state.schemaVersion,
+        searchProvider: state.searchProvider,
+        themeId: state.themeId,
+        tiles: state.tiles,
+        wallpaper: state.wallpaper
+      })
+    )
+  );
   const replaceTabState = useTabStore((state) => state.replaceState);
   const updateTabState = useTabStore((state) => state.updateState);
   const setLayout = useTabStore((state) => state.setLayout);
@@ -75,14 +89,15 @@ export function useNewTabController() {
 
   const activeSearchProvider = useMemo(() => {
     return searchProviders[tabState.canvas.widgets.search.settings.searchProvider];
-  }, [tabState]);
+  }, [tabState.canvas.widgets.search.settings.searchProvider]);
 
-  const topLevelTiles = useMemo(() => resolveTopLevelTiles(tabState), [tabState]);
+  const topLevelTiles = useMemo(() => resolveTopLevelTiles(tabState), [tabState.pages, tabState.tiles]);
   const hasOverlayOpen = isSettingsDrawerOpen || shortcutDraft !== null || folderDraft !== null || activeFolderId !== null;
-  const activeFolder = resolveActiveFolder(tabState, activeFolderId);
-  const shortcutIconRecommendations = shortcutDraft
-    ? findBrandIconRecommendations(shortcutDraft.title, shortcutDraft.url)
-    : [];
+  const activeFolder = useMemo(() => resolveActiveFolder(tabState, activeFolderId), [activeFolderId, tabState.tiles]);
+  const shortcutIconRecommendations = useMemo(
+    () => (shortcutDraft ? findBrandIconRecommendations(shortcutDraft.title, shortcutDraft.url) : []),
+    [shortcutDraft?.title, shortcutDraft?.url]
+  );
 
   function persistState(nextState: TabState) {
     replaceTabState(nextState);
@@ -283,12 +298,16 @@ export function useNewTabController() {
     }
 
     const iconDataUrl = await readFileAsDataUrl(file);
-    setShortcutDraft({
-      ...shortcutDraft,
-      iconImageDataUrl: iconDataUrl,
-      iconMediaId: shortcutDraft.iconMediaId,
-      brandIconId: null
-    });
+    setShortcutDraft((currentDraft) =>
+      currentDraft
+        ? {
+            ...currentDraft,
+            iconImageDataUrl: iconDataUrl,
+            iconMediaId: currentDraft.iconMediaId,
+            brandIconId: null
+          }
+        : currentDraft
+    );
   }
 
   function chooseRecommendedIcon(icon: BrandIcon) {

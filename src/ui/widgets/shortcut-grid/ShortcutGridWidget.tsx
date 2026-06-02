@@ -1,4 +1,4 @@
-import { CSSProperties, WheelEvent, useEffect, useRef, type RefObject } from "react";
+import { CSSProperties, WheelEvent, useEffect, useMemo, useRef, type RefObject } from "react";
 import type { DropAction } from "../../../domain/dropActions";
 import type { ResolvedFolder, ResolvedTopLevelTile } from "../../../domain/tabOperations";
 import type { Shortcut, TabState } from "../../../domain/tabState";
@@ -51,8 +51,18 @@ export function ShortcutGridWidget({
 }: ShortcutGridWidgetProps) {
   const wheelDeltaRef = useRef(0);
   const wheelLockUntilRef = useRef(0);
-  const { activeShortcutPageIndex, gridLayout, pageCapacity, pageCount, visibleShortcutPageItems } =
-    deriveShortcutGridWidgetModel({ activeShortcutPage, canvasMetrics, settings, tabState, topLevelTiles, widgetPlacement });
+  const { activeShortcutPageIndex, gridLayout, pageCapacity, pageCount, visibleShortcutPageItems } = useMemo(
+    () => deriveShortcutGridWidgetModel({ activeShortcutPage, canvasMetrics, settings, tabState, topLevelTiles, widgetPlacement }),
+    [
+      activeShortcutPage,
+      canvasMetrics.cellHeight,
+      canvasMetrics.cellWidth,
+      settings,
+      tabState.layout.gridLayout,
+      topLevelTiles,
+      widgetPlacement
+    ]
+  );
   const { maxFittedIconSize, fittedLabelSize, fittedTileGap } = useShortcutGridMetrics(
     gridRef,
     gridLayout,

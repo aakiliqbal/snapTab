@@ -42,11 +42,19 @@ export function useShortcutGridMetrics(
         (gridBounds.width - columnGap * Math.max(0, gridLayout.columns - 1)) / gridLayout.columns;
       const heightAvailable = rowHeight - labelHeight - tileGap;
 
-      setMetrics({
+      const nextMetrics = {
         fittedLabelSize: labelSize,
         fittedTileGap: tileGap,
         maxFittedIconSize: Math.max(18, Math.floor(Math.min(220, widthAvailable, heightAvailable)))
-      });
+      };
+
+      setMetrics((currentMetrics) =>
+        currentMetrics.fittedLabelSize === nextMetrics.fittedLabelSize &&
+        currentMetrics.fittedTileGap === nextMetrics.fittedTileGap &&
+        currentMetrics.maxFittedIconSize === nextMetrics.maxFittedIconSize
+          ? currentMetrics
+          : nextMetrics
+      );
     }
 
     measure();

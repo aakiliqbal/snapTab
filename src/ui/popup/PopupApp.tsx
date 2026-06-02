@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { findBrandIconRecommendations, type BrandIcon } from "../../domain/brandIcons";
 import { emptyShortcutDraft, type ShortcutDraft } from "../../domain/drafts";
 import { applyRecommendedIcon, createShortcutFromDraft, upsertShortcut } from "../../domain/tabOperations";
 import { readFileAsDataUrl } from "../../infrastructure/fileData";
 import { useTabStore } from "../../stores/useTabStore";
 import { getThemePreset, isThemeId, type ThemeId } from "../../domain/themes";
+import type { TabState } from "../../domain/tabState";
 import { ShortcutForm } from "../shortcut-editor";
 
 const storageKey = "snapTabState";
@@ -16,63 +18,30 @@ type ActiveTab = {
 };
 
 export function PopupApp() {
-  const tabState = useTabStore();
+  const tabState = useTabStore(
+    useShallow(
+      (state): TabState => ({
+        canvas: state.canvas,
+        layout: state.layout,
+        pages: state.pages,
+        schemaVersion: state.schemaVersion,
+        searchProvider: state.searchProvider,
+        themeId: state.themeId,
+        tiles: state.tiles,
+        wallpaper: state.wallpaper
+      })
+    )
+  );
   const replaceState = useTabStore((state) => state.replaceState);
-  const [popupThemeId, setPopupThemeId] = useState<ThemeId>(tabState.themeId);
+  const popupThemeId = usePopupThemeId(tabState.themeId);
   const theme = getThemePreset(popupThemeId);
-  const [draft, setDraft] = useState<ShortcutDraft>({ ...emptyShortcutDraft });
-  const [message, setMessage] = useState("Loading current tab...");
+  const { draft, message, setDraft, setMessage } = useCurrentTabShortcutDraft();
   const iconRecommendations = useMemo(() => findBrandIconRecommendations(draft.title, draft.url), [draft.title, draft.url]);
 
-  useEffect(() => {
-    document.body.classList.add("popup-body");
-    return () => document.body.classList.remove("popup-body");
-  }, []);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    readStoredThemeId().then((themeId) => {
-      if (isMounted && themeId) {
-        setPopupThemeId(themeId);
-      }
-    });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    setPopupThemeId(tabState.themeId);
-  }, [tabState.themeId]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    getActiveTab().then((tab) => {
-      if (!isMounted) {
-        return;
-      }
-
-      const url = tab?.url ?? "";
-      const title = tab?.title?.trim() || getTitleFromUrl(url);
-      setDraft({
-        ...emptyShortcutDraft,
-        title,
-        url,
-        iconLabel: title.slice(0, 2).toUpperCase()
-      });
-      setMessage(url ? "Review and save this site to SnapTab." : "Could not read the current tab URL.");
-    });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  usePopupBodyClass();
 
   function chooseRecommendedIcon(icon: BrandIcon) {
-    setDraft(applyRecommendedIcon(draft, icon));
+    setDraft((currentDraft) => applyRecommendedIcon(currentDraft, icon));
   }
 
   async function uploadShortcutIcon(file: File | null) {
@@ -81,11 +50,11 @@ export function PopupApp() {
     }
 
     const iconDataUrl = await readFileAsDataUrl(file);
-    setDraft({
-      ...draft,
+    setDraft((currentDraft) => ({
+      ...currentDraft,
       iconImageDataUrl: iconDataUrl,
-      iconMediaId: draft.iconMediaId
-    });
+      iconMediaId: currentDraft.iconMediaId
+    }));
   }
 
   function saveShortcut(event: FormEvent<HTMLFormElement>) {
@@ -124,6 +93,68 @@ export function PopupApp() {
       </section>
     </main>
   );
+}
+
+function usePopupBodyClass() {
+  useEffect(() => {
+    document.body.classList.add("popup-body");
+    return () => document.body.classList.remove("popup-body");
+  }, []);
+}
+
+function usePopupThemeId(tabStateThemeId: ThemeId) {
+  const [popupThemeId, setPopupThemeId] = useState<ThemeId>(tabStateThemeId);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    readStoredThemeId().then((themeId) => {
+      if (isMounted && themeId) {
+        setPopupThemeId(themeId);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    setPopupThemeId(tabStateThemeId);
+  }, [tabStateThemeId]);
+
+  return popupThemeId;
+}
+
+function useCurrentTabShortcutDraft() {
+  const [draft, setDraft] = useState<ShortcutDraft>({ ...emptyShortcutDraft });
+  const [message, setMessage] = useState("Loading current tab...");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    getActiveTab().then((tab) => {
+      if (!isMounted) {
+        return;
+      }
+
+      const url = tab?.url ?? "";
+      const title = tab?.title?.trim() || getTitleFromUrl(url);
+      setDraft({
+        ...emptyShortcutDraft,
+        title,
+        url,
+        iconLabel: title.slice(0, 2).toUpperCase()
+      });
+      setMessage(url ? "Review and save this site to SnapTab." : "Could not read the current tab URL.");
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  return { draft, message, setDraft, setMessage };
 }
 
 function readStoredThemeId(): Promise<ThemeId | null> {

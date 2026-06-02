@@ -1,13 +1,15 @@
-import { CSSProperties, useState } from "react";
+import { CSSProperties, Suspense, lazy, useState } from "react";
 import { defaultTabState } from "../../domain/tabState";
 import { getThemePreset } from "../../domain/themes";
 import type { DragSource } from "../drag/dragModel";
 import { CanvasWidgetHost } from "../canvas";
-import { SettingsDrawer } from "../settings";
-import { FolderModal, ShortcutModal } from "../modals";
-import { FolderPanel } from "../widgets/shortcut-grid";
 import { useNewTabController } from "./useNewTabController";
 import { useCanvasMetrics } from "../canvas";
+
+const SettingsDrawer = lazy(() => import("../settings/SettingsDrawer").then((module) => ({ default: module.SettingsDrawer })));
+const FolderModal = lazy(() => import("../modals/FolderModal").then((module) => ({ default: module.FolderModal })));
+const ShortcutModal = lazy(() => import("../modals/ShortcutModal").then((module) => ({ default: module.ShortcutModal })));
+const FolderPanel = lazy(() => import("../widgets/shortcut-grid/FolderPanel").then((module) => ({ default: module.FolderPanel })));
 
 export function App() {
   const controller = useNewTabController();
@@ -86,58 +88,61 @@ export function App() {
         />
       </section>
 
-      {controller.isSettingsDrawerOpen ? (
-        <SettingsDrawer
-          backupMessage={controller.backupMessage}
-          changeTheme={controller.changeTheme}
-          changeWallpaperSetting={controller.changeWallpaperSetting}
-          close={() => controller.setIsSettingsDrawerOpen(false)}
-          exportBackup={controller.exportBackup}
-          importBackup={controller.importBackup}
-          resetWallpaper={controller.resetWallpaper}
-          tabState={tabState}
-          uploadWallpaper={controller.uploadWallpaper}
-          wallpaperMessage={controller.wallpaperMessage}
-        />
-      ) : null}
+      <Suspense fallback={null}>
+        {controller.isSettingsDrawerOpen ? (
+          <SettingsDrawer
+            activeThemeId={tabState.themeId}
+            backupMessage={controller.backupMessage}
+            changeTheme={controller.changeTheme}
+            changeWallpaperSetting={controller.changeWallpaperSetting}
+            close={() => controller.setIsSettingsDrawerOpen(false)}
+            exportBackup={controller.exportBackup}
+            importBackup={controller.importBackup}
+            resetWallpaper={controller.resetWallpaper}
+            uploadWallpaper={controller.uploadWallpaper}
+            wallpaper={tabState.wallpaper}
+            wallpaperMessage={controller.wallpaperMessage}
+          />
+        ) : null}
 
-      {controller.activeFolder ? (
-        <FolderPanel
-          activeFolder={controller.activeFolder}
-          activeShortcutPageIndex={controller.activeShortcutPage}
-          dispatchDropAction={controller.dispatchDropAction}
-          onClose={() => controller.setActiveFolderId(null)}
-          onEditFolder={controller.openEditFolderDialog}
-          onEditShortcut={(shortcut) => controller.openEditShortcutDialog(shortcut, controller.activeFolder?.id ?? null)}
-          onStartOutgoingDrag={(source) => {
-            setOutgoingDragSource(source);
-          }}
-          tabState={tabState}
-        />
-      ) : null}
+        {controller.activeFolder ? (
+          <FolderPanel
+            activeFolder={controller.activeFolder}
+            activeShortcutPageIndex={controller.activeShortcutPage}
+            dispatchDropAction={controller.dispatchDropAction}
+            onClose={() => controller.setActiveFolderId(null)}
+            onEditFolder={controller.openEditFolderDialog}
+            onEditShortcut={(shortcut) => controller.openEditShortcutDialog(shortcut, controller.activeFolder?.id ?? null)}
+            onStartOutgoingDrag={(source) => {
+              setOutgoingDragSource(source);
+            }}
+            tabState={tabState}
+          />
+        ) : null}
 
-      {controller.shortcutDraft ? (
-        <ShortcutModal
-          draft={controller.shortcutDraft}
-          iconRecommendations={controller.shortcutIconRecommendations}
-          onApplyRecommendedIcon={controller.chooseRecommendedIcon}
-          onChangeDraft={controller.setShortcutDraft}
-          onClose={() => controller.setShortcutDraft(null)}
-          onDelete={() => void controller.deleteShortcut()}
-          onSave={controller.saveShortcut}
-          onUploadIcon={(file) => void controller.uploadShortcutIcon(file)}
-        />
-      ) : null}
+        {controller.shortcutDraft ? (
+          <ShortcutModal
+            draft={controller.shortcutDraft}
+            iconRecommendations={controller.shortcutIconRecommendations}
+            onApplyRecommendedIcon={controller.chooseRecommendedIcon}
+            onChangeDraft={controller.setShortcutDraft}
+            onClose={() => controller.setShortcutDraft(null)}
+            onDelete={() => void controller.deleteShortcut()}
+            onSave={controller.saveShortcut}
+            onUploadIcon={(file) => void controller.uploadShortcutIcon(file)}
+          />
+        ) : null}
 
-      {controller.folderDraft ? (
-        <FolderModal
-          draft={controller.folderDraft}
-          onChangeDraft={controller.setFolderDraft}
-          onClose={() => controller.setFolderDraft(null)}
-          onDelete={() => void controller.deleteFolder()}
-          onSave={controller.saveFolder}
-        />
-      ) : null}
+        {controller.folderDraft ? (
+          <FolderModal
+            draft={controller.folderDraft}
+            onChangeDraft={controller.setFolderDraft}
+            onClose={() => controller.setFolderDraft(null)}
+            onDelete={() => void controller.deleteFolder()}
+            onSave={controller.saveFolder}
+          />
+        ) : null}
+      </Suspense>
     </main>
   );
 }

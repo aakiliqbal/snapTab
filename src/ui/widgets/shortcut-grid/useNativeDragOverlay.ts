@@ -11,9 +11,11 @@ export function useNativeDragOverlayPointer(
   dragOverlay: DragOverlayState,
   setDragOverlay: (overlay: DragOverlayState | ((current: DragOverlayState) => DragOverlayState)) => void
 ) {
+  const isDragging = dragOverlay !== null;
+
   // Native drag emits pointer position through dragover; this hook isolates that browser-specific Adapter.
   useEffect(() => {
-    if (!dragOverlay) return;
+    if (!isDragging) return;
 
     const handleMove = (event: MouseEvent) => {
       setDragOverlay((current) => (current ? { ...current, x: event.clientX, y: event.clientY } : null));
@@ -32,5 +34,5 @@ export function useNativeDragOverlayPointer(
       window.removeEventListener("dragend", handleEnd);
       window.removeEventListener("drop", handleEnd);
     };
-  }, [dragOverlay, setDragOverlay]);
+  }, [isDragging, setDragOverlay]);
 }
