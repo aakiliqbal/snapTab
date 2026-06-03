@@ -31,8 +31,10 @@ import {
 import { applyDropAction, type DropAction } from "../../domain/dropActions";
 import {
   type CanvasGrid,
+  type DateTimeWidgetSettings,
   type SearchWidgetSettings,
   type ShortcutGridWidgetSettings,
+  type WeatherWidgetSettings,
   type WidgetId,
   type WidgetPlacement,
   findNearestFreePlacement,
@@ -161,6 +163,22 @@ export function useNewTabController() {
     updateTabState((state) =>
       produce(state, (draft) => {
         draft.canvas.widgets.shortcutGrid.settings[key] = value;
+      })
+    );
+  }
+
+  function changeWeatherWidgetSetting<K extends keyof WeatherWidgetSettings>(key: K, value: WeatherWidgetSettings[K]) {
+    updateTabState((state) =>
+      produce(state, (draft) => {
+        draft.canvas.widgets.weather.settings[key] = value;
+      })
+    );
+  }
+
+  function changeDateTimeWidgetSetting<K extends keyof DateTimeWidgetSettings>(key: K, value: DateTimeWidgetSettings[K]) {
+    updateTabState((state) =>
+      produce(state, (draft) => {
+        draft.canvas.widgets.dateTime.settings[key] = value;
       })
     );
   }
@@ -382,8 +400,10 @@ export function useNewTabController() {
     activeShortcutPage,
     backupMessage,
     changeLayout,
+    changeDateTimeWidgetSetting,
     changeSearchProvider,
     changeSearchWidgetSetting,
+    changeWeatherWidgetSetting,
     changeShortcutGridWidgetSetting,
     changeTheme,
     changeWallpaperSetting,

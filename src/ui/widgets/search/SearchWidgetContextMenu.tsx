@@ -1,7 +1,7 @@
 import { searchProviders, type SearchProviderId } from "../../../domain/tabState";
 import type { SearchWidgetSettings } from "../../../domain/canvas";
 import type { WidgetState } from "../../../domain/canvas";
-import { RangeRow } from "../WidgetContextMenuControls";
+import { RangeRow, WidgetVisualControls } from "../WidgetContextMenuControls";
 
 type SearchWidgetContextMenuProps = {
   changeSearchWidgetSetting: <K extends keyof SearchWidgetSettings>(key: K, value: SearchWidgetSettings[K]) => void;
@@ -54,13 +54,14 @@ export function SearchWidgetContextMenu({
         />
       </label>
       <RangeRow
-        label="Opacity"
+        label="Input opacity"
         max={100}
         min={0}
         onChange={(value) => changeSearchWidgetSetting("opacity", value)}
         suffix="%"
         value={searchWidget.settings.opacity}
       />
+      <WidgetVisualControls visual={searchWidget.settings.visual} onChange={(visual) => changeSearchWidgetSetting("visual", visual)} />
       <RangeRow
         label="Roundness"
         max={100}

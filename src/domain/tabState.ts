@@ -1,5 +1,15 @@
 import type { BrandIconId } from "./brandIcons";
-import { defaultCanvasState, type CanvasState } from "./canvas";
+import {
+  defaultCanvasState,
+  type CanvasState,
+  type DateTimeClockMode,
+  type DateTimeDateMode,
+  type DateTimeDateOrder,
+  type DateTimeFormat,
+  type DateTimeShortSeparator,
+  type WeatherDisplayMode,
+  type WeatherUnits
+} from "./canvas";
 import { defaultThemeId, isThemeId, type ThemeId } from "./themes";
 
 export type SearchProviderId = "google" | "bing" | "yahoo" | "yandex" | "duckduckgo";
@@ -427,7 +437,9 @@ export function normalizeCanvasState(value: unknown, fallbackState?: Partial<Tab
             ),
             showLabels: legacyLayout?.showLabels ?? fallback.widgets.shortcutGrid.settings.showLabels
           }
-        }
+        },
+        weather: fallback.widgets.weather,
+        dateTime: fallback.widgets.dateTime
       }
     };
   }
@@ -437,7 +449,9 @@ export function normalizeCanvasState(value: unknown, fallbackState?: Partial<Tab
     targetCellSize: clampInteger(value.targetCellSize, 48, 72, fallback.targetCellSize),
     widgets: {
       search: normalizeSearchWidget(widgets.search, fallback.widgets.search, legacySearchProvider),
-      shortcutGrid: normalizeShortcutGridWidget(widgets.shortcutGrid, fallback.widgets.shortcutGrid)
+      shortcutGrid: normalizeShortcutGridWidget(widgets.shortcutGrid, fallback.widgets.shortcutGrid),
+      weather: normalizeWeatherWidget(widgets.weather, fallback.widgets.weather),
+      dateTime: normalizeDateTimeWidget(widgets.dateTime, fallback.widgets.dateTime)
     }
   };
 }
@@ -495,6 +509,74 @@ function normalizeShortcutGridWidget(
       lineSpacing: clampInteger(settings.lineSpacing, 0, 100, fallback.settings.lineSpacing),
       showLabels: typeof settings.showLabels === "boolean" ? settings.showLabels : fallback.settings.showLabels,
       showPageDots: typeof settings.showPageDots === "boolean" ? settings.showPageDots : fallback.settings.showPageDots,
+      visual: normalizeWidgetVisualSettings(settings.visual, fallback.settings.visual)
+    }
+  };
+}
+
+function normalizeWeatherWidget(
+  value: unknown,
+  fallback: CanvasState["widgets"]["weather"]
+): CanvasState["widgets"]["weather"] {
+  if (!isRecord(value)) {
+    return fallback;
+  }
+
+  const settings = isRecord(value.settings) ? value.settings : {};
+  return {
+    enabled: typeof value.enabled === "boolean" ? value.enabled : fallback.enabled,
+    placement: normalizeWidgetPlacement(value.placement, fallback.placement),
+    settings: {
+      ...fallback.settings,
+      locationName: normalizeLocationName(settings.locationName, fallback.settings.locationName),
+      latitude: clampNumber(settings.latitude, -90, 90, fallback.settings.latitude),
+      longitude: clampNumber(settings.longitude, -180, 180, fallback.settings.longitude),
+      units: isWeatherUnits(settings.units) ? settings.units : fallback.settings.units,
+      displayMode: isWeatherDisplayMode(settings.displayMode) ? settings.displayMode : fallback.settings.displayMode,
+      showFeelsLike: typeof settings.showFeelsLike === "boolean" ? settings.showFeelsLike : fallback.settings.showFeelsLike,
+      showHumidity: typeof settings.showHumidity === "boolean" ? settings.showHumidity : fallback.settings.showHumidity,
+      showWind: typeof settings.showWind === "boolean" ? settings.showWind : fallback.settings.showWind,
+      showPrecipitation:
+        typeof settings.showPrecipitation === "boolean" ? settings.showPrecipitation : fallback.settings.showPrecipitation,
+      refreshMinutes: clampInteger(settings.refreshMinutes, 5, 120, fallback.settings.refreshMinutes),
+      visual: normalizeWidgetVisualSettings(settings.visual, fallback.settings.visual)
+    }
+  };
+}
+
+function normalizeDateTimeWidget(
+  value: unknown,
+  fallback: CanvasState["widgets"]["dateTime"]
+): CanvasState["widgets"]["dateTime"] {
+  if (!isRecord(value)) {
+    return fallback;
+  }
+
+  const settings = isRecord(value.settings) ? value.settings : {};
+  return {
+    enabled: typeof value.enabled === "boolean" ? value.enabled : fallback.enabled,
+    placement: normalizeWidgetPlacement(value.placement, fallback.placement),
+    settings: {
+      ...fallback.settings,
+      clockMode: isDateTimeClockMode(settings.clockMode) ? settings.clockMode : fallback.settings.clockMode,
+      timeFormat: isDateTimeFormat(settings.timeFormat) ? settings.timeFormat : fallback.settings.timeFormat,
+      showSeconds: typeof settings.showSeconds === "boolean" ? settings.showSeconds : fallback.settings.showSeconds,
+      padHour: typeof settings.padHour === "boolean" ? settings.padHour : fallback.settings.padHour,
+      dateMode: isDateTimeDateMode(settings.dateMode) ? settings.dateMode : fallback.settings.dateMode,
+      dateOrder: isDateTimeDateOrder(settings.dateOrder) ? settings.dateOrder : fallback.settings.dateOrder,
+      shortSeparator: isDateTimeShortSeparator(settings.shortSeparator)
+        ? settings.shortSeparator
+        : fallback.settings.shortSeparator,
+      showWeekday: typeof settings.showWeekday === "boolean" ? settings.showWeekday : fallback.settings.showWeekday,
+      showOrdinalDay:
+        typeof settings.showOrdinalDay === "boolean" ? settings.showOrdinalDay : fallback.settings.showOrdinalDay,
+      showWeekNumber:
+        typeof settings.showWeekNumber === "boolean" ? settings.showWeekNumber : fallback.settings.showWeekNumber,
+      padDate: typeof settings.padDate === "boolean" ? settings.padDate : fallback.settings.padDate,
+      timezone: normalizeTimezone(settings.timezone, fallback.settings.timezone),
+      hourColor: normalizeColorString(settings.hourColor, fallback.settings.hourColor),
+      minuteColor: normalizeColorString(settings.minuteColor, fallback.settings.minuteColor),
+      secondColor: normalizeColorString(settings.secondColor, fallback.settings.secondColor),
       visual: normalizeWidgetVisualSettings(settings.visual, fallback.settings.visual)
     }
   };
@@ -805,6 +887,64 @@ function isSearchVerticalId(value: unknown): value is SearchVerticalId {
 
 function isGridLayoutPresetId(value: unknown): value is GridLayoutPresetId {
   return typeof value === "string" && value in gridLayoutPresets;
+}
+
+function isWeatherUnits(value: unknown): value is WeatherUnits {
+  return value === "celsius" || value === "fahrenheit";
+}
+
+function isWeatherDisplayMode(value: unknown): value is WeatherDisplayMode {
+  return value === "compact" || value === "standard" || value === "expanded";
+}
+
+function isDateTimeClockMode(value: unknown): value is DateTimeClockMode {
+  return value === "digital" || value === "percentageComplete" || value === "verticalClock";
+}
+
+function isDateTimeFormat(value: unknown): value is DateTimeFormat {
+  return value === "twentyFourHour" || value === "twelveHour";
+}
+
+function isDateTimeDateMode(value: unknown): value is DateTimeDateMode {
+  return value === "hidden" || value === "long" || value === "short";
+}
+
+function isDateTimeDateOrder(value: unknown): value is DateTimeDateOrder {
+  return value === "DMY" || value === "MDY" || value === "YMD";
+}
+
+function isDateTimeShortSeparator(value: unknown): value is DateTimeShortSeparator {
+  return value === "dash" || value === "dots" || value === "gaps" || value === "slashes";
+}
+
+function normalizeTimezone(value: unknown, fallback: string) {
+  if (typeof value !== "string") {
+    return fallback;
+  }
+
+  const trimmed = value.trim();
+  return trimmed === "auto" || (trimmed.length > 0 && trimmed.length <= 80) ? trimmed : fallback;
+}
+
+function normalizeColorString(value: unknown, fallback: string) {
+  return typeof value === "string" && value.trim().length > 0 && value.length <= 32 ? value : fallback;
+}
+
+function normalizeLocationName(value: unknown, fallback: string) {
+  if (typeof value !== "string") {
+    return fallback;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 && trimmed.length <= 80 ? trimmed : fallback;
+}
+
+function clampNumber(value: unknown, min: number, max: number, fallback: number) {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return fallback;
+  }
+
+  return Math.min(max, Math.max(min, value));
 }
 
 function clampInteger(value: unknown, min: number, max: number, fallback: number) {

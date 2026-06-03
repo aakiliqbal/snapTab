@@ -1,5 +1,5 @@
 import type { ShortcutGridWidgetSettings, WidgetState } from "../../../domain/canvas";
-import { RangeRow } from "../WidgetContextMenuControls";
+import { RangeRow, WidgetVisualControls } from "../WidgetContextMenuControls";
 
 type ShortcutGridWidgetContextMenuProps = {
   changeShortcutGridWidgetSetting: <K extends keyof ShortcutGridWidgetSettings>(
@@ -48,6 +48,10 @@ export function ShortcutGridWidgetContextMenu({
         onChange={(value) => changeShortcutGridWidgetSetting("lineSpacing", value)}
         suffix="%"
         value={shortcutGridWidget.settings.lineSpacing}
+      />
+      <WidgetVisualControls
+        visual={shortcutGridWidget.settings.visual}
+        onChange={(visual) => changeShortcutGridWidgetSetting("visual", visual)}
       />
       <label className="context-toggle-row">
         <span>Labels</span>

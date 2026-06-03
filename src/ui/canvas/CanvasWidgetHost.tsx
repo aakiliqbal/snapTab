@@ -2,8 +2,10 @@ import { MouseEvent, useEffect, useState, type RefObject } from "react";
 import {
   resolveResponsiveDefaultWidgetPlacement,
   type CanvasGrid,
+  type DateTimeWidgetSettings,
   type SearchWidgetSettings,
   type ShortcutGridWidgetSettings,
+  type WeatherWidgetSettings,
   type WidgetId,
   type WidgetPlacement
 } from "../../domain/canvas";
@@ -15,6 +17,8 @@ import { WidgetContextMenu, type ContextMenuState } from "../widgets/WidgetConte
 import { WidgetFrame } from "../widgets/WidgetFrame";
 import { SearchWidget } from "../widgets/search";
 import { ShortcutGridWidget } from "../widgets/shortcut-grid";
+import { WeatherWidget } from "../widgets/weather";
+import { DateTimeWidget } from "../widgets/date-time";
 import { CanvasSurface } from "./CanvasSurface";
 
 type CanvasMetrics = ReturnType<typeof import("./useCanvasMetrics").useCanvasMetrics>;
@@ -22,12 +26,14 @@ type CanvasMetrics = ReturnType<typeof import("./useCanvasMetrics").useCanvasMet
 export type CanvasWidgetController = {
   activeSearchProvider: (typeof searchProviders)[SearchProviderId];
   activeShortcutPage: number;
+  changeDateTimeWidgetSetting: <K extends keyof DateTimeWidgetSettings>(key: K, value: DateTimeWidgetSettings[K]) => void;
   changeSearchProvider: (providerId: SearchProviderId) => void;
   changeSearchWidgetSetting: <K extends keyof SearchWidgetSettings>(key: K, value: SearchWidgetSettings[K]) => void;
   changeShortcutGridWidgetSetting: <K extends keyof ShortcutGridWidgetSettings>(
     key: K,
     value: ShortcutGridWidgetSettings[K]
   ) => void;
+  changeWeatherWidgetSetting: <K extends keyof WeatherWidgetSettings>(key: K, value: WeatherWidgetSettings[K]) => void;
   dispatchDropAction: (action: DropAction) => void;
   gridRef: RefObject<HTMLElement | null>;
   hasOverlayOpen: boolean;
@@ -65,12 +71,16 @@ export function CanvasWidgetHost({
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
   const shortcutGridWidget = tabState.canvas.widgets.shortcutGrid;
   const searchWidget = tabState.canvas.widgets.search;
+  const weatherWidget = tabState.canvas.widgets.weather;
+  const dateTimeWidget = tabState.canvas.widgets.dateTime;
   const searchPlacement = resolveResponsiveDefaultWidgetPlacement("search", searchWidget.placement, canvasMetrics);
   const shortcutGridPlacement = resolveResponsiveDefaultWidgetPlacement(
     "shortcutGrid",
     shortcutGridWidget.placement,
     canvasMetrics
   );
+  const weatherPlacement = resolveResponsiveDefaultWidgetPlacement("weather", weatherWidget.placement, canvasMetrics);
+  const dateTimePlacement = resolveResponsiveDefaultWidgetPlacement("dateTime", dateTimeWidget.placement, canvasMetrics);
 
   useEffect(() => {
     if (!contextMenu) {
@@ -96,7 +106,7 @@ export function CanvasWidgetHost({
     setContextMenu({ type: "canvas", x: event.clientX, y: event.clientY });
   }
 
-  function openWidgetContextMenu(widgetId: "search" | "shortcutGrid", event: MouseEvent<HTMLElement>) {
+  function openWidgetContextMenu(widgetId: WidgetId, event: MouseEvent<HTMLElement>) {
     if (!isCanvasEditMode) {
       return;
     }
@@ -109,6 +119,20 @@ export function CanvasWidgetHost({
   return (
     <>
       <CanvasSurface editMode={isCanvasEditMode} metrics={canvasMetrics} onCanvasContextMenu={openCanvasContextMenu}>
+        <WidgetFrame
+          editMode={isCanvasEditMode}
+          enabled={dateTimeWidget.enabled}
+          label="Date & Time Widget"
+          metrics={canvasMetrics}
+          onMove={(placement) => controller.updateWidgetPlacement("dateTime", placement, canvasMetrics)}
+          onResize={(placement) => controller.updateWidgetPlacement("dateTime", placement, canvasMetrics)}
+          onWidgetContextMenu={openWidgetContextMenu}
+          placement={dateTimePlacement}
+          widgetId="dateTime"
+        >
+          <DateTimeWidget settings={dateTimeWidget.settings} />
+        </WidgetFrame>
+
         <WidgetFrame
           editMode={isCanvasEditMode}
           enabled={searchWidget.enabled}
@@ -128,6 +152,20 @@ export function CanvasWidgetHost({
             setQuery={setQuery}
             settings={searchWidget.settings}
           />
+        </WidgetFrame>
+
+        <WidgetFrame
+          editMode={isCanvasEditMode}
+          enabled={weatherWidget.enabled}
+          label="Weather Widget"
+          metrics={canvasMetrics}
+          onMove={(placement) => controller.updateWidgetPlacement("weather", placement, canvasMetrics)}
+          onResize={(placement) => controller.updateWidgetPlacement("weather", placement, canvasMetrics)}
+          onWidgetContextMenu={openWidgetContextMenu}
+          placement={weatherPlacement}
+          widgetId="weather"
+        >
+          <WeatherWidget settings={weatherWidget.settings} />
         </WidgetFrame>
 
         <WidgetFrame
@@ -167,6 +205,8 @@ export function CanvasWidgetHost({
         <WidgetContextMenu
           changeSearchWidgetSetting={controller.changeSearchWidgetSetting}
           changeShortcutGridWidgetSetting={controller.changeShortcutGridWidgetSetting}
+          changeWeatherWidgetSetting={controller.changeWeatherWidgetSetting}
+          changeDateTimeWidgetSetting={controller.changeDateTimeWidgetSetting}
           close={() => setContextMenu(null)}
           menu={contextMenu}
           setWidgetEnabled={(widgetId, enabled) => controller.setWidgetEnabled(widgetId, enabled, canvasMetrics)}

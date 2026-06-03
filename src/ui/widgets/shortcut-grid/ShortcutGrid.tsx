@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { createPortal } from "react-dom";
 import { useReducedMotion } from "motion/react";
 import { brandIcons } from "../../../domain/brandIcons";
 import type { DropAction } from "../../../domain/dropActions";
@@ -12,6 +13,7 @@ import { useGridDragSession } from "./useGridDragSession";
 
 type ShortcutGridProps = {
   activeShortcutPageIndex: number;
+  dragOverlayStyle: React.CSSProperties;
   dispatchDropAction: (action: DropAction) => void;
   gridRef: React.RefObject<HTMLElement | null>;
   outgoingDragSource: DragSource | null;
@@ -30,6 +32,7 @@ type ShortcutGridProps = {
 
 export function ShortcutGrid({
   activeShortcutPageIndex,
+  dragOverlayStyle,
   dispatchDropAction,
   gridRef,
   outgoingDragSource,
@@ -218,10 +221,12 @@ export function ShortcutGrid({
         ) : null}
       </nav>
 
-      {dragSession.dragOverlay && Number.isFinite(dragSession.dragOverlay.x) && Number.isFinite(dragSession.dragOverlay.y) && (
+      {dragSession.dragOverlay && Number.isFinite(dragSession.dragOverlay.x) && Number.isFinite(dragSession.dragOverlay.y)
+        ? createPortal(
         <div
           className={["drag-overlay-tile", isCombinePreview ? "merge-active" : ""].filter(Boolean).join(" ")}
           style={{
+            ...dragOverlayStyle,
             position: 'fixed',
             left: dragSession.dragOverlay.x - 40,
             top: dragSession.dragOverlay.y - 40,
@@ -235,8 +240,10 @@ export function ShortcutGrid({
               +
             </span>
           ) : null}
-        </div>
-      )}
+        </div>,
+        document.body
+      )
+        : null}
     </>
   );
 }

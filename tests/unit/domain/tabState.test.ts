@@ -217,6 +217,99 @@ describe("normalizeTabState", () => {
 
     expect(normalized.canvas.widgets.search.settings.searchVertical).toBe("web");
   });
+
+  it("backfills Weather Widget defaults for persisted Canvas state without weather", () => {
+    const { weather: _weather, ...widgetsWithoutWeather } = defaultTabState.canvas.widgets;
+    const normalized = normalizeTabState({
+      ...defaultTabState,
+      canvas: {
+        ...defaultTabState.canvas,
+        widgets: widgetsWithoutWeather
+      }
+    });
+
+    expect(normalized.canvas.widgets.weather.settings.locationName).toBe("London");
+    expect(normalized.canvas.widgets.weather.enabled).toBe(true);
+  });
+
+  it("backfills Date & Time Widget defaults for persisted Canvas state without dateTime", () => {
+    const { dateTime: _dateTime, ...widgetsWithoutDateTime } = defaultTabState.canvas.widgets;
+    const normalized = normalizeTabState({
+      ...defaultTabState,
+      canvas: {
+        ...defaultTabState.canvas,
+        widgets: widgetsWithoutDateTime
+      }
+    });
+
+    expect(normalized.canvas.widgets.dateTime.settings.clockMode).toBe("verticalClock");
+    expect(normalized.canvas.widgets.dateTime.settings.showSeconds).toBe(true);
+    expect(normalized.canvas.widgets.dateTime.settings.dateMode).toBe("long");
+  });
+
+  it("normalizes invalid Weather Widget settings", () => {
+    const normalized = normalizeTabState({
+      ...defaultTabState,
+      canvas: {
+        ...defaultTabState.canvas,
+        widgets: {
+          ...defaultTabState.canvas.widgets,
+          weather: {
+            ...defaultTabState.canvas.widgets.weather,
+            settings: {
+              ...defaultTabState.canvas.widgets.weather.settings,
+              locationName: "",
+              latitude: 200,
+              longitude: -300,
+              units: "kelvin",
+              displayMode: "custom",
+              refreshMinutes: 2
+            }
+          }
+        }
+      }
+    });
+
+    expect(normalized.canvas.widgets.weather.settings.locationName).toBe("London");
+    expect(normalized.canvas.widgets.weather.settings.latitude).toBe(90);
+    expect(normalized.canvas.widgets.weather.settings.longitude).toBe(-180);
+    expect(normalized.canvas.widgets.weather.settings.units).toBe("celsius");
+    expect(normalized.canvas.widgets.weather.settings.displayMode).toBe("expanded");
+    expect(normalized.canvas.widgets.weather.settings.refreshMinutes).toBe(5);
+  });
+
+  it("normalizes invalid Date & Time Widget settings", () => {
+    const normalized = normalizeTabState({
+      ...defaultTabState,
+      canvas: {
+        ...defaultTabState.canvas,
+        widgets: {
+          ...defaultTabState.canvas.widgets,
+          dateTime: {
+            ...defaultTabState.canvas.widgets.dateTime,
+            settings: {
+              ...defaultTabState.canvas.widgets.dateTime.settings,
+              clockMode: "analog",
+              timeFormat: "twentyfivehour",
+              dateMode: "calendar",
+              dateOrder: "DMYY",
+              shortSeparator: "comma",
+              timezone: "",
+              hourColor: ""
+            }
+          }
+        }
+      }
+    });
+
+    expect(normalized.canvas.widgets.dateTime.settings.clockMode).toBe("verticalClock");
+    expect(normalized.canvas.widgets.dateTime.settings.timeFormat).toBe("twentyFourHour");
+    expect(normalized.canvas.widgets.dateTime.settings.dateMode).toBe("long");
+    expect(normalized.canvas.widgets.dateTime.settings.dateOrder).toBe("DMY");
+    expect(normalized.canvas.widgets.dateTime.settings.shortSeparator).toBe("dots");
+    expect(normalized.canvas.widgets.dateTime.settings.timezone).toBe("auto");
+    expect(normalized.canvas.widgets.dateTime.settings.hourColor).toBe("#f8fafc");
+  });
 });
 
 describe("buildSearchUrl", () => {
