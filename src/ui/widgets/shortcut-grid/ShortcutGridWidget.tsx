@@ -6,6 +6,7 @@ import type { DragSource } from "../../drag/dragModel";
 import { deriveShortcutGridWidgetModel } from "./shortcutPageModel";
 import { useShortcutGridMetrics } from "./useShortcutGridMetrics";
 import { ShortcutGrid } from "./ShortcutGrid";
+import { getWidgetSurfaceStyle } from "../widgetSurface";
 
 type CanvasMetrics = {
   cellWidth: number;
@@ -69,14 +70,25 @@ export function ShortcutGridWidget({
     settings.showLabels,
     activeShortcutPageIndex
   );
+  const iconSize = `${Math.max(18, Math.min(maxFittedIconSize, (86 * gridLayout.iconSize) / 100))}px`;
+  const labelFontSize = `${fittedLabelSize}px`;
+  const tileGap = `${fittedTileGap}px`;
   const layoutStyle = {
-    "--icon-size": `${Math.max(18, Math.min(maxFittedIconSize, (86 * gridLayout.iconSize) / 100))}px`,
+    "--icon-size": iconSize,
     "--grid-column-gap": `${(34 * gridLayout.columnSpacing) / 100}px`,
     "--grid-row-gap": `${(34 * gridLayout.lineSpacing) / 100}px`,
     "--grid-columns": `${gridLayout.columns}`,
     "--grid-rows": `${gridLayout.rows}`,
-    "--quick-link-label-font-size": `${fittedLabelSize}px`,
-    "--quick-link-tile-gap": `${fittedTileGap}px`
+    "--quick-link-label-font-size": labelFontSize,
+    "--quick-link-tile-gap": tileGap,
+    ...getWidgetSurfaceStyle(settings),
+    "--widget-padding": "18px 18px 8px",
+    "--widget-radius": "28px"
+  } as CSSProperties;
+  const dragOverlayStyle = {
+    "--icon-size": iconSize,
+    "--quick-link-label-font-size": labelFontSize,
+    "--quick-link-tile-gap": tileGap
   } as CSSProperties;
 
   useEffect(() => {
@@ -117,9 +129,10 @@ export function ShortcutGridWidget({
   }
 
   return (
-    <div className="shortcut-grid-widget" onWheel={handleShortcutWheel} style={layoutStyle}>
+    <div className="shortcut-grid-widget widget-surface" onWheel={handleShortcutWheel} style={layoutStyle}>
       <ShortcutGrid
         activeShortcutPageIndex={activeShortcutPageIndex}
+        dragOverlayStyle={dragOverlayStyle}
         dispatchDropAction={dispatchDropAction}
         gridRef={gridRef}
         outgoingDragSource={isCanvasEditMode ? null : outgoingDragSource}

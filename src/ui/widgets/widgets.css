@@ -1,5 +1,8 @@
 @import "./widget-frame.css";
+@import "./widget-surface.css";
 @import "./WidgetContextMenu.css";
 @import "./search/search-widget.css";
 @import "./shortcut-grid/shortcut-grid-widget.css";
 @import "./shortcut-grid/shortcuts/shortcut-tiles.css";
+@import "./weather/weather-widget.css";
+@import "./date-time/date-time-widget.css";

@@ -1,0 +1,13 @@
+.widget-surface {
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--widget-border-color, #ffffff) calc(var(--widget-border-opacity, 0) * 100%), transparent);
+  border-radius: var(--widget-radius, 24px);
+  background:
+    radial-gradient(circle at 18% 18%, rgba(125, 211, 252, var(--widget-bg-accent-opacity, 0)), transparent 34%),
+    linear-gradient(145deg, rgba(15, 23, 42, var(--widget-bg-opacity, 0)), rgba(30, 41, 59, calc(var(--widget-bg-opacity, 0) * 0.58)));
+  box-shadow:
+    0 18px 44px rgba(0, 0, 0, var(--widget-shadow-opacity, 0)),
+    inset 0 1px 0 color-mix(in srgb, var(--widget-border-color, #ffffff) calc(var(--widget-border-opacity, 0) * 100%), transparent);
+  padding: var(--widget-padding, 0);
+  backdrop-filter: blur(calc(var(--widget-bg-opacity, 0) * 36px)) saturate(1.2);
+}

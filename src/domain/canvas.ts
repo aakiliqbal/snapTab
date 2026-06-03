@@ -1,6 +1,6 @@
 import type { SearchProviderId, SearchVerticalId } from "./tabState";
 
-export type WidgetId = "search" | "shortcutGrid";
+export type WidgetId = "search" | "shortcutGrid" | "weather" | "dateTime";
 
 export type WidgetPlacement = {
   x: number;
@@ -41,6 +41,53 @@ export type ShortcutGridWidgetSettings = {
   visual: WidgetVisualSettings;
 };
 
+export type WeatherUnits = "celsius" | "fahrenheit";
+
+export type WeatherDisplayMode = "compact" | "standard" | "expanded";
+
+export type WeatherWidgetSettings = {
+  locationName: string;
+  latitude: number;
+  longitude: number;
+  units: WeatherUnits;
+  displayMode: WeatherDisplayMode;
+  showFeelsLike: boolean;
+  showHumidity: boolean;
+  showWind: boolean;
+  showPrecipitation: boolean;
+  refreshMinutes: number;
+  visual: WidgetVisualSettings;
+};
+
+export type DateTimeClockMode = "digital" | "percentageComplete" | "verticalClock";
+
+export type DateTimeFormat = "twentyFourHour" | "twelveHour";
+
+export type DateTimeDateMode = "hidden" | "long" | "short";
+
+export type DateTimeDateOrder = "DMY" | "MDY" | "YMD";
+
+export type DateTimeShortSeparator = "dash" | "dots" | "gaps" | "slashes";
+
+export type DateTimeWidgetSettings = {
+  clockMode: DateTimeClockMode;
+  timeFormat: DateTimeFormat;
+  showSeconds: boolean;
+  padHour: boolean;
+  dateMode: DateTimeDateMode;
+  dateOrder: DateTimeDateOrder;
+  shortSeparator: DateTimeShortSeparator;
+  showWeekday: boolean;
+  showOrdinalDay: boolean;
+  showWeekNumber: boolean;
+  padDate: boolean;
+  timezone: "auto" | string;
+  hourColor: string;
+  minuteColor: string;
+  secondColor: string;
+  visual: WidgetVisualSettings;
+};
+
 export type WidgetState<TSettings> = {
   enabled: boolean;
   placement: WidgetPlacement;
@@ -50,6 +97,8 @@ export type WidgetState<TSettings> = {
 export type CanvasWidgets = {
   search: WidgetState<SearchWidgetSettings>;
   shortcutGrid: WidgetState<ShortcutGridWidgetSettings>;
+  weather: WidgetState<WeatherWidgetSettings>;
+  dateTime: WidgetState<DateTimeWidgetSettings>;
 };
 
 export type CanvasState = {
@@ -68,6 +117,8 @@ const widgetGap = 2;
 const canvasBottomMargin = 1;
 const defaultSearchSize = { width: 11, height: 1 };
 const defaultShortcutGridSize = { width: 13, height: 7 };
+const defaultWeatherSize = { width: 5, height: 3 };
+const defaultDateTimeSize = { width: 7, height: 3 };
 
 export const defaultWidgetVisualSettings: WidgetVisualSettings = {
   showBackground: false,
@@ -108,6 +159,57 @@ export const defaultCanvasState: CanvasState = {
         showPageDots: true,
         visual: defaultWidgetVisualSettings
       }
+    },
+    weather: {
+      enabled: true,
+      placement: deriveDefaultWidgetPlacements(fallbackCanvasGrid).weather,
+      settings: {
+        locationName: "London",
+        latitude: 51.5072,
+        longitude: -0.1276,
+        units: "celsius",
+        displayMode: "expanded",
+        showFeelsLike: true,
+        showHumidity: true,
+        showWind: true,
+        showPrecipitation: true,
+        refreshMinutes: 10,
+        visual: {
+          ...defaultWidgetVisualSettings,
+          showBackground: true,
+          backgroundOpacity: 26,
+          radius: 22,
+          padding: 12
+        }
+      }
+    },
+    dateTime: {
+      enabled: true,
+      placement: deriveDefaultWidgetPlacements(fallbackCanvasGrid).dateTime,
+      settings: {
+        clockMode: "verticalClock",
+        timeFormat: "twentyFourHour",
+        showSeconds: true,
+        padHour: true,
+        dateMode: "long",
+        dateOrder: "DMY",
+        shortSeparator: "dots",
+        showWeekday: true,
+        showOrdinalDay: true,
+        showWeekNumber: false,
+        padDate: true,
+        timezone: "auto",
+        hourColor: "#f8fafc",
+        minuteColor: "#7dd3fc",
+        secondColor: "#fde68a",
+        visual: {
+          ...defaultWidgetVisualSettings,
+          showBackground: true,
+          backgroundOpacity: 26,
+          radius: 24,
+          padding: 14
+        }
+      }
     }
   }
 };
@@ -135,6 +237,10 @@ export function deriveDefaultWidgetPlacements(grid: CanvasGrid): Record<WidgetId
   const shortcutGridWidth = Math.min(defaultShortcutGridSize.width, grid.columns);
   const availableShortcutGridHeight = Math.max(1, grid.rows - shortcutGridY - canvasBottomMargin);
   const shortcutGridHeight = Math.min(defaultShortcutGridSize.height, availableShortcutGridHeight);
+  const weatherWidth = Math.min(defaultWeatherSize.width, grid.columns);
+  const weatherHeight = Math.min(defaultWeatherSize.height, grid.rows);
+  const dateTimeWidth = Math.min(defaultDateTimeSize.width, grid.columns);
+  const dateTimeHeight = Math.min(defaultDateTimeSize.height, grid.rows);
 
   return {
     search: searchPlacement,
@@ -145,6 +251,26 @@ export function deriveDefaultWidgetPlacements(grid: CanvasGrid): Record<WidgetId
         width: shortcutGridWidth,
         height: shortcutGridHeight,
         zIndex: 5
+      },
+      grid
+    ),
+    weather: clampPlacementToCanvas(
+      {
+        x: 0,
+        y: Math.max(0, grid.rows - weatherHeight),
+        width: weatherWidth,
+        height: weatherHeight,
+        zIndex: 8
+      },
+      grid
+    ),
+    dateTime: clampPlacementToCanvas(
+      {
+        x: 0,
+        y: 0,
+        width: dateTimeWidth,
+        height: dateTimeHeight,
+        zIndex: 8
       },
       grid
     )
@@ -267,6 +393,15 @@ function isKnownDefaultWidgetPlacement(widgetId: WidgetId, placement: WidgetPlac
       { x: 7, y: 5, width: 13, height: 7, zIndex: 5 },
       { x: 4, y: 6, width: 26, height: 10, zIndex: 5 },
       { x: 12.5, y: 5.5, width: 9, height: 8, zIndex: 5 }
+    ],
+    weather: [
+      fallbackDefaults.weather,
+      { x: 29, y: 0, width: 5, height: 2, zIndex: 8 },
+      { x: 0, y: 16, width: 5, height: 3, zIndex: 8 }
+    ],
+    dateTime: [
+      fallbackDefaults.dateTime,
+      { x: 0, y: 0, width: 7, height: 3, zIndex: 8 }
     ]
   };
 

@@ -1,7 +1,8 @@
-import type { FormEvent, MouseEvent } from "react";
+import type { CSSProperties, FormEvent, MouseEvent } from "react";
 import { brandIcons, type BrandIcon } from "../../../domain/brandIcons";
 import { buildSearchUrl, searchVerticals, type SearchProviderId, type SearchVerticalId } from "../../../domain/tabState";
 import type { SearchWidgetSettings } from "../../../domain/canvas";
+import { getWidgetSurfaceStyle } from "../widgetSurface";
 
 type SearchWidgetProps = {
   activeProvider: { label: string };
@@ -24,6 +25,8 @@ const providerMarks: Record<SearchProviderId, ProviderMark> = {
 };
 
 export function SearchWidget({ activeProvider, changeSearchVertical, query, setQuery, settings }: SearchWidgetProps) {
+  const surfaceStyle = getSearchSurfaceStyle(settings);
+
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -41,7 +44,7 @@ export function SearchWidget({ activeProvider, changeSearchVertical, query, setQ
   }
 
   return (
-    <section className="search-panel">
+    <section className="search-panel widget-surface" style={surfaceStyle}>
       {settings.showProviderTabs ? (
         <div className="search-tabs" role="tablist" aria-label={`${activeProvider.label} search category`}>
           {Object.entries(searchVerticals).map(([id, vertical]) => (
@@ -71,6 +74,14 @@ export function SearchWidget({ activeProvider, changeSearchVertical, query, setQ
       </form>
     </section>
   );
+}
+
+function getSearchSurfaceStyle(settings: SearchWidgetSettings) {
+  return {
+    ...getWidgetSurfaceStyle(settings),
+    "--widget-padding": "clamp(10px, 3%, 16px)",
+    "--widget-radius": "28px"
+  } as CSSProperties;
 }
 
 function ProviderBrandMark({ providerId, providerLabel }: { providerId: SearchProviderId; providerLabel: string }) {
