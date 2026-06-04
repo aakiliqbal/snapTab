@@ -225,6 +225,65 @@ test("Search Widget edit frame wraps tabs and search bar", async ({ page }) => {
   expect(frameBox!.y + frameBox!.height).toBeGreaterThanOrEqual(searchBoxBox!.y + searchBoxBox!.height - 1);
 });
 
+test("Weather and Date & Time typography scale with widget size", async ({ page }) => {
+  await page.route("https://api.open-meteo.com/**", (route) =>
+    route.fulfill({
+      json: {
+        current: {
+          apparent_temperature: 22,
+          is_day: 1,
+          precipitation: 0,
+          relative_humidity_2m: 50,
+          temperature_2m: 21,
+          weather_code: 0,
+          wind_direction_10m: 90,
+          wind_speed_10m: 5
+        },
+        current_units: {
+          precipitation: "mm",
+          temperature_2m: "°C",
+          wind_speed_10m: "km/h"
+        }
+      }
+    })
+  );
+  await page.goto("/newtab.html");
+
+  async function measureWidgets(size: { weatherWidth: number; weatherHeight: number; clockWidth: number; clockHeight: number }) {
+    await page.evaluate((nextState) => {
+      window.localStorage.setItem("snapTabState", JSON.stringify({ state: nextState, version: 2 }));
+    }, buildResponsiveWidgetState(size));
+    await page.goto("/newtab.html");
+    await page.waitForSelector(".weather-temp-group strong");
+    await page.waitForSelector(".date-time-vertical strong");
+
+    return page.evaluate(() => {
+      const weatherTemperature = document.querySelector(".weather-temp-group strong");
+      const weatherIcon = document.querySelector(".weather-icon");
+      const clockDigit = document.querySelector(".date-time-vertical strong");
+      if (!weatherTemperature || !weatherIcon || !clockDigit) {
+        throw new Error("Responsive widgets did not render.");
+      }
+
+      return {
+        clockFont: parseFloat(window.getComputedStyle(clockDigit).fontSize),
+        clockDigitHeadroom: clockDigit.clientWidth - clockDigit.scrollWidth,
+        weatherFont: parseFloat(window.getComputedStyle(weatherTemperature).fontSize),
+        weatherIconWidth: weatherIcon.getBoundingClientRect().width
+      };
+    });
+  }
+
+  const small = await measureWidgets({ weatherWidth: 4, weatherHeight: 3, clockWidth: 4, clockHeight: 2 });
+  const large = await measureWidgets({ weatherWidth: 10, weatherHeight: 7, clockWidth: 12, clockHeight: 5 });
+
+  expect(small.weatherIconWidth).toBeGreaterThanOrEqual(40);
+  expect(large.weatherIconWidth).toBeGreaterThan(small.weatherIconWidth + 30);
+  expect(large.weatherFont).toBeGreaterThan(small.weatherFont + 20);
+  expect(large.clockFont).toBeGreaterThan(small.clockFont + 20);
+  expect(large.clockDigitHeadroom).toBeGreaterThanOrEqual(0);
+});
+
 test("settings drawer renders backup controls", async ({ page }) => {
   await page.goto("/newtab.html");
   await page.getByRole("button", { name: "Open settings menu" }).click();
@@ -250,3 +309,73 @@ test("wallpaper upload accepts a GIF and renders it", async ({ page }) => {
   await expect(page.getByText("Wallpaper saved.")).toBeVisible();
   await expect(page.locator(".wallpaper-media")).toBeVisible();
 });
+
+function buildResponsiveWidgetState(size: { weatherWidth: number; weatherHeight: number; clockWidth: number; clockHeight: number }) {
+  return {
+    schemaVersion: 2,
+    canvas: {
+      targetCellSize: 56,
+      widgets: {
+        search: {
+          enabled: false,
+          placement: { x: 0, y: 0, width: 1, height: 1, zIndex: 1 }
+        },
+        shortcutGrid: {
+          enabled: false,
+          placement: { x: 0, y: 0, width: 1, height: 1, zIndex: 1 }
+        },
+        weather: {
+          enabled: true,
+          placement: { x: 1, y: 1, width: size.weatherWidth, height: size.weatherHeight, zIndex: 5 },
+          settings: {
+            displayMode: "expanded",
+            latitude: 51.5072,
+            locationName: "London",
+            longitude: -0.1276,
+            refreshMinutes: 10,
+            showFeelsLike: true,
+            showHumidity: true,
+            showPrecipitation: true,
+            showWind: true,
+            units: "celsius"
+          }
+        },
+        dateTime: {
+          enabled: true,
+          placement: { x: 14, y: 1, width: size.clockWidth, height: size.clockHeight, zIndex: 6 },
+          settings: {
+            clockMode: "verticalClock",
+            dateMode: "long",
+            dateOrder: "DMY",
+            hourColor: "#f8fafc",
+            minuteColor: "#7dd3fc",
+            padDate: true,
+            padHour: true,
+            secondColor: "#fde68a",
+            shortSeparator: "dots",
+            showOrdinalDay: true,
+            showSeconds: true,
+            showWeekNumber: false,
+            showWeekday: true,
+            timeFormat: "twentyFourHour",
+            timezone: "auto"
+          }
+        }
+      }
+    },
+    layout: {
+      gridLayout: {
+        columnSpacing: 100,
+        columns: 6,
+        iconSize: 100,
+        lineSpacing: 100,
+        mode: "preset",
+        presetId: "2x6",
+        rows: 2
+      }
+    },
+    pages: [{ id: "page-1", tileIds: [] }],
+    tiles: {},
+    wallpaper: { type: "none", value: null, mediaId: null, dim: 40, blur: 0 }
+  };
+}

@@ -32,7 +32,8 @@ export function PopupApp() {
       })
     )
   );
-  const replaceState = useTabStore((state) => state.replaceState);
+  const hasHydrated = useTabStore((state) => state.hasHydrated);
+  const updateState = useTabStore((state) => state.updateState);
   const popupThemeId = usePopupThemeId(tabState.themeId);
   const theme = getThemePreset(popupThemeId);
   const { draft, message, setDraft, setMessage } = useCurrentTabShortcutDraft();
@@ -66,7 +67,12 @@ export function PopupApp() {
       return;
     }
 
-    replaceState(upsertShortcut(tabState, shortcut, draft));
+    if (!hasHydrated) {
+      setMessage("SnapTab is still loading. Try again in a moment.");
+      return;
+    }
+
+    updateState((state) => upsertShortcut(state, shortcut, draft));
     setMessage("Saved to SnapTab.");
     window.setTimeout(() => window.close(), 550);
   }
@@ -88,7 +94,7 @@ export function PopupApp() {
           onChangeDraft={setDraft}
           onSave={saveShortcut}
           onUploadIcon={(file) => void uploadShortcutIcon(file)}
-          saveLabel="Add"
+          saveLabel={hasHydrated ? "Add" : "Loading..."}
         />
       </section>
     </main>

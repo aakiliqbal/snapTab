@@ -59,11 +59,21 @@ type OpenMeteoForecastResponse = {
 };
 
 const cache = new Map<string, WeatherSnapshot>();
+const locationCache = new Map<string, WeatherLocationResult>();
+const persistentWeatherCacheKey = "snapTabWeatherCache";
+const persistentLocationCacheKey = "snapTabWeatherLocationCache";
 
 export async function resolveWeatherLocation(query: string, signal?: AbortSignal): Promise<WeatherLocationResult> {
   const trimmedQuery = query.trim();
   if (!trimmedQuery) {
     throw new Error("Enter a location.");
+  }
+
+  const cacheKey = trimmedQuery.toLocaleLowerCase();
+  const cached = locationCache.get(cacheKey) ?? (await readPersistentCache<WeatherLocationResult>(persistentLocationCacheKey))[cacheKey];
+  if (cached) {
+    locationCache.set(cacheKey, cached);
+    return cached;
   }
 
   const params = new URLSearchParams({ name: trimmedQuery, count: "1", language: "en", format: "json" });
@@ -78,18 +88,31 @@ export async function resolveWeatherLocation(query: string, signal?: AbortSignal
     throw new Error("Location not found.");
   }
 
-  return {
+  const location = {
     name: [result.name, result.admin1, result.country].filter(Boolean).join(", "),
     latitude: result.latitude,
     longitude: result.longitude
   };
+
+  locationCache.set(cacheKey, location);
+  await writePersistentCache(persistentLocationCacheKey, cacheKey, location);
+  return location;
 }
 
 export async function fetchWeatherSnapshot(settings: WeatherWidgetSettings, signal?: AbortSignal): Promise<WeatherSnapshot> {
   const cacheKey = `${settings.latitude.toFixed(3)}:${settings.longitude.toFixed(3)}:${settings.units}`;
   const cached = cache.get(cacheKey);
   if (cached && Date.now() - cached.fetchedAt < settings.refreshMinutes * 60_000) {
-    return cached;
+    return withCurrentLocationName(cached, settings.locationName);
+  }
+
+  const persistentCache = await readPersistentCache<WeatherSnapshot>(persistentWeatherCacheKey);
+  const persistentSnapshot = persistentCache[cacheKey];
+  if (persistentSnapshot) {
+    cache.set(cacheKey, persistentSnapshot);
+    if (Date.now() - persistentSnapshot.fetchedAt < settings.refreshMinutes * 60_000) {
+      return withCurrentLocationName(persistentSnapshot, settings.locationName);
+    }
   }
 
   const params = new URLSearchParams({
@@ -112,14 +135,23 @@ export async function fetchWeatherSnapshot(settings: WeatherWidgetSettings, sign
     params.set("temperature_unit", "fahrenheit");
   }
 
-  const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`, { signal });
-  if (!response.ok) {
-    throw new Error("Weather fetch failed.");
-  }
+  let data: OpenMeteoForecastResponse;
+  try {
+    const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`, { signal });
+    if (!response.ok) {
+      throw new Error("Weather fetch failed.");
+    }
 
-  const data = (await response.json()) as OpenMeteoForecastResponse;
-  if (!data.current) {
-    throw new Error("Weather data unavailable.");
+    data = (await response.json()) as OpenMeteoForecastResponse;
+    if (!data.current) {
+      throw new Error("Weather data unavailable.");
+    }
+  } catch (error) {
+    if (persistentSnapshot && !signal?.aborted) {
+      return withCurrentLocationName(persistentSnapshot, settings.locationName);
+    }
+
+    throw error;
   }
 
   const snapshot: WeatherSnapshot = {
@@ -141,7 +173,46 @@ export async function fetchWeatherSnapshot(settings: WeatherWidgetSettings, sign
   };
 
   cache.set(cacheKey, snapshot);
+  await writePersistentCache(persistentWeatherCacheKey, cacheKey, snapshot);
   return snapshot;
+}
+
+function withCurrentLocationName(snapshot: WeatherSnapshot, locationName: string): WeatherSnapshot {
+  return snapshot.locationName === locationName ? snapshot : { ...snapshot, locationName };
+}
+
+async function readPersistentCache<T>(key: string): Promise<Record<string, T>> {
+  const chromeLocal = typeof chrome !== "undefined" ? chrome.storage?.local : undefined;
+  if (chromeLocal) {
+    return new Promise((resolve) => {
+      chromeLocal.get([key], (items) => {
+        resolve(isRecord(items[key]) ? (items[key] as Record<string, T>) : {});
+      });
+    });
+  }
+
+  try {
+    const value = window.localStorage.getItem(key);
+    const parsed = value ? (JSON.parse(value) as unknown) : null;
+    return isRecord(parsed) ? (parsed as Record<string, T>) : {};
+  } catch {
+    return {};
+  }
+}
+
+async function writePersistentCache<T>(key: string, cacheKey: string, value: T) {
+  const nextCache = { ...(await readPersistentCache<T>(key)), [cacheKey]: value };
+  const chromeLocal = typeof chrome !== "undefined" ? chrome.storage?.local : undefined;
+  if (chromeLocal) {
+    await new Promise<void>((resolve) => chromeLocal.set({ [key]: nextCache }, () => resolve()));
+    return;
+  }
+
+  window.localStorage.setItem(key, JSON.stringify(nextCache));
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }
 
 export function describeWeatherCode(code: number): WeatherCondition {

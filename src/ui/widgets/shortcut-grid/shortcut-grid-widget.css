@@ -22,13 +22,17 @@
 
 .shortcut-grid-widget .quick-link-grid {
   width: 100%;
-  height: calc(100% - 56px);
+  height: calc(100% - var(--shortcut-footer-height, 56px));
   max-height: none;
   padding-top: 18px;
 }
 
 .shortcut-grid-widget .shortcut-page-footer {
-  min-height: 56px;
+  min-height: var(--shortcut-footer-height, 56px);
+}
+
+.shortcut-grid-widget.no-page-dots .shortcut-page-footer {
+  align-items: start;
 }
 
 .shortcut-page-footer {

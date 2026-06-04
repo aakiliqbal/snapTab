@@ -19,6 +19,11 @@ type ChromeTabs = {
   remove?: (tabId: number, callback?: () => void) => void;
 };
 
+type ChromeStorageChangeEvent = {
+  addListener: (callback: (changes: Record<string, unknown>, areaName: string) => void) => void;
+  removeListener: (callback: (changes: Record<string, unknown>, areaName: string) => void) => void;
+};
+
 declare const chrome:
   | {
       runtime?: {
@@ -28,6 +33,7 @@ declare const chrome:
       };
       storage?: {
         local?: ChromeStorageArea;
+        onChanged?: ChromeStorageChangeEvent;
       };
       tabs?: ChromeTabs;
     }

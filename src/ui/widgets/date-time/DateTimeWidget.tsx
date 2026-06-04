@@ -46,8 +46,8 @@ function ClockView({
     const percent = getDayPercent(now);
     return (
       <div className="date-time-percentage" aria-label={`${percent}% of today complete`}>
-        <strong>{percent}%</strong>
-        <span>day complete</span>
+        <strong style={{ color: settings.hourColor }}>{percent}%</strong>
+        <span><span style={{ color: settings.minuteColor }}>day</span> <span style={{ color: settings.secondColor }}>complete</span></span>
       </div>
     );
   }
@@ -66,7 +66,15 @@ function ClockView({
   return (
     <div className="date-time-digital" aria-label={timeParts.accessibleLabel}>
       <strong>
-        {timeParts.hour}<span>:</span>{timeParts.minute}{settings.showSeconds ? <><span>:</span>{timeParts.second}</> : null}
+        <span className="date-time-part" style={{ color: settings.hourColor }}>{timeParts.hour}</span>
+        <span>:</span>
+        <span className="date-time-part" style={{ color: settings.minuteColor }}>{timeParts.minute}</span>
+        {settings.showSeconds ? (
+          <>
+            <span>:</span>
+            <span className="date-time-part" style={{ color: settings.secondColor }}>{timeParts.second}</span>
+          </>
+        ) : null}
       </strong>
       {timeParts.period ? <span>{timeParts.period}</span> : null}
     </div>

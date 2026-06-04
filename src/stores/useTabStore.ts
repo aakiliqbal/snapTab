@@ -18,7 +18,9 @@ const storageKey = "snapTabState";
 const legacyStorageKey = ["in", "fi", "TabState"].join("");
 
 type TabStoreState = TabState & {
+  hasHydrated: boolean;
   replaceState: (state: TabState) => void;
+  setHasHydrated: (hasHydrated: boolean) => void;
   updateState: (update: (state: TabState) => TabState) => TabState;
   setLayout: <K extends keyof LayoutSettings>(key: K, value: LayoutSettings[K]) => void;
   setSearchProvider: (providerId: SearchProviderId) => void;
@@ -30,9 +32,14 @@ export const useTabStore = create<TabStoreState>()(
   persist(
     immer((set) => ({
       ...defaultTabState,
+      hasHydrated: false,
       replaceState: (state) =>
         set((draft) => {
           Object.assign(draft, normalizeTabState(state));
+        }),
+      setHasHydrated: (hasHydrated) =>
+        set((draft) => {
+          draft.hasHydrated = hasHydrated;
         }),
       updateState: (update) => {
         const nextState = update(stripActions(useTabStore.getState()));
@@ -71,6 +78,9 @@ export const useTabStore = create<TabStoreState>()(
         ...currentState,
         ...normalizeTabState(toRecord(persistedState))
       }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
       migrate: (persistedState, version) =>
         version === 1
           ? migrateLegacyTabState(persistedState as Partial<LegacyTabState>)
@@ -78,6 +88,28 @@ export const useTabStore = create<TabStoreState>()(
     }
   )
 );
+
+export function subscribeToExternalTabStateChanges() {
+  const chromeStorage = typeof chrome !== "undefined" ? chrome.storage : undefined;
+  const handleChromeStorageChange = (changes: Record<string, unknown>, areaName: string) => {
+    if (areaName === "local" && changes[storageKey]) {
+      void useTabStore.persist.rehydrate();
+    }
+  };
+  const handleLocalStorageChange = (event: StorageEvent) => {
+    if (event.key === storageKey) {
+      void useTabStore.persist.rehydrate();
+    }
+  };
+
+  chromeStorage?.onChanged?.addListener(handleChromeStorageChange);
+  window.addEventListener("storage", handleLocalStorageChange);
+
+  return () => {
+    chromeStorage?.onChanged?.removeListener(handleChromeStorageChange);
+    window.removeEventListener("storage", handleLocalStorageChange);
+  };
+}
 
 function stripActions(state: TabStoreState): TabState {
   return {

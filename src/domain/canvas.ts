@@ -117,7 +117,7 @@ const widgetGap = 2;
 const canvasBottomMargin = 1;
 const defaultSearchSize = { width: 11, height: 1 };
 const defaultShortcutGridSize = { width: 13, height: 7 };
-const defaultWeatherSize = { width: 5, height: 3 };
+const defaultWeatherSize = { width: 7, height: 4 };
 const defaultDateTimeSize = { width: 7, height: 3 };
 
 export const defaultWidgetVisualSettings: WidgetVisualSettings = {

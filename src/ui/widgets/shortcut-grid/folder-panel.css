@@ -5,7 +5,7 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background: var(--theme-folder-backdrop-bg, rgba(7, 12, 13, 0.68));
+  background: var(--theme-folder-backdrop-bg, rgba(2, 6, 23, 0.76));
 }
 
 .folder-backdrop.folder-drop-target {
@@ -40,10 +40,10 @@
   max-height: min(640px, calc(100vh - 48px));
   grid-template-rows: auto 1fr;
   border-radius: 8px;
-  background: var(--theme-folder-panel-bg, rgba(255, 255, 255, 0.78));
+  background: color-mix(in srgb, var(--theme-folder-panel-bg, rgba(15, 23, 42, 0.82)) 34%, rgba(2, 6, 23, 0.86));
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
   overflow: hidden;
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(18px) saturate(1.2);
 }
 
 .folder-header {

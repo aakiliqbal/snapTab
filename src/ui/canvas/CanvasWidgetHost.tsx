@@ -31,9 +31,11 @@ export type CanvasWidgetController = {
   changeSearchWidgetSetting: <K extends keyof SearchWidgetSettings>(key: K, value: SearchWidgetSettings[K]) => void;
   changeShortcutGridWidgetSetting: <K extends keyof ShortcutGridWidgetSettings>(
     key: K,
-    value: ShortcutGridWidgetSettings[K]
+    value: ShortcutGridWidgetSettings[K],
+    grid?: CanvasGrid & { cellWidth: number; cellHeight: number }
   ) => void;
   changeWeatherWidgetSetting: <K extends keyof WeatherWidgetSettings>(key: K, value: WeatherWidgetSettings[K]) => void;
+  changeWeatherWidgetSettings: (settings: Partial<WeatherWidgetSettings>) => void;
   dispatchDropAction: (action: DropAction) => void;
   gridRef: RefObject<HTMLElement | null>;
   hasOverlayOpen: boolean;
@@ -204,8 +206,9 @@ export function CanvasWidgetHost({
       {contextMenu ? (
         <WidgetContextMenu
           changeSearchWidgetSetting={controller.changeSearchWidgetSetting}
-          changeShortcutGridWidgetSetting={controller.changeShortcutGridWidgetSetting}
+          changeShortcutGridWidgetSetting={(key, value) => controller.changeShortcutGridWidgetSetting(key, value, canvasMetrics)}
           changeWeatherWidgetSetting={controller.changeWeatherWidgetSetting}
+          changeWeatherWidgetSettings={controller.changeWeatherWidgetSettings}
           changeDateTimeWidgetSetting={controller.changeDateTimeWidgetSetting}
           close={() => setContextMenu(null)}
           menu={contextMenu}

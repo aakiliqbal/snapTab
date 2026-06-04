@@ -18,6 +18,7 @@ type WidgetContextMenuProps = {
     value: ShortcutGridWidgetSettings[K]
   ) => void;
   changeWeatherWidgetSetting: <K extends keyof WeatherWidgetSettings>(key: K, value: WeatherWidgetSettings[K]) => void;
+  changeWeatherWidgetSettings: (settings: Partial<WeatherWidgetSettings>) => void;
   close: () => void;
   menu: ContextMenuState;
   setWidgetEnabled: (widgetId: WidgetId, enabled: boolean) => void;
@@ -31,6 +32,7 @@ export function WidgetContextMenu({
   changeSearchWidgetSetting,
   changeShortcutGridWidgetSetting,
   changeWeatherWidgetSetting,
+  changeWeatherWidgetSettings,
   close,
   menu,
   setWidgetEnabled,
@@ -114,6 +116,7 @@ export function WidgetContextMenu({
         ) : (
           <WeatherWidgetContextMenu
             changeWeatherWidgetSetting={changeWeatherWidgetSetting}
+            changeWeatherWidgetSettings={changeWeatherWidgetSettings}
             setEnabled={(enabled) => setWidgetEnabled("weather", enabled)}
             weatherWidget={weatherWidget}
           />

@@ -71,6 +71,34 @@ export function DateTimeWidgetContextMenu({
         />
       </label>
 
+      <div className="date-time-color-row" role="group" aria-label="Clock colours">
+        <span>Colours</span>
+        <label>
+          <span>Hour</span>
+          <input
+            value={settings.hourColor}
+            onChange={(event) => changeDateTimeWidgetSetting("hourColor", event.target.value)}
+            type="color"
+          />
+        </label>
+        <label>
+          <span>Minute</span>
+          <input
+            value={settings.minuteColor}
+            onChange={(event) => changeDateTimeWidgetSetting("minuteColor", event.target.value)}
+            type="color"
+          />
+        </label>
+        <label>
+          <span>Second</span>
+          <input
+            value={settings.secondColor}
+            onChange={(event) => changeDateTimeWidgetSetting("secondColor", event.target.value)}
+            type="color"
+          />
+        </label>
+      </div>
+
       <label>
         <span>Date mode</span>
         <select

@@ -47,12 +47,13 @@ function deriveShortcutGridLayoutFromWidget({
   const shortcutWidgetWidth = widgetPlacement.width * canvasMetrics.cellWidth;
   const shortcutWidgetHeight = widgetPlacement.height * canvasMetrics.cellHeight;
   const shortcutIconScale = settings.iconSize / 100;
+  const footerHeight = settings.showPageDots ? 56 : 18;
   const estimatedTileWidth = Math.max(84, 86 * shortcutIconScale + 30);
   const estimatedTileHeight = Math.max(84, 86 * shortcutIconScale + (settings.showLabels ? 42 : 18));
 
   return {
     ...tabState.layout.gridLayout,
-    rows: Math.max(1, Math.floor((shortcutWidgetHeight - 56) / estimatedTileHeight)),
+    rows: Math.max(1, Math.floor((shortcutWidgetHeight - footerHeight) / estimatedTileHeight)),
     columns: Math.max(1, Math.floor(shortcutWidgetWidth / estimatedTileWidth)),
     iconSize: settings.iconSize,
     columnSpacing: settings.columnSpacing,

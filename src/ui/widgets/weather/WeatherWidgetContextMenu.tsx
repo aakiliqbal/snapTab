@@ -5,12 +5,14 @@ import { resolveWeatherLocation } from "./weatherService";
 
 type WeatherWidgetContextMenuProps = {
   changeWeatherWidgetSetting: <K extends keyof WeatherWidgetSettings>(key: K, value: WeatherWidgetSettings[K]) => void;
+  changeWeatherWidgetSettings: (settings: Partial<WeatherWidgetSettings>) => void;
   setEnabled: (enabled: boolean) => void;
   weatherWidget: WidgetState<WeatherWidgetSettings>;
 };
 
 export function WeatherWidgetContextMenu({
   changeWeatherWidgetSetting,
+  changeWeatherWidgetSettings,
   setEnabled,
   weatherWidget
 }: WeatherWidgetContextMenuProps) {
@@ -27,9 +29,11 @@ export function WeatherWidgetContextMenu({
 
     try {
       const result = await resolveWeatherLocation(locationDraft);
-      changeWeatherWidgetSetting("locationName", result.name);
-      changeWeatherWidgetSetting("latitude", result.latitude);
-      changeWeatherWidgetSetting("longitude", result.longitude);
+      changeWeatherWidgetSettings({
+        locationName: result.name,
+        latitude: result.latitude,
+        longitude: result.longitude
+      });
       setLocationDraft(result.name);
       setLocationStatus("Location updated");
     } catch (error) {
