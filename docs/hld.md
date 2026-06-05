@@ -6,17 +6,19 @@ SnapTab is a local-first Chrome Manifest V3 new-tab extension. Product shape con
 
 - Fixed full-viewport new tab page
 - Toolbar popup to add the current site
-- Canvas with movable/resizable Search and Shortcut Grid Widgets
+- Canvas with movable/resizable Search, Shortcut Grid, Weather, Date & Time, and Snap Feed Widgets
 - Paged shortcut grid with folders inside the Shortcut Grid Widget
 - Wallpaper layer (image/GIF)
 - Right-side settings drawer
 - JSON backup import/export
+- OPML import/export for Snap Feed subscriptions
 
 ## Architecture Layers
 
 ```
 Chrome Extension
   └─ public/manifest.json          # MV3 extension manifest
+      ├─ public/background.js       # RSS/Atom feed fetch worker
       ├─ src/main.tsx           # New Tab Surface React entry point
       │   └─ src/ui/app/App.tsx # New Tab Surface root component
       │       ├─ app/useNewTabController() # Transient UI state and store actions
@@ -25,6 +27,9 @@ Chrome Extension
       │       ├─ widgets/WidgetFrame       # Common Widget move/resize frame
       │       ├─ widgets/search/*          # Search Widget rendering and settings menu section
       │       ├─ widgets/shortcut-grid/*   # Shortcut Grid Widget, Shortcut Pages, folders, native drag, tile/icon UI
+      │       ├─ widgets/weather/*         # Weather Widget rendering, service, settings, and styles
+      │       ├─ widgets/date-time/*       # Date & Time Widget rendering, settings, and styles
+      │       ├─ widgets/rss/*             # Snap Feed Widget rendering, feed service, OPML controls, and styles
       │       ├─ settings/*                # Settings Drawer and settings sections
       │       ├─ modals/*                  # Shortcut and Folder edit overlays
       │       └─ shortcut-editor/*         # Shared Shortcut editor form
@@ -37,7 +42,8 @@ Domain Layer (src/domain/)
   ├─ drafts.ts          # Shortcut/Folder edit command drafts
   ├─ tabOperations.ts  # Resolved view models
   ├─ dropActions.ts   # DnD domain logic
-  └─ backup.ts      # Import/export
+  ├─ backup.ts      # JSON Backup import/export
+  └─ rss.ts         # OPML parsing, RSS/Atom parsing, Feed Item normalization
 
 Infrastructure Layer (src/infrastructure/)
   └─ fileData.ts    # Browser File API
@@ -55,6 +61,8 @@ Store Layer (src/stores/)
 | Drag Source / Drop Target to Drop Action | `createDropAction()` UI Adapter | `src/ui/drag/dropActionAdapter.ts`, `src/domain/dropActions.ts` |
 | Shortcut editing | `ShortcutDraft` and shared editor form | `src/domain/drafts.ts`, `src/ui/shortcut-editor/ShortcutForm.tsx` |
 | Persistence | Zustand persisted `TabState` | `src/stores/useTabStore.ts` with Chrome/localStorage fallback |
+| RSS/Atom fetch | Feed URL to XML text | New Tab Surface sends a runtime message to `public/background.js`; service worker fetches with manifest host permissions |
+| OPML import/export | Feed Source list | `src/domain/rss.ts`, `src/ui/widgets/rss/RssWidgetContextMenu.tsx` |
 
 ## State Model
 
@@ -102,7 +110,8 @@ Persisted `pages[].tileIds` is top-level order. The visible Shortcut Pages are d
 5. **One store**: All persisted state in Zustand + immer store
 6. **Local-first**: No backend, chrome.storage.local persistence
 7. **Canvas bounds**: Widgets persist freeform Canvas-relative placement and enabled Widgets cannot overlap
-8. **Widget ownership**: Search settings belong to Search Widget; Shortcut Grid settings belong to Shortcut Grid Widget
+8. **Widget ownership**: Each Widget owns rendering and settings; Canvas owns Widget placement, enabled state, and context menu mounting
+9. **Feed config separation**: Snap Feed persists Feed Sources only; fetched Feed Items and cache metadata remain runtime/cache data
 
 ## Product Surfaces
 
@@ -112,6 +121,9 @@ Persisted `pages[].tileIds` is top-level order. The visible Shortcut Pages are d
 | Canvas | Fixed full-viewport workspace containing Widgets |
 | Search Widget | Search input and provider controls |
 | Shortcut Grid Widget | Shortcut Pages, Top-Level Tiles, and tile drag/drop |
+| Weather Widget | Cached weather snapshot and weather settings |
+| Date & Time Widget | Clock/date display with formatting and per-part colors |
+| Snap Feed Widget | RSS/Atom Feed Sources, fetched Feed Items, OPML import/export, and feed checks |
 | Toolbar Popup | Add current active website as a Shortcut |
 | Shortcut Grid | Paged top-level tile grid |
 | Settings Drawer | Right-side settings |
@@ -132,6 +144,7 @@ Persisted `pages[].tileIds` is top-level order. The visible Shortcut Pages are d
 | Persistence | Zustand persist to chrome.storage.local | localStorage fallback in dev |
 | Animation | Motion (Framer Motion) | Reduced motion support |
 | Icons | Lucide + Simple Icons | Brand matching |
+| RSS fetch | MV3 background service worker | Host permissions apply to feeds that block browser CORS |
 
 ## Reference Extension Learnings
 
@@ -155,6 +168,7 @@ The extracted reference extension confirms:
 | Native drag | widgets/shortcut-grid/ShortcutGrid.tsx + useNativeDragOverlay | Custom overlay, no dnd-kit |
 | Canvas widget drag | widgets/WidgetFrame.tsx | Pointer-based move/resize in Canvas Edit Mode |
 | Widget mounting | canvas/CanvasWidgetHost.tsx | Canvas-owned Widget frames and context menu shell |
+| Snap Feed service | widgets/rss/rssService.ts + public/background.js | UI owns parsing/cache; background owns network fetch |
 | Shortcut Page model | widgets/shortcut-grid/shortcutPageModel.ts | Pure Grid Layout Capacity and page slicing math |
 | Zone timer | 200ms debounce | Timer in useRef |
 | Live shift | getTileShift() | FLIP-like animation |
@@ -173,7 +187,10 @@ The extracted reference extension confirms:
 - [x] Canvas Edit Mode with Widget frames and alignment guides
 - [x] Debounced Widget placement persistence with pointer-up flush
 - [x] Toolbar Popup-only Shortcut creation flow
-- [ ] Widget visual style customization controls
+- [x] Weather Widget
+- [x] Date & Time Widget
+- [x] Snap Feed Widget with RSS/Atom parsing, OPML import/export, feed checks, refresh, thumbnails, and per-feed item limits
+- [x] Widget visual style customization controls
 - [ ] Keyboard drag
 - [ ] Touch drag
 

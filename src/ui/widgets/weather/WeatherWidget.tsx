@@ -48,14 +48,7 @@ export function WeatherWidget({ settings }: WeatherWidgetProps) {
       });
 
     return () => controller.abort();
-  }, [
-    settings.latitude,
-    settings.longitude,
-    settings.units,
-    settings.locationName,
-    settings.refreshMinutes,
-    settings.displayMode
-  ]);
+  }, [settings.latitude, settings.longitude, settings.units, settings.locationName, settings.refreshMinutes]);
 
   if (status.type === "loading") {
     return (

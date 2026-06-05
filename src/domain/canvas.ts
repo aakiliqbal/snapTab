@@ -1,6 +1,6 @@
 import type { SearchProviderId, SearchVerticalId } from "./tabState";
 
-export type WidgetId = "search" | "shortcutGrid" | "weather" | "dateTime";
+export type WidgetId = "search" | "shortcutGrid" | "weather" | "dateTime" | "rss";
 
 export type WidgetPlacement = {
   x: number;
@@ -88,6 +88,29 @@ export type DateTimeWidgetSettings = {
   visual: WidgetVisualSettings;
 };
 
+export type RssFeed = {
+  id: string;
+  title: string;
+  url: string;
+};
+
+export type RssFeedMode = "all" | "selected";
+
+export type RssDisplayMode = "compact" | "standard" | "expanded";
+
+export type RssWidgetSettings = {
+  feeds: RssFeed[];
+  feedMode: RssFeedMode;
+  selectedFeedId: string | null;
+  displayMode: RssDisplayMode;
+  maxItems: number;
+  maxItemsPerFeed: number;
+  refreshMinutes: number;
+  showSource: boolean;
+  showSnippet: boolean;
+  visual: WidgetVisualSettings;
+};
+
 export type WidgetState<TSettings> = {
   enabled: boolean;
   placement: WidgetPlacement;
@@ -99,6 +122,7 @@ export type CanvasWidgets = {
   shortcutGrid: WidgetState<ShortcutGridWidgetSettings>;
   weather: WidgetState<WeatherWidgetSettings>;
   dateTime: WidgetState<DateTimeWidgetSettings>;
+  rss: WidgetState<RssWidgetSettings>;
 };
 
 export type CanvasState = {
@@ -117,8 +141,9 @@ const widgetGap = 2;
 const canvasBottomMargin = 1;
 const defaultSearchSize = { width: 11, height: 1 };
 const defaultShortcutGridSize = { width: 13, height: 7 };
-const defaultWeatherSize = { width: 5, height: 3 };
+const defaultWeatherSize = { width: 7, height: 4 };
 const defaultDateTimeSize = { width: 7, height: 3 };
+const defaultRssSize = { width: 8, height: 5 };
 
 export const defaultWidgetVisualSettings: WidgetVisualSettings = {
   showBackground: false,
@@ -210,6 +235,28 @@ export const defaultCanvasState: CanvasState = {
           padding: 14
         }
       }
+    },
+    rss: {
+      enabled: true,
+      placement: deriveDefaultWidgetPlacements(fallbackCanvasGrid).rss,
+      settings: {
+        feeds: [],
+        feedMode: "all",
+        selectedFeedId: null,
+        displayMode: "standard",
+        maxItems: 8,
+        maxItemsPerFeed: 3,
+        refreshMinutes: 30,
+        showSource: true,
+        showSnippet: true,
+        visual: {
+          ...defaultWidgetVisualSettings,
+          showBackground: true,
+          backgroundOpacity: 26,
+          radius: 24,
+          padding: 12
+        }
+      }
     }
   }
 };
@@ -241,6 +288,8 @@ export function deriveDefaultWidgetPlacements(grid: CanvasGrid): Record<WidgetId
   const weatherHeight = Math.min(defaultWeatherSize.height, grid.rows);
   const dateTimeWidth = Math.min(defaultDateTimeSize.width, grid.columns);
   const dateTimeHeight = Math.min(defaultDateTimeSize.height, grid.rows);
+  const rssWidth = Math.min(defaultRssSize.width, grid.columns);
+  const rssHeight = Math.min(defaultRssSize.height, grid.rows);
 
   return {
     search: searchPlacement,
@@ -270,6 +319,16 @@ export function deriveDefaultWidgetPlacements(grid: CanvasGrid): Record<WidgetId
         y: 0,
         width: dateTimeWidth,
         height: dateTimeHeight,
+        zIndex: 8
+      },
+      grid
+    ),
+    rss: clampPlacementToCanvas(
+      {
+        x: Math.max(0, grid.columns - rssWidth),
+        y: 0,
+        width: rssWidth,
+        height: rssHeight,
         zIndex: 8
       },
       grid
@@ -402,6 +461,10 @@ function isKnownDefaultWidgetPlacement(widgetId: WidgetId, placement: WidgetPlac
     dateTime: [
       fallbackDefaults.dateTime,
       { x: 0, y: 0, width: 7, height: 3, zIndex: 8 }
+    ],
+    rss: [
+      fallbackDefaults.rss,
+      { x: 26, y: 0, width: 8, height: 5, zIndex: 8 }
     ]
   };
 

@@ -150,25 +150,32 @@
 
 .quick-link-edit {
   position: absolute;
-  top: -8px;
-  right: calc(50% - var(--icon-size) / 2 - 8px);
+  top: -9px;
+  right: calc(50% - var(--icon-size) / 2 - 10px);
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
   border: 0;
-  border-radius: 999px;
-  background: var(--theme-tile-edit-bg, rgba(255, 255, 255, 0.96));
+  border-radius: 50%;
+  background: var(--theme-tile-edit-bg, rgba(255, 255, 255, 0.94));
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.22);
   color: var(--theme-tile-edit-text, #1f2937);
   cursor: pointer;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.01em;
-  line-height: 1;
   opacity: 0;
-  padding: 7px 10px;
+  padding: 0;
   pointer-events: auto;
   transform: translateY(4px);
   transition:
     opacity 150ms ease,
     transform 150ms ease;
   z-index: 2;
+}
+
+.quick-link-edit svg {
+  width: 15px;
+  height: 15px;
+  stroke-width: 2.6;
 }
 
 .quick-link:hover .quick-link-edit,

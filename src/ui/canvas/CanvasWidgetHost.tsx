@@ -3,6 +3,7 @@ import {
   resolveResponsiveDefaultWidgetPlacement,
   type CanvasGrid,
   type DateTimeWidgetSettings,
+  type RssWidgetSettings,
   type SearchWidgetSettings,
   type ShortcutGridWidgetSettings,
   type WeatherWidgetSettings,
@@ -10,7 +11,7 @@ import {
   type WidgetPlacement
 } from "../../domain/canvas";
 import type { DropAction } from "../../domain/dropActions";
-import type { ResolvedFolder, ResolvedTopLevelTile } from "../../domain/tabOperations";
+import type { ResolvedTopLevelTile } from "../../domain/tabOperations";
 import { searchProviders, type SearchProviderId, type SearchVerticalId, type Shortcut, type TabState } from "../../domain/tabState";
 import type { DragSource } from "../drag/dragModel";
 import { WidgetContextMenu, type ContextMenuState } from "../widgets/WidgetContextMenu";
@@ -19,6 +20,7 @@ import { SearchWidget } from "../widgets/search";
 import { ShortcutGridWidget } from "../widgets/shortcut-grid";
 import { WeatherWidget } from "../widgets/weather";
 import { DateTimeWidget } from "../widgets/date-time";
+import { RssWidget } from "../widgets/rss";
 import { CanvasSurface } from "./CanvasSurface";
 
 type CanvasMetrics = ReturnType<typeof import("./useCanvasMetrics").useCanvasMetrics>;
@@ -27,17 +29,20 @@ export type CanvasWidgetController = {
   activeSearchProvider: (typeof searchProviders)[SearchProviderId];
   activeShortcutPage: number;
   changeDateTimeWidgetSetting: <K extends keyof DateTimeWidgetSettings>(key: K, value: DateTimeWidgetSettings[K]) => void;
+  changeRssWidgetSetting: <K extends keyof RssWidgetSettings>(key: K, value: RssWidgetSettings[K]) => void;
+  changeRssWidgetSettings: (settings: Partial<RssWidgetSettings>) => void;
   changeSearchProvider: (providerId: SearchProviderId) => void;
   changeSearchWidgetSetting: <K extends keyof SearchWidgetSettings>(key: K, value: SearchWidgetSettings[K]) => void;
   changeShortcutGridWidgetSetting: <K extends keyof ShortcutGridWidgetSettings>(
     key: K,
-    value: ShortcutGridWidgetSettings[K]
+    value: ShortcutGridWidgetSettings[K],
+    grid?: CanvasGrid & { cellWidth: number; cellHeight: number }
   ) => void;
   changeWeatherWidgetSetting: <K extends keyof WeatherWidgetSettings>(key: K, value: WeatherWidgetSettings[K]) => void;
+  changeWeatherWidgetSettings: (settings: Partial<WeatherWidgetSettings>) => void;
   dispatchDropAction: (action: DropAction) => void;
   gridRef: RefObject<HTMLElement | null>;
   hasOverlayOpen: boolean;
-  openEditFolderDialog: (folder: ResolvedFolder) => void;
   openEditShortcutDialog: (shortcut: Shortcut, folderId?: string | null) => void;
   setActiveFolderId: (folderId: string | null) => void;
   setActiveShortcutPage: (pageIndex: number | ((current: number) => number)) => void;
@@ -73,6 +78,7 @@ export function CanvasWidgetHost({
   const searchWidget = tabState.canvas.widgets.search;
   const weatherWidget = tabState.canvas.widgets.weather;
   const dateTimeWidget = tabState.canvas.widgets.dateTime;
+  const rssWidget = tabState.canvas.widgets.rss;
   const searchPlacement = resolveResponsiveDefaultWidgetPlacement("search", searchWidget.placement, canvasMetrics);
   const shortcutGridPlacement = resolveResponsiveDefaultWidgetPlacement(
     "shortcutGrid",
@@ -81,6 +87,7 @@ export function CanvasWidgetHost({
   );
   const weatherPlacement = resolveResponsiveDefaultWidgetPlacement("weather", weatherWidget.placement, canvasMetrics);
   const dateTimePlacement = resolveResponsiveDefaultWidgetPlacement("dateTime", dateTimeWidget.placement, canvasMetrics);
+  const rssPlacement = resolveResponsiveDefaultWidgetPlacement("rss", rssWidget.placement, canvasMetrics);
 
   useEffect(() => {
     if (!contextMenu) {
@@ -169,6 +176,20 @@ export function CanvasWidgetHost({
         </WidgetFrame>
 
         <WidgetFrame
+          editMode={isCanvasEditMode}
+          enabled={rssWidget.enabled}
+          label="Snap Feed Widget"
+          metrics={canvasMetrics}
+          onMove={(placement) => controller.updateWidgetPlacement("rss", placement, canvasMetrics)}
+          onResize={(placement) => controller.updateWidgetPlacement("rss", placement, canvasMetrics)}
+          onWidgetContextMenu={openWidgetContextMenu}
+          placement={rssPlacement}
+          widgetId="rss"
+        >
+          <RssWidget settings={rssWidget.settings} />
+        </WidgetFrame>
+
+        <WidgetFrame
           centerSnapAxes={{ x: true, y: false }}
           editMode={isCanvasEditMode}
           enabled={shortcutGridWidget.enabled}
@@ -188,7 +209,6 @@ export function CanvasWidgetHost({
             hasOverlayOpen={controller.hasOverlayOpen}
             isCanvasEditMode={isCanvasEditMode}
             onClearOutgoingDrag={() => setOutgoingDragSource(null)}
-            onEditFolder={controller.openEditFolderDialog}
             onEditShortcut={controller.openEditShortcutDialog}
             onSetActiveFolderId={controller.setActiveFolderId}
             outgoingDragSource={outgoingDragSource}
@@ -204,9 +224,12 @@ export function CanvasWidgetHost({
       {contextMenu ? (
         <WidgetContextMenu
           changeSearchWidgetSetting={controller.changeSearchWidgetSetting}
-          changeShortcutGridWidgetSetting={controller.changeShortcutGridWidgetSetting}
+          changeShortcutGridWidgetSetting={(key, value) => controller.changeShortcutGridWidgetSetting(key, value, canvasMetrics)}
           changeWeatherWidgetSetting={controller.changeWeatherWidgetSetting}
+          changeWeatherWidgetSettings={controller.changeWeatherWidgetSettings}
           changeDateTimeWidgetSetting={controller.changeDateTimeWidgetSetting}
+          changeRssWidgetSetting={controller.changeRssWidgetSetting}
+          changeRssWidgetSettings={controller.changeRssWidgetSettings}
           close={() => setContextMenu(null)}
           menu={contextMenu}
           setWidgetEnabled={(widgetId, enabled) => controller.setWidgetEnabled(widgetId, enabled, canvasMetrics)}

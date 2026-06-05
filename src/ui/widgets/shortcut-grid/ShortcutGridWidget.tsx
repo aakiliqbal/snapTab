@@ -1,6 +1,6 @@
 import { CSSProperties, WheelEvent, useEffect, useMemo, useRef, type RefObject } from "react";
 import type { DropAction } from "../../../domain/dropActions";
-import type { ResolvedFolder, ResolvedTopLevelTile } from "../../../domain/tabOperations";
+import type { ResolvedTopLevelTile } from "../../../domain/tabOperations";
 import type { Shortcut, TabState } from "../../../domain/tabState";
 import type { DragSource } from "../../drag/dragModel";
 import { deriveShortcutGridWidgetModel } from "./shortcutPageModel";
@@ -20,7 +20,6 @@ type ShortcutGridWidgetProps = {
   hasOverlayOpen: boolean;
   isCanvasEditMode: boolean;
   onClearOutgoingDrag: () => void;
-  onEditFolder: (folder: ResolvedFolder) => void;
   onEditShortcut: (shortcut: Shortcut) => void;
   onSetActiveFolderId: (folderId: string | null) => void;
   outgoingDragSource: DragSource | null;
@@ -40,7 +39,6 @@ export function ShortcutGridWidget({
   hasOverlayOpen,
   isCanvasEditMode,
   onClearOutgoingDrag,
-  onEditFolder,
   onEditShortcut,
   onSetActiveFolderId,
   outgoingDragSource,
@@ -67,12 +65,12 @@ export function ShortcutGridWidget({
   const { maxFittedIconSize, fittedLabelSize, fittedTileGap } = useShortcutGridMetrics(
     gridRef,
     gridLayout,
-    settings.showLabels,
-    activeShortcutPageIndex
+    settings.showLabels
   );
   const iconSize = `${Math.max(18, Math.min(maxFittedIconSize, (86 * gridLayout.iconSize) / 100))}px`;
   const labelFontSize = `${fittedLabelSize}px`;
   const tileGap = `${fittedTileGap}px`;
+  const footerHeight = settings.showPageDots && pageCount > 1 ? 56 : 18;
   const layoutStyle = {
     "--icon-size": iconSize,
     "--grid-column-gap": `${(34 * gridLayout.columnSpacing) / 100}px`,
@@ -82,8 +80,9 @@ export function ShortcutGridWidget({
     "--quick-link-label-font-size": labelFontSize,
     "--quick-link-tile-gap": tileGap,
     ...getWidgetSurfaceStyle(settings),
-    "--widget-padding": "18px 18px 8px",
-    "--widget-radius": "28px"
+    "--widget-padding": settings.showPageDots && pageCount > 1 ? "18px 18px 8px" : "18px 18px 0",
+    "--widget-radius": "28px",
+    "--shortcut-footer-height": `${footerHeight}px`
   } as CSSProperties;
   const dragOverlayStyle = {
     "--icon-size": iconSize,
@@ -129,7 +128,11 @@ export function ShortcutGridWidget({
   }
 
   return (
-    <div className="shortcut-grid-widget widget-surface" onWheel={handleShortcutWheel} style={layoutStyle}>
+    <div
+      className={`shortcut-grid-widget widget-surface${settings.showPageDots && pageCount > 1 ? "" : " no-page-dots"}`}
+      onWheel={handleShortcutWheel}
+      style={layoutStyle}
+    >
       <ShortcutGrid
         activeShortcutPageIndex={activeShortcutPageIndex}
         dragOverlayStyle={dragOverlayStyle}
@@ -137,7 +140,6 @@ export function ShortcutGridWidget({
         gridRef={gridRef}
         outgoingDragSource={isCanvasEditMode ? null : outgoingDragSource}
         onClearOutgoingDrag={onClearOutgoingDrag}
-        onEditFolder={onEditFolder}
         onEditShortcut={onEditShortcut}
         onSetActiveFolderId={onSetActiveFolderId}
         onSetActiveShortcutPage={setActiveShortcutPage}

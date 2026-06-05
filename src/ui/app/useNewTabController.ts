@@ -32,6 +32,7 @@ import { applyDropAction, type DropAction } from "../../domain/dropActions";
 import {
   type CanvasGrid,
   type DateTimeWidgetSettings,
+  type RssWidgetSettings,
   type SearchWidgetSettings,
   type ShortcutGridWidgetSettings,
   type WeatherWidgetSettings,
@@ -158,11 +159,34 @@ export function useNewTabController() {
 
   function changeShortcutGridWidgetSetting<K extends keyof ShortcutGridWidgetSettings>(
     key: K,
-    value: ShortcutGridWidgetSettings[K]
+    value: ShortcutGridWidgetSettings[K],
+    grid?: CanvasGrid & { cellWidth: number; cellHeight: number }
   ) {
     updateTabState((state) =>
       produce(state, (draft) => {
-        draft.canvas.widgets.shortcutGrid.settings[key] = value;
+        const widget = draft.canvas.widgets.shortcutGrid;
+        const previousSettings = widget.settings;
+        widget.settings[key] = value;
+
+        if (key === "iconSize" && typeof value === "number" && grid) {
+          const currentWidth = widget.placement.width * grid.cellWidth;
+          const currentHeight = widget.placement.height * grid.cellHeight;
+          const previousScale = previousSettings.iconSize / 100;
+          const nextScale = value / 100;
+          const previousTileWidth = Math.max(84, 86 * previousScale + 30);
+          const previousTileHeight = Math.max(84, 86 * previousScale + (previousSettings.showLabels ? 42 : 18));
+          const columns = Math.max(1, Math.floor(currentWidth / previousTileWidth));
+          const rows = Math.max(1, Math.floor((currentHeight - 56) / previousTileHeight));
+          const nextTileWidth = Math.max(84, 86 * nextScale + 30);
+          const nextTileHeight = Math.max(84, 86 * nextScale + (widget.settings.showLabels ? 42 : 18));
+          const nextPlacement = {
+            ...widget.placement,
+            width: Math.max(widget.placement.width, Math.ceil((columns * nextTileWidth) / grid.cellWidth)),
+            height: Math.max(widget.placement.height, Math.ceil((rows * nextTileHeight + 56) / grid.cellHeight))
+          };
+
+          widget.placement = resolveWidgetPlacement(nextPlacement, grid, draft.canvas.widgets, "shortcutGrid", widget.placement);
+        }
       })
     );
   }
@@ -175,10 +199,40 @@ export function useNewTabController() {
     );
   }
 
+  function changeWeatherWidgetSettings(settings: Partial<WeatherWidgetSettings>) {
+    updateTabState((state) =>
+      produce(state, (draft) => {
+        draft.canvas.widgets.weather.settings = {
+          ...draft.canvas.widgets.weather.settings,
+          ...settings
+        };
+      })
+    );
+  }
+
   function changeDateTimeWidgetSetting<K extends keyof DateTimeWidgetSettings>(key: K, value: DateTimeWidgetSettings[K]) {
     updateTabState((state) =>
       produce(state, (draft) => {
         draft.canvas.widgets.dateTime.settings[key] = value;
+      })
+    );
+  }
+
+  function changeRssWidgetSetting<K extends keyof RssWidgetSettings>(key: K, value: RssWidgetSettings[K]) {
+    updateTabState((state) =>
+      produce(state, (draft) => {
+        draft.canvas.widgets.rss.settings[key] = value;
+      })
+    );
+  }
+
+  function changeRssWidgetSettings(settings: Partial<RssWidgetSettings>) {
+    updateTabState((state) =>
+      produce(state, (draft) => {
+        draft.canvas.widgets.rss.settings = {
+          ...draft.canvas.widgets.rss.settings,
+          ...settings
+        };
       })
     );
   }
@@ -189,6 +243,25 @@ export function useNewTabController() {
 
   function changeTheme(themeId: ThemeId) {
     setTheme(themeId);
+  }
+
+  function renameFolder(folderId: string, title: string) {
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) {
+      return;
+    }
+
+    updateTabState((state) =>
+      produce(state, (draft) => {
+        const folder = draft.tiles[folderId];
+        if (folder?.kind !== "folder") {
+          return;
+        }
+
+        folder.title = trimmedTitle;
+        folder.icon.label = (trimmedTitle.slice(0, 1) || "?").toUpperCase();
+      })
+    );
   }
 
   function openEditShortcutDialog(shortcut: Shortcut, folderId: string | null = null) {
@@ -401,12 +474,15 @@ export function useNewTabController() {
     backupMessage,
     changeLayout,
     changeDateTimeWidgetSetting,
+    changeRssWidgetSetting,
+    changeRssWidgetSettings,
     changeSearchProvider,
     changeSearchWidgetSetting,
     changeWeatherWidgetSetting,
     changeShortcutGridWidgetSetting,
     changeTheme,
     changeWallpaperSetting,
+    changeWeatherWidgetSettings,
     chooseRecommendedIcon,
     deleteFolder,
     deleteShortcut,
@@ -422,6 +498,7 @@ export function useNewTabController() {
     shortcutDraft,
     shortcutIconRecommendations,
     resetWallpaper,
+    renameFolder,
     saveFolder,
     saveShortcut,
     setActiveFolderId,

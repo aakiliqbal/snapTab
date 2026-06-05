@@ -7,8 +7,12 @@
     "default_title": "Add to SnapTab",
     "default_popup": "popup.html"
   },
+  "background": {
+    "service_worker": "background.js"
+  },
   "chrome_url_overrides": {
     "newtab": "newtab.html"
   },
-  "permissions": ["activeTab", "storage", "tabs", "unlimitedStorage"]
+  "permissions": ["activeTab", "storage", "tabs", "unlimitedStorage"],
+  "host_permissions": ["https://*/*", "http://*/*"]
 }

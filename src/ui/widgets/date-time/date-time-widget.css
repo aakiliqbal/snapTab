@@ -1,5 +1,5 @@
 .date-time-widget {
-  container-type: inline-size;
+  container-type: size;
   display: grid;
   width: 100%;
   height: 100%;
@@ -20,7 +20,7 @@
 .date-time-digital strong {
   display: inline-block;
   color: #ffffff;
-  font-size: clamp(36px, 12vw, 78px);
+  font-size: clamp(36px, min(20cqw, 46cqh), 116px);
   font-weight: 950;
   letter-spacing: -0.06em;
   line-height: 0.92;
@@ -33,10 +33,14 @@
   margin: 0 0.03em;
 }
 
+.date-time-digital strong .date-time-part {
+  margin: 0;
+}
+
 .date-time-digital > span,
 .date-time-vertical > span {
   color: var(--theme-muted-text, rgba(226, 232, 240, 0.78));
-  font-size: clamp(12px, 2vw, 16px);
+  font-size: clamp(12px, min(4cqw, 10cqh), 22px);
   font-weight: 950;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -51,7 +55,7 @@
 .date-time-date-group span {
   overflow: hidden;
   color: var(--theme-muted-text, rgba(226, 232, 240, 0.82));
-  font-size: clamp(13px, 2.2vw, 18px);
+  font-size: clamp(13px, min(4.4cqw, 10cqh), 24px);
   font-weight: 850;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -59,7 +63,7 @@
 
 .date-time-date-group small {
   color: var(--theme-muted-text, rgba(226, 232, 240, 0.62));
-  font-size: 12px;
+  font-size: clamp(12px, min(3.4cqw, 7cqh), 18px);
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -72,7 +76,7 @@
 
 .date-time-percentage strong {
   color: #ffffff;
-  font-size: clamp(42px, 13vw, 86px);
+  font-size: clamp(42px, min(22cqw, 48cqh), 124px);
   font-weight: 950;
   letter-spacing: -0.08em;
   line-height: 0.92;
@@ -80,7 +84,7 @@
 
 .date-time-percentage span {
   color: var(--theme-muted-text, rgba(226, 232, 240, 0.78));
-  font-size: clamp(12px, 2vw, 16px);
+  font-size: clamp(12px, min(4cqw, 10cqh), 22px);
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -92,10 +96,13 @@
   align-items: center;
   justify-content: start;
   gap: clamp(8px, 4%, 14px);
+  min-width: 0;
 }
 
 .date-time-vertical strong {
+  box-sizing: border-box;
   display: grid;
+  width: 100%;
   min-width: 0;
   max-width: 100%;
   place-items: center;
@@ -103,15 +110,77 @@
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.08);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  font-size: clamp(24px, 26cqw, 58px);
+  font-size: clamp(22px, min(14cqw, 38cqh), 82px);
+  font-variant-numeric: tabular-nums;
   font-weight: 950;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.015em;
   line-height: 1;
-  padding: 8px 6px;
+  padding: 8px clamp(8px, 2cqw, 14px);
+  text-align: center;
+}
+
+.date-time-vertical-digit {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  font-size: inherit;
+  line-height: 1;
   text-align: center;
 }
 
 .date-time-vertical > span {
   align-self: end;
   padding-bottom: 8px;
+}
+
+.date-time-color-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  border-radius: 16px;
+  background: var(--theme-settings-card-bg, rgba(255, 255, 255, 0.06));
+  padding: 10px 12px;
+}
+
+.date-time-color-row > span {
+  grid-column: 1 / -1;
+  color: var(--theme-muted-text, rgba(241, 245, 249, 0.86));
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.widget-context-menu .date-time-color-button {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  border-radius: 12px;
+  border: 0;
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  padding: 8px 6px;
+}
+
+.widget-context-menu .date-time-color-button:focus-visible {
+  outline: 2px solid var(--theme-accent, #7dd3fc);
+  outline-offset: 2px;
+}
+
+.date-time-color-swatch {
+  width: 100%;
+  height: 34px;
+  border: 1px solid var(--theme-border, rgba(255, 255, 255, 0.16));
+  border-radius: 10px;
+  padding: 2px;
+}
+
+.date-time-shared-color-input {
+  position: fixed;
+  left: -100vw;
+  top: -100vh;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }

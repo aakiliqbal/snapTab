@@ -1,6 +1,6 @@
-import { CSSProperties, Suspense, lazy, useState } from "react";
-import { defaultTabState } from "../../domain/tabState";
+import { CSSProperties, Suspense, lazy, useEffect, useState } from "react";
 import { getThemePreset } from "../../domain/themes";
+import { subscribeToExternalTabStateChanges, useTabStore } from "../../stores/useTabStore";
 import type { DragSource } from "../drag/dragModel";
 import { CanvasWidgetHost } from "../canvas";
 import { useNewTabController } from "./useNewTabController";
@@ -13,11 +13,14 @@ const FolderPanel = lazy(() => import("../widgets/shortcut-grid/FolderPanel").th
 
 export function App() {
   const controller = useNewTabController();
+  const hasHydrated = useTabStore((state) => state.hasHydrated);
   const [query, setQuery] = useState("");
   const [isCanvasEditMode, setIsCanvasEditMode] = useState(false);
   const [outgoingDragSource, setOutgoingDragSource] = useState<DragSource | null>(null);
 
-  const tabState = controller.tabState ?? defaultTabState;
+  useEffect(() => subscribeToExternalTabStateChanges(), []);
+
+  const tabState = controller.tabState;
   const canvasMetrics = useCanvasMetrics(tabState.canvas.targetCellSize);
   const searchWidget = tabState.canvas.widgets.search;
   const searchSettings = searchWidget.settings;
@@ -41,7 +44,7 @@ export function App() {
     "--wallpaper-blur": `${tabState.wallpaper.blur}px`
   } as CSSProperties;
 
-  if (!controller.tabState) {
+  if (!hasHydrated) {
     return <main className="new-tab loading">Loading</main>;
   }
 
@@ -111,8 +114,8 @@ export function App() {
             activeShortcutPageIndex={controller.activeShortcutPage}
             dispatchDropAction={controller.dispatchDropAction}
             onClose={() => controller.setActiveFolderId(null)}
-            onEditFolder={controller.openEditFolderDialog}
             onEditShortcut={(shortcut) => controller.openEditShortcutDialog(shortcut, controller.activeFolder?.id ?? null)}
+            onRenameFolder={controller.renameFolder}
             onStartOutgoingDrag={(source) => {
               setOutgoingDragSource(source);
             }}

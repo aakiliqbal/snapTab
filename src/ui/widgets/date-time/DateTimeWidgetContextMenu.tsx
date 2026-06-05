@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import type {
   DateTimeClockMode,
   DateTimeDateMode,
@@ -15,12 +16,39 @@ type DateTimeWidgetContextMenuProps = {
   setEnabled: (enabled: boolean) => void;
 };
 
+type ColorSettingKey = "hourColor" | "minuteColor" | "secondColor";
+
+const clockColorSettings: Array<{ key: ColorSettingKey; label: string }> = [
+  { key: "hourColor", label: "Hour" },
+  { key: "minuteColor", label: "Minute" },
+  { key: "secondColor", label: "Second" }
+];
+
 export function DateTimeWidgetContextMenu({
   changeDateTimeWidgetSetting,
   dateTimeWidget,
   setEnabled
 }: DateTimeWidgetContextMenuProps) {
   const settings = dateTimeWidget.settings;
+  const colorInputRef = useRef<HTMLInputElement>(null);
+  const activeColorSettingRef = useRef<ColorSettingKey>("hourColor");
+
+  function openColorPicker(key: ColorSettingKey) {
+    const input = colorInputRef.current;
+
+    activeColorSettingRef.current = key;
+    if (!input) {
+      return;
+    }
+
+    input.blur();
+    input.value = settings[key];
+    input.click();
+  }
+
+  function changeActiveColor(value: string) {
+    changeDateTimeWidgetSetting(activeColorSettingRef.current, value);
+  }
 
   return (
     <>
@@ -70,6 +98,31 @@ export function DateTimeWidgetContextMenu({
           type="checkbox"
         />
       </label>
+
+      <div className="date-time-color-row" role="group" aria-label="Clock colours">
+        <span>Colours</span>
+        {clockColorSettings.map((colorSetting) => (
+          <button
+            aria-label={`Choose ${colorSetting.label.toLowerCase()} colour`}
+            className="date-time-color-button"
+            key={colorSetting.key}
+            onClick={() => openColorPicker(colorSetting.key)}
+            type="button"
+          >
+            <span>{colorSetting.label}</span>
+            <span className="date-time-color-swatch" style={{ backgroundColor: settings[colorSetting.key] }} />
+          </button>
+        ))}
+        <input
+          aria-hidden="true"
+          className="date-time-shared-color-input"
+          ref={colorInputRef}
+          tabIndex={-1}
+          type="color"
+          defaultValue={settings.hourColor}
+          onInput={(event) => changeActiveColor(event.currentTarget.value)}
+        />
+      </div>
 
       <label>
         <span>Date mode</span>

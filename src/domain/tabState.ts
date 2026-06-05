@@ -7,9 +7,12 @@ import {
   type DateTimeDateOrder,
   type DateTimeFormat,
   type DateTimeShortSeparator,
+  type RssDisplayMode,
+  type RssFeedMode,
   type WeatherDisplayMode,
   type WeatherUnits
 } from "./canvas";
+import { createRssFeedId, normalizeFeedUrl } from "./rss";
 import { defaultThemeId, isThemeId, type ThemeId } from "./themes";
 
 export type SearchProviderId = "google" | "bing" | "yahoo" | "yandex" | "duckduckgo";
@@ -439,7 +442,8 @@ export function normalizeCanvasState(value: unknown, fallbackState?: Partial<Tab
           }
         },
         weather: fallback.widgets.weather,
-        dateTime: fallback.widgets.dateTime
+        dateTime: fallback.widgets.dateTime,
+        rss: fallback.widgets.rss
       }
     };
   }
@@ -451,7 +455,8 @@ export function normalizeCanvasState(value: unknown, fallbackState?: Partial<Tab
       search: normalizeSearchWidget(widgets.search, fallback.widgets.search, legacySearchProvider),
       shortcutGrid: normalizeShortcutGridWidget(widgets.shortcutGrid, fallback.widgets.shortcutGrid),
       weather: normalizeWeatherWidget(widgets.weather, fallback.widgets.weather),
-      dateTime: normalizeDateTimeWidget(widgets.dateTime, fallback.widgets.dateTime)
+      dateTime: normalizeDateTimeWidget(widgets.dateTime, fallback.widgets.dateTime),
+      rss: normalizeRssWidget(widgets.rss, fallback.widgets.rss)
     }
   };
 }
@@ -580,6 +585,89 @@ function normalizeDateTimeWidget(
       visual: normalizeWidgetVisualSettings(settings.visual, fallback.settings.visual)
     }
   };
+}
+
+function normalizeRssWidget(value: unknown, fallback: CanvasState["widgets"]["rss"]): CanvasState["widgets"]["rss"] {
+  if (!isRecord(value)) {
+    return fallback;
+  }
+
+  const settings = isRecord(value.settings) ? value.settings : {};
+  const feeds = normalizeRssFeeds(settings.feeds, fallback.settings.feeds);
+  const selectedFeedId = normalizeSelectedRssFeedId(settings.selectedFeedId, feeds, fallback.settings.selectedFeedId);
+  return {
+    enabled: typeof value.enabled === "boolean" ? value.enabled : fallback.enabled,
+    placement: normalizeWidgetPlacement(value.placement, fallback.placement),
+    settings: {
+      ...fallback.settings,
+      feeds,
+      feedMode: isRssFeedMode(settings.feedMode) ? settings.feedMode : fallback.settings.feedMode,
+      selectedFeedId,
+      displayMode: isRssDisplayMode(settings.displayMode) ? settings.displayMode : fallback.settings.displayMode,
+      maxItems: clampInteger(settings.maxItems, 1, 20, fallback.settings.maxItems),
+      maxItemsPerFeed: clampInteger(settings.maxItemsPerFeed, 1, 10, fallback.settings.maxItemsPerFeed),
+      refreshMinutes: clampInteger(settings.refreshMinutes, 5, 240, fallback.settings.refreshMinutes),
+      showSource: typeof settings.showSource === "boolean" ? settings.showSource : fallback.settings.showSource,
+      showSnippet: typeof settings.showSnippet === "boolean" ? settings.showSnippet : fallback.settings.showSnippet,
+      visual: normalizeWidgetVisualSettings(settings.visual, fallback.settings.visual)
+    }
+  };
+}
+
+function normalizeRssFeeds(value: unknown, fallback: CanvasState["widgets"]["rss"]["settings"]["feeds"]) {
+  if (!Array.isArray(value)) {
+    return fallback;
+  }
+
+  const seenUrls = new Set<string>();
+  const feeds: CanvasState["widgets"]["rss"]["settings"]["feeds"] = [];
+  for (const item of value) {
+    if (!isRecord(item)) {
+      continue;
+    }
+
+    const url = normalizeFeedUrl(typeof item.url === "string" ? item.url : null);
+    if (!url || seenUrls.has(url)) {
+      continue;
+    }
+
+    seenUrls.add(url);
+    const title = normalizeRssFeedTitle(item.title, url);
+    const id = typeof item.id === "string" && item.id.trim().length > 0 && item.id.length <= 80 ? item.id : createRssFeedId(url);
+    feeds.push({ id, title, url });
+    if (feeds.length >= 100) {
+      break;
+    }
+  }
+
+  return feeds;
+}
+
+function normalizeRssFeedTitle(value: unknown, url: string) {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (trimmed.length > 0 && trimmed.length <= 120) {
+      return trimmed;
+    }
+  }
+
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return "RSS Feed";
+  }
+}
+
+function normalizeSelectedRssFeedId(
+  value: unknown,
+  feeds: CanvasState["widgets"]["rss"]["settings"]["feeds"],
+  fallback: string | null
+) {
+  if (typeof value !== "string") {
+    return fallback && feeds.some((feed) => feed.id === fallback) ? fallback : null;
+  }
+
+  return feeds.some((feed) => feed.id === value) ? value : null;
 }
 
 function normalizeWidgetPlacement(value: unknown, fallback: CanvasState["widgets"]["search"]["placement"]) {
@@ -894,6 +982,14 @@ function isWeatherUnits(value: unknown): value is WeatherUnits {
 }
 
 function isWeatherDisplayMode(value: unknown): value is WeatherDisplayMode {
+  return value === "compact" || value === "standard" || value === "expanded";
+}
+
+function isRssFeedMode(value: unknown): value is RssFeedMode {
+  return value === "all" || value === "selected";
+}
+
+function isRssDisplayMode(value: unknown): value is RssDisplayMode {
   return value === "compact" || value === "standard" || value === "expanded";
 }
 

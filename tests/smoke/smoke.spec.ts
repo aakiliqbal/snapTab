@@ -82,6 +82,24 @@ test("shortcut edit can persist a manual fallback icon", async ({ page }) => {
   await expect(docsIcon).toHaveCSS("background-color", "rgb(18, 52, 86)");
 });
 
+test("folder name can be edited by double-clicking its opened title", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      "snapTabState",
+      JSON.stringify({ state: { schemaVersion: 2, pages: [{ id: "page-1", tileIds: ["work-folder"] }] }, version: 2 })
+    );
+  });
+  await page.goto("/newtab.html");
+  await page.locator('[data-tile-key="folder:work-folder"]').click();
+
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.getByRole("heading", { name: "Work" }).dblclick();
+  await page.getByLabel("Folder name").fill("Projects");
+  await page.keyboard.press("Enter");
+
+  await expect(page.getByRole("heading", { name: "Projects" })).toBeVisible();
+});
+
 test("dev root renders the New Tab Surface", async ({ page }) => {
   const pageErrors: Error[] = [];
   page.on("pageerror", (error) => pageErrors.push(error));
@@ -225,6 +243,126 @@ test("Search Widget edit frame wraps tabs and search bar", async ({ page }) => {
   expect(frameBox!.y + frameBox!.height).toBeGreaterThanOrEqual(searchBoxBox!.y + searchBoxBox!.height - 1);
 });
 
+test("Weather and Date & Time typography scale with widget size", async ({ page }) => {
+  await page.route("https://api.open-meteo.com/**", (route) =>
+    route.fulfill({
+      json: {
+        current: {
+          apparent_temperature: 22,
+          is_day: 1,
+          precipitation: 0,
+          relative_humidity_2m: 50,
+          temperature_2m: 21,
+          weather_code: 0,
+          wind_direction_10m: 90,
+          wind_speed_10m: 5
+        },
+        current_units: {
+          precipitation: "mm",
+          temperature_2m: "°C",
+          wind_speed_10m: "km/h"
+        }
+      }
+    })
+  );
+  await page.goto("/newtab.html");
+
+  async function measureWidgets(size: { weatherWidth: number; weatherHeight: number; clockWidth: number; clockHeight: number }) {
+    await page.evaluate((nextState) => {
+      window.localStorage.setItem("snapTabState", JSON.stringify({ state: nextState, version: 2 }));
+    }, buildResponsiveWidgetState(size));
+    await page.goto("/newtab.html");
+    await page.waitForSelector(".weather-temp-group strong");
+    await page.waitForSelector(".date-time-vertical strong");
+
+    return page.evaluate(() => {
+      const weatherTemperature = document.querySelector(".weather-temp-group strong");
+      const weatherIcon = document.querySelector(".weather-icon");
+      const clockDigit = document.querySelector(".date-time-vertical strong");
+      if (!weatherTemperature || !weatherIcon || !clockDigit) {
+        throw new Error("Responsive widgets did not render.");
+      }
+
+      return {
+        clockFont: parseFloat(window.getComputedStyle(clockDigit).fontSize),
+        clockDigitHeadroom: clockDigit.clientWidth - clockDigit.scrollWidth,
+        weatherFont: parseFloat(window.getComputedStyle(weatherTemperature).fontSize),
+        weatherIconWidth: weatherIcon.getBoundingClientRect().width
+      };
+    });
+  }
+
+  const small = await measureWidgets({ weatherWidth: 4, weatherHeight: 3, clockWidth: 4, clockHeight: 2 });
+  const large = await measureWidgets({ weatherWidth: 10, weatherHeight: 7, clockWidth: 12, clockHeight: 5 });
+
+  expect(small.weatherIconWidth).toBeGreaterThanOrEqual(40);
+  expect(large.weatherIconWidth).toBeGreaterThan(small.weatherIconWidth + 30);
+  expect(large.weatherFont).toBeGreaterThan(small.weatherFont + 20);
+  expect(large.clockFont).toBeGreaterThan(small.clockFont + 20);
+  expect(large.clockDigitHeadroom).toBeGreaterThanOrEqual(0);
+});
+
+test("Shortcut Page transitions keep icon size stable", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      "snapTabState",
+      JSON.stringify({
+        state: {
+          schemaVersion: 2,
+          canvas: {
+            targetCellSize: 56,
+            widgets: {
+              shortcutGrid: {
+                enabled: true,
+                placement: { x: 9, y: 4, width: 10, height: 5, zIndex: 5 },
+                settings: {
+                  columnSpacing: 70,
+                  iconSize: 150,
+                  lineSpacing: 70,
+                  showLabels: true,
+                  showPageDots: true
+                }
+              }
+            }
+          },
+          layout: {
+            gridLayout: {
+              columnSpacing: 100,
+              columns: 6,
+              iconSize: 100,
+              lineSpacing: 100,
+              mode: "custom",
+              presetId: "2x6",
+              rows: 2
+            }
+          }
+        },
+        version: 2
+      })
+    );
+  });
+
+  await page.goto("/newtab.html");
+  await page.waitForSelector(".quick-link-icon");
+  await page.waitForTimeout(350);
+
+  const before = await page.locator(".quick-link-icon").first().boundingBox();
+  expect(before).not.toBeNull();
+
+  await page.locator(".shortcut-page-dots button").nth(1).click();
+  const widths: number[] = [];
+  for (let index = 0; index < 8; index += 1) {
+    await page.waitForTimeout(30);
+    const box = await page.locator(".quick-link-icon").first().boundingBox();
+    if (box) {
+      widths.push(box.width);
+    }
+  }
+
+  expect(widths.length).toBeGreaterThan(0);
+  expect(Math.max(...widths.map((width) => Math.abs(width - before!.width)))).toBeLessThanOrEqual(1);
+});
+
 test("settings drawer renders backup controls", async ({ page }) => {
   await page.goto("/newtab.html");
   await page.getByRole("button", { name: "Open settings menu" }).click();
@@ -250,3 +388,73 @@ test("wallpaper upload accepts a GIF and renders it", async ({ page }) => {
   await expect(page.getByText("Wallpaper saved.")).toBeVisible();
   await expect(page.locator(".wallpaper-media")).toBeVisible();
 });
+
+function buildResponsiveWidgetState(size: { weatherWidth: number; weatherHeight: number; clockWidth: number; clockHeight: number }) {
+  return {
+    schemaVersion: 2,
+    canvas: {
+      targetCellSize: 56,
+      widgets: {
+        search: {
+          enabled: false,
+          placement: { x: 0, y: 0, width: 1, height: 1, zIndex: 1 }
+        },
+        shortcutGrid: {
+          enabled: false,
+          placement: { x: 0, y: 0, width: 1, height: 1, zIndex: 1 }
+        },
+        weather: {
+          enabled: true,
+          placement: { x: 1, y: 1, width: size.weatherWidth, height: size.weatherHeight, zIndex: 5 },
+          settings: {
+            displayMode: "expanded",
+            latitude: 51.5072,
+            locationName: "London",
+            longitude: -0.1276,
+            refreshMinutes: 10,
+            showFeelsLike: true,
+            showHumidity: true,
+            showPrecipitation: true,
+            showWind: true,
+            units: "celsius"
+          }
+        },
+        dateTime: {
+          enabled: true,
+          placement: { x: 14, y: 1, width: size.clockWidth, height: size.clockHeight, zIndex: 6 },
+          settings: {
+            clockMode: "verticalClock",
+            dateMode: "long",
+            dateOrder: "DMY",
+            hourColor: "#f8fafc",
+            minuteColor: "#7dd3fc",
+            padDate: true,
+            padHour: true,
+            secondColor: "#fde68a",
+            shortSeparator: "dots",
+            showOrdinalDay: true,
+            showSeconds: true,
+            showWeekNumber: false,
+            showWeekday: true,
+            timeFormat: "twentyFourHour",
+            timezone: "auto"
+          }
+        }
+      }
+    },
+    layout: {
+      gridLayout: {
+        columnSpacing: 100,
+        columns: 6,
+        iconSize: 100,
+        lineSpacing: 100,
+        mode: "preset",
+        presetId: "2x6",
+        rows: 2
+      }
+    },
+    pages: [{ id: "page-1", tileIds: [] }],
+    tiles: {},
+    wallpaper: { type: "none", value: null, mediaId: null, dim: 40, blur: 0 }
+  };
+}
