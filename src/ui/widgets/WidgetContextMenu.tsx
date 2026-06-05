@@ -1,7 +1,8 @@
 import type { CSSProperties } from "react";
 import type { TabState } from "../../domain/tabState";
-import type { DateTimeWidgetSettings, SearchWidgetSettings, ShortcutGridWidgetSettings, WeatherWidgetSettings, WidgetId } from "../../domain/canvas";
+import type { DateTimeWidgetSettings, RssWidgetSettings, SearchWidgetSettings, ShortcutGridWidgetSettings, WeatherWidgetSettings, WidgetId } from "../../domain/canvas";
 import { DateTimeWidgetContextMenu } from "./date-time";
+import { RssWidgetContextMenu } from "./rss";
 import { SearchWidgetContextMenu } from "./search";
 import { ShortcutGridWidgetContextMenu } from "./shortcut-grid";
 import { WeatherWidgetContextMenu } from "./weather";
@@ -12,6 +13,8 @@ type ContextMenuState =
 
 type WidgetContextMenuProps = {
   changeDateTimeWidgetSetting: <K extends keyof DateTimeWidgetSettings>(key: K, value: DateTimeWidgetSettings[K]) => void;
+  changeRssWidgetSetting: <K extends keyof RssWidgetSettings>(key: K, value: RssWidgetSettings[K]) => void;
+  changeRssWidgetSettings: (settings: Partial<RssWidgetSettings>) => void;
   changeSearchWidgetSetting: <K extends keyof SearchWidgetSettings>(key: K, value: SearchWidgetSettings[K]) => void;
   changeShortcutGridWidgetSetting: <K extends keyof ShortcutGridWidgetSettings>(
     key: K,
@@ -29,6 +32,8 @@ export type { ContextMenuState };
 
 export function WidgetContextMenu({
   changeDateTimeWidgetSetting,
+  changeRssWidgetSetting,
+  changeRssWidgetSettings,
   changeSearchWidgetSetting,
   changeShortcutGridWidgetSetting,
   changeWeatherWidgetSetting,
@@ -43,6 +48,7 @@ export function WidgetContextMenu({
   const shortcutGridWidget = tabState.canvas.widgets.shortcutGrid;
   const weatherWidget = tabState.canvas.widgets.weather;
   const dateTimeWidget = tabState.canvas.widgets.dateTime;
+  const rssWidget = tabState.canvas.widgets.rss;
   const style = {
     "--context-menu-x": `${menu.x}px`,
     "--context-menu-y": `${menu.y}px`
@@ -94,6 +100,14 @@ export function WidgetContextMenu({
                 type="checkbox"
               />
             </label>
+            <label className="context-toggle-row">
+              <span>Snap Feed Widget</span>
+              <input
+                checked={rssWidget.enabled}
+                onChange={(event) => setWidgetEnabled("rss", event.target.checked)}
+                type="checkbox"
+              />
+            </label>
           </>
         ) : menu.widgetId === "search" ? (
           <SearchWidgetContextMenu
@@ -113,12 +127,19 @@ export function WidgetContextMenu({
             dateTimeWidget={dateTimeWidget}
             setEnabled={(enabled) => setWidgetEnabled("dateTime", enabled)}
           />
-        ) : (
+        ) : menu.widgetId === "weather" ? (
           <WeatherWidgetContextMenu
             changeWeatherWidgetSetting={changeWeatherWidgetSetting}
             changeWeatherWidgetSettings={changeWeatherWidgetSettings}
             setEnabled={(enabled) => setWidgetEnabled("weather", enabled)}
             weatherWidget={weatherWidget}
+          />
+        ) : (
+          <RssWidgetContextMenu
+            changeRssWidgetSetting={changeRssWidgetSetting}
+            changeRssWidgetSettings={changeRssWidgetSettings}
+            rssWidget={rssWidget}
+            setEnabled={(enabled) => setWidgetEnabled("rss", enabled)}
           />
         )}
       </section>

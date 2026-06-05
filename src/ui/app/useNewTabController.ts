@@ -32,6 +32,7 @@ import { applyDropAction, type DropAction } from "../../domain/dropActions";
 import {
   type CanvasGrid,
   type DateTimeWidgetSettings,
+  type RssWidgetSettings,
   type SearchWidgetSettings,
   type ShortcutGridWidgetSettings,
   type WeatherWidgetSettings,
@@ -217,12 +218,50 @@ export function useNewTabController() {
     );
   }
 
+  function changeRssWidgetSetting<K extends keyof RssWidgetSettings>(key: K, value: RssWidgetSettings[K]) {
+    updateTabState((state) =>
+      produce(state, (draft) => {
+        draft.canvas.widgets.rss.settings[key] = value;
+      })
+    );
+  }
+
+  function changeRssWidgetSettings(settings: Partial<RssWidgetSettings>) {
+    updateTabState((state) =>
+      produce(state, (draft) => {
+        draft.canvas.widgets.rss.settings = {
+          ...draft.canvas.widgets.rss.settings,
+          ...settings
+        };
+      })
+    );
+  }
+
   function changeLayout<K extends keyof TabState["layout"]>(key: K, value: TabState["layout"][K]) {
     setLayout(key, value);
   }
 
   function changeTheme(themeId: ThemeId) {
     setTheme(themeId);
+  }
+
+  function renameFolder(folderId: string, title: string) {
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) {
+      return;
+    }
+
+    updateTabState((state) =>
+      produce(state, (draft) => {
+        const folder = draft.tiles[folderId];
+        if (folder?.kind !== "folder") {
+          return;
+        }
+
+        folder.title = trimmedTitle;
+        folder.icon.label = (trimmedTitle.slice(0, 1) || "?").toUpperCase();
+      })
+    );
   }
 
   function openEditShortcutDialog(shortcut: Shortcut, folderId: string | null = null) {
@@ -435,6 +474,8 @@ export function useNewTabController() {
     backupMessage,
     changeLayout,
     changeDateTimeWidgetSetting,
+    changeRssWidgetSetting,
+    changeRssWidgetSettings,
     changeSearchProvider,
     changeSearchWidgetSetting,
     changeWeatherWidgetSetting,
@@ -457,6 +498,7 @@ export function useNewTabController() {
     shortcutDraft,
     shortcutIconRecommendations,
     resetWallpaper,
+    renameFolder,
     saveFolder,
     saveShortcut,
     setActiveFolderId,

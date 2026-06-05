@@ -12,7 +12,7 @@
   justify-items: center;
   margin-top: 0;
   padding-top: clamp(58px, 9vh, 86px);
-  animation: shortcut-page-enter 180ms ease-out;
+  animation: shortcut-page-fade 220ms ease-out;
 }
 
 .shortcut-grid-widget {
@@ -85,15 +85,13 @@
   background: var(--theme-tile-label-text, rgba(255, 255, 255, 0.96));
 }
 
-@keyframes shortcut-page-enter {
+@keyframes shortcut-page-fade {
   from {
     opacity: 0;
-    transform: translateY(10px);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 

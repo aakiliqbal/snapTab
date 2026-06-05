@@ -24,7 +24,7 @@ SnapTab is a local-first Chrome new tab extension for building a personalized, f
 
 ## Overview
 
-SnapTab replaces Chrome's new tab page with a customizable workspace. It combines a search widget, paged shortcut grid, folders, wallpaper controls, and backup tools in a single Manifest V3 extension.
+SnapTab replaces Chrome's new tab page with a customizable workspace. It combines search, shortcuts, folders, weather, date/time, Snap Feed RSS, wallpaper controls, and backup tools in a single Manifest V3 extension.
 
 The app is shaped by familiar new tab productivity patterns, but it is its own implementation and product direction.
 
@@ -34,6 +34,9 @@ The app is shaped by familiar new tab productivity patterns, but it is its own i
 - Full-viewport Canvas with movable and resizable widgets
 - Search widget with configurable search providers and display options
 - Shortcut Grid widget with paged top-level tiles
+- Weather widget with location, units, display, and refresh controls
+- Date & Time widget with clock/date display modes and color controls
+- Snap Feed widget for RSS/Atom feeds with direct extension fetch, OPML import/export, feed checks, thumbnails, refresh, and per-feed item limits
 - Shortcut add, edit, delete, reorder, and drag behavior
 - Toolbar popup for saving the current active website as a shortcut
 - Folder creation by dragging shortcuts together
@@ -45,6 +48,7 @@ The app is shaped by familiar new tab productivity patterns, but it is its own i
 - Settings drawer for search, grid, wallpaper, and backup controls
 - JSON backup export and replace-only import
 - Local-first persistence through Chrome storage
+- RSS feed fetching through a Manifest V3 background service worker with default host permissions for `http` and `https` feeds
 - Reduced motion support
 
 ## Technology
@@ -118,6 +122,10 @@ SnapTab is local-first. There is no backend account or sync service in the curre
 Runtime state is persisted to `chrome.storage.local`, with a localStorage fallback for development. Backups are portable JSON files that replace the current state on import.
 
 Uploaded wallpapers and shortcut icons are kept portable as data URLs or media-backed records in the local extension environment.
+
+Snap Feed subscriptions are stored in the same local state and are included in JSON backups. OPML import/export is scoped to Snap Feed subscriptions only. Feed article caches remain runtime cache data and are not mixed into user feed configuration.
+
+The extension manifest includes broad `http`/`https` host permissions so the background service worker can fetch common RSS/Atom feeds that do not expose browser CORS headers. Test Snap Feed from the installed `chrome-extension://.../newtab.html` page; Vite dev pages still run as normal web origins.
 
 ## Project Docs
 

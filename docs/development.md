@@ -11,7 +11,7 @@ SnapTab is a local-first Chrome new tab extension shaped by familiar new tab pro
 - Chrome Manifest V3 new tab override.
 - React + Vite new tab UI plus toolbar action popup.
 - Quick-link grid with add, edit, delete, active-page drag reorder, drag-combine folder creation, drag-add-to-folder, and FolderPanel child drag-out promotion.
-- Canvas-based New Tab Surface with movable/resizable Search and Shortcut Grid Widgets.
+- Canvas-based New Tab Surface with movable/resizable Search, Shortcut Grid, Weather, Date & Time, and Snap Feed Widgets.
 - Canvas edit toggle with Widget frames and alignment guides; tile drag is disabled while arranging Widgets.
 - Toolbar popup for adding the active browser tab as a shortcut with the shared shortcut editor form.
 - Folder tiles that open as modal overlays.
@@ -22,6 +22,9 @@ SnapTab is a local-first Chrome new tab extension shaped by familiar new tab pro
 - Search provider presets: Google, Bing, Yahoo, Yandex, DuckDuckGo.
 - Search Widget customization: enabled state, provider tabs, search mark, rounded corners, opacity.
 - Shortcut Grid Widget customization: enabled state, icon size, grid spacing, labels, page dots.
+- Weather Widget customization: location, units, display mode, refresh interval, and visual surface settings.
+- Date & Time Widget customization: clock mode, time/date formatting, seconds, color controls, and visual surface settings.
+- Snap Feed Widget customization: RSS/Atom Feed Sources, all-feeds or selected-feed mode, OPML import/export, feed checks, refresh interval, item limits, thumbnails, snippets, and visual surface settings.
 - Right-side settings drawer opened by a gear button.
 - Full JSON export/import backup with replace-only restore.
 - Automated build checks plus unit and browser smoke tests.
@@ -41,6 +44,7 @@ SnapTab is a local-first Chrome new tab extension shaped by familiar new tab pro
 
 ```text
 public/manifest.json          Chrome extension manifest
+public/background.js          Manifest V3 background worker for RSS/Atom feed fetches
 newtab.html                   New Tab Surface HTML entry
 popup.html                    Toolbar popup HTML entry
 src/main.tsx                  New Tab Surface React entry point
@@ -53,6 +57,9 @@ src/ui/canvas/useCanvasMetrics.ts  Canvas viewport metrics
 src/ui/popup/PopupApp.tsx     Toolbar add-current-site popup
 src/ui/widgets/search/*       Search Widget rendering, settings menu section, and styles
 src/ui/widgets/shortcut-grid/* Shortcut Grid Widget, Shortcut Pages, FolderPanel, drag shell, Shortcut tile/icon UI, and styles
+src/ui/widgets/weather/*      Weather Widget rendering, service, settings menu section, and styles
+src/ui/widgets/date-time/*    Date & Time Widget rendering, settings menu section, and styles
+src/ui/widgets/rss/*          Snap Feed Widget rendering, RSS fetch service, OPML controls, settings menu section, and styles
 src/ui/widgets/WidgetFrame.tsx Common Widget move/resize frame
 src/ui/widgets/WidgetContextMenu.tsx Common edit-mode Widget context menu shell
 src/ui/settings/*             Settings Drawer and settings sections
@@ -70,6 +77,7 @@ src/domain/drafts.ts          Shortcut and Folder edit draft contracts
 src/domain/tabOperations.ts   Shortcut, Folder, and layout mutation operations
 src/domain/dropActions.ts     Drag/drop actions and folder cleanup reducer
 src/domain/backup.ts          Backup parsing and compatibility defaults
+src/domain/rss.ts             OPML parsing, RSS/Atom parsing, and Feed Item normalization
 src/stores/useTabStore.ts     Zustand + immer persisted state store
 src/infrastructure/fileData.ts  File-to-data-URL adapter
 CONTEXT.md                    Domain glossary and current decisions
@@ -95,7 +103,9 @@ Top-level fields:
 - `tiles`: flat map of all `Shortcut` and `Folder` records by ID.
 - `pages`: ordered Shortcut Pages. Each page owns a `tileIds[]` list for Top-Level Tile display order.
 
-The Canvas stores exactly one Search Widget and one Shortcut Grid Widget. Widget placement is persisted in Canvas-relative units and may be fractional for freeform placement. Enabled Widgets cannot overlap; disabled Widgets keep settings and last placement but do not reserve Canvas space.
+The Canvas stores exactly one Search Widget, Shortcut Grid Widget, Weather Widget, Date & Time Widget, and Snap Feed Widget. Widget placement is persisted in Canvas-relative units and may be fractional for freeform placement. Enabled Widgets cannot overlap; disabled Widgets keep settings and last placement but do not reserve Canvas space.
+
+Snap Feed stores only user Feed Sources in Widget settings: ID, title, and URL. Fetched Feed Items and cache metadata stay outside Widget settings. All-feeds mode applies `maxItemsPerFeed` before the global item cap, so one noisy feed cannot hide quieter sources.
 
 `Shortcut` icons support three modes:
 
@@ -114,14 +124,19 @@ Wallpaper and uploaded shortcut icons are stored as portable data URLs inside `T
 The manifest includes:
 
 ```json
-"permissions": ["activeTab", "storage", "unlimitedStorage"]
+"permissions": ["activeTab", "storage", "tabs", "unlimitedStorage"],
+"host_permissions": ["https://*/*", "http://*/*"]
 ```
 
-`activeTab` lets the toolbar popup prefill the shortcut title and URL from the current tab. `unlimitedStorage` remains enabled for local-first storage headroom while media payloads remain in the persisted state blob.
+`activeTab` and `tabs` let the toolbar popup prefill the shortcut title and URL from the current tab. `unlimitedStorage` remains enabled for local-first storage headroom while media payloads remain in the persisted state blob. Host permissions allow the background service worker to fetch RSS/Atom feeds that block normal browser CORS requests.
+
+Snap Feed fetching runs through `public/background.js`. The New Tab Surface sends a feed URL to the service worker, the worker fetches the XML using extension host permissions, and the UI parses the returned text through `src/domain/rss.ts`. In Vite dev, where no extension service worker exists, the service falls back to direct `fetch` and may hit CORS.
 
 ## Backup And Restore
 
 JSON export serializes the full `TabState`, including wallpaper and uploaded icon data URLs so backups stay portable.
+
+Snap Feed subscriptions are included in JSON Backup as Widget settings. OPML import/export is separate and only moves Feed Sources, not wallpaper, shortcuts, widget placement, or fetched article cache.
 
 Import is replace-only:
 
@@ -170,6 +185,7 @@ Shortcut and Folder editing rules live in `src/domain/tabOperations.ts`. Drag/dr
 - The New Tab Surface is a fixed Canvas containing Widgets; it never browser-scrolls.
 - `CanvasWidgetHost` is the seam where Canvas mounts Widgets, wires Widget Placement changes, and hosts the common Widget Context Menu shell.
 - Widget-specific context menu controls live with their Widget Modules; the shared `WidgetContextMenu` owns only shell positioning and Canvas-level Widget toggles.
+- Snap Feed owns its feed management, OPML import/export, feed status checks, and refresh controls inside `src/ui/widgets/rss/`.
 - Canvas Edit Mode is transient, starts off on new tabs, and enables Widget movement/resizing.
 - Shortcut Pages live inside the Shortcut Grid Widget. Wheel navigation applies only while hovering that Widget in normal mode.
 - The New Tab Surface no longer renders a Shortcut creation tile; the Toolbar Popup is the shortcut creation flow.
@@ -198,8 +214,9 @@ Load the built extension from `dist/` through `chrome://extensions/` with Develo
 
 - Vite builds `newtab.html` and `popup.html` as Rollup inputs and removes `crossorigin` attributes during build.
 - Vitest runs `tests/unit/**/*.test.ts` in a Node environment.
+- Vitest also includes TSX unit tests; selected RSS parser/service tests run in jsdom for DOMParser and browser API seams.
 - Playwright smoke tests run from `tests/smoke/` against `http://127.0.0.1:4173`; its web server command is `npm run build && npm run preview -- --port 4173`.
-- Manifest V3 declares the new-tab override, toolbar action popup, `activeTab`, `storage`, and `unlimitedStorage`; there is no background script, content script, or icon set.
+- Manifest V3 declares the new-tab override, toolbar action popup, `activeTab`, `tabs`, `storage`, `unlimitedStorage`, broad `http`/`https` host permissions for Snap Feed, and a background service worker. There is no content script or icon set.
 
 ## Release Workflow
 
@@ -212,7 +229,7 @@ The workflow is manual-only, must run from `main`, installs with `npm ci`, auto-
 - **Done**: Drag/drop session logic extracted to `useGridDragSession` hook.
 - Drag UI routes most drops through `createDropAction()` but does not use domain `resolveDrop()` in production.
 - Touch drag is not implemented.
-- Favicon lookup for unknown websites is not implemented.
+- Snap Feed favicon lookup uses Google's favicon service as a non-blocking image fallback; shortcut favicon lookup for unknown websites is not implemented.
 - Keyboard focus trapping for modals/drawer is not complete.
 - Chrome Web Store assets and privacy text are not prepared.
 - dnd-kit is not installed; current drag implementation is native HTML drag. Reintroduce it only through a deliberate future ADR.

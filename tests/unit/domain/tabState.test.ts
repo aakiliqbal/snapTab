@@ -247,6 +247,21 @@ describe("normalizeTabState", () => {
     expect(normalized.canvas.widgets.dateTime.settings.dateMode).toBe("long");
   });
 
+  it("backfills RSS Widget defaults for persisted Canvas state without rss", () => {
+    const { rss: _rss, ...widgetsWithoutRss } = defaultTabState.canvas.widgets;
+    const normalized = normalizeTabState({
+      ...defaultTabState,
+      canvas: {
+        ...defaultTabState.canvas,
+        widgets: widgetsWithoutRss
+      }
+    });
+
+    expect(normalized.canvas.widgets.rss.enabled).toBe(true);
+    expect(normalized.canvas.widgets.rss.settings.feedMode).toBe("all");
+    expect(normalized.canvas.widgets.rss.settings.feeds).toEqual([]);
+  });
+
   it("normalizes invalid Weather Widget settings", () => {
     const normalized = normalizeTabState({
       ...defaultTabState,
@@ -309,6 +324,45 @@ describe("normalizeTabState", () => {
     expect(normalized.canvas.widgets.dateTime.settings.shortSeparator).toBe("dots");
     expect(normalized.canvas.widgets.dateTime.settings.timezone).toBe("auto");
     expect(normalized.canvas.widgets.dateTime.settings.hourColor).toBe("#f8fafc");
+  });
+
+  it("normalizes invalid RSS Widget settings", () => {
+    const normalized = normalizeTabState({
+      ...defaultTabState,
+      canvas: {
+        ...defaultTabState.canvas,
+        widgets: {
+          ...defaultTabState.canvas.widgets,
+          rss: {
+            ...defaultTabState.canvas.widgets.rss,
+            settings: {
+              ...defaultTabState.canvas.widgets.rss.settings,
+              feeds: [
+                { id: "feed-one", title: "Example", url: "https://example.com/feed.xml" },
+                { id: "feed-two", title: "Duplicate", url: "https://example.com/feed.xml#duplicate" },
+                { id: "bad", title: "Bad", url: "ftp://example.com/feed.xml" }
+              ],
+              feedMode: "solo",
+              selectedFeedId: "missing",
+              displayMode: "huge",
+              maxItems: 200,
+              maxItemsPerFeed: 0,
+              refreshMinutes: 1
+            }
+          }
+        }
+      }
+    });
+
+    expect(normalized.canvas.widgets.rss.settings.feeds).toEqual([
+      { id: "feed-one", title: "Example", url: "https://example.com/feed.xml" }
+    ]);
+    expect(normalized.canvas.widgets.rss.settings.feedMode).toBe("all");
+    expect(normalized.canvas.widgets.rss.settings.selectedFeedId).toBeNull();
+    expect(normalized.canvas.widgets.rss.settings.displayMode).toBe("standard");
+    expect(normalized.canvas.widgets.rss.settings.maxItems).toBe(20);
+    expect(normalized.canvas.widgets.rss.settings.maxItemsPerFeed).toBe(1);
+    expect(normalized.canvas.widgets.rss.settings.refreshMinutes).toBe(5);
   });
 });
 

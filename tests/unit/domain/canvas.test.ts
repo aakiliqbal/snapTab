@@ -22,14 +22,16 @@ describe("canvas placement", () => {
       search: { x: 11.5, y: 2, width: 11, height: 1, zIndex: 10 },
       shortcutGrid: { x: 10.5, y: 5, width: 13, height: 7, zIndex: 5 },
       weather: { x: 0, y: 15, width: 7, height: 4, zIndex: 8 },
-      dateTime: { x: 0, y: 0, width: 7, height: 3, zIndex: 8 }
+      dateTime: { x: 0, y: 0, width: 7, height: 3, zIndex: 8 },
+      rss: { x: 26, y: 0, width: 8, height: 5, zIndex: 8 }
     });
 
     expect(deriveDefaultWidgetPlacements({ columns: 20, rows: 12 })).toEqual({
       search: { x: 4.5, y: 2, width: 11, height: 1, zIndex: 10 },
       shortcutGrid: { x: 3.5, y: 5, width: 13, height: 6, zIndex: 5 },
       weather: { x: 0, y: 8, width: 7, height: 4, zIndex: 8 },
-      dateTime: { x: 0, y: 0, width: 7, height: 3, zIndex: 8 }
+      dateTime: { x: 0, y: 0, width: 7, height: 3, zIndex: 8 },
+      rss: { x: 12, y: 0, width: 8, height: 5, zIndex: 8 }
     });
   });
 
@@ -46,6 +48,9 @@ describe("canvas placement", () => {
     expect(
       resolveResponsiveDefaultWidgetPlacement("dateTime", { x: 0, y: 0, width: 7, height: 3, zIndex: 8 }, { columns: 20, rows: 12 })
     ).toEqual({ x: 0, y: 0, width: 7, height: 3, zIndex: 8 });
+    expect(
+      resolveResponsiveDefaultWidgetPlacement("rss", { x: 26, y: 0, width: 8, height: 5, zIndex: 8 }, { columns: 20, rows: 12 })
+    ).toEqual({ x: 12, y: 0, width: 8, height: 5, zIndex: 8 });
   });
 
   it("keeps fractional placement while clamping inside the canvas", () => {

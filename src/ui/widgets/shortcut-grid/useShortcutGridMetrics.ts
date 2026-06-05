@@ -16,8 +16,7 @@ const defaultMetrics: ShortcutGridMetrics = {
 export function useShortcutGridMetrics(
   gridRef: RefObject<HTMLElement | null>,
   gridLayout: GridLayoutSettings,
-  showLabels: boolean,
-  activeShortcutPageIndex: number
+  showLabels: boolean
 ): ShortcutGridMetrics {
   const [metrics, setMetrics] = useState(defaultMetrics);
 
@@ -70,7 +69,6 @@ export function useShortcutGridMetrics(
       window.removeEventListener("resize", measure);
     };
   }, [
-    activeShortcutPageIndex,
     gridLayout.columns,
     gridLayout.columnSpacing,
     gridLayout.lineSpacing,

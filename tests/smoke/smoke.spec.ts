@@ -82,6 +82,24 @@ test("shortcut edit can persist a manual fallback icon", async ({ page }) => {
   await expect(docsIcon).toHaveCSS("background-color", "rgb(18, 52, 86)");
 });
 
+test("folder name can be edited by double-clicking its opened title", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      "snapTabState",
+      JSON.stringify({ state: { schemaVersion: 2, pages: [{ id: "page-1", tileIds: ["work-folder"] }] }, version: 2 })
+    );
+  });
+  await page.goto("/newtab.html");
+  await page.locator('[data-tile-key="folder:work-folder"]').click();
+
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.getByRole("heading", { name: "Work" }).dblclick();
+  await page.getByLabel("Folder name").fill("Projects");
+  await page.keyboard.press("Enter");
+
+  await expect(page.getByRole("heading", { name: "Projects" })).toBeVisible();
+});
+
 test("dev root renders the New Tab Surface", async ({ page }) => {
   const pageErrors: Error[] = [];
   page.on("pageerror", (error) => pageErrors.push(error));
@@ -282,6 +300,67 @@ test("Weather and Date & Time typography scale with widget size", async ({ page 
   expect(large.weatherFont).toBeGreaterThan(small.weatherFont + 20);
   expect(large.clockFont).toBeGreaterThan(small.clockFont + 20);
   expect(large.clockDigitHeadroom).toBeGreaterThanOrEqual(0);
+});
+
+test("Shortcut Page transitions keep icon size stable", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      "snapTabState",
+      JSON.stringify({
+        state: {
+          schemaVersion: 2,
+          canvas: {
+            targetCellSize: 56,
+            widgets: {
+              shortcutGrid: {
+                enabled: true,
+                placement: { x: 9, y: 4, width: 10, height: 5, zIndex: 5 },
+                settings: {
+                  columnSpacing: 70,
+                  iconSize: 150,
+                  lineSpacing: 70,
+                  showLabels: true,
+                  showPageDots: true
+                }
+              }
+            }
+          },
+          layout: {
+            gridLayout: {
+              columnSpacing: 100,
+              columns: 6,
+              iconSize: 100,
+              lineSpacing: 100,
+              mode: "custom",
+              presetId: "2x6",
+              rows: 2
+            }
+          }
+        },
+        version: 2
+      })
+    );
+  });
+
+  await page.goto("/newtab.html");
+  await page.waitForSelector(".quick-link-icon");
+  await page.waitForTimeout(350);
+
+  const before = await page.locator(".quick-link-icon").first().boundingBox();
+  expect(before).not.toBeNull();
+
+  await page.locator(".shortcut-page-dots button").nth(1).click();
+  const widths: number[] = [];
+  for (let index = 0; index < 8; index += 1) {
+    await page.waitForTimeout(30);
+    const box = await page.locator(".quick-link-icon").first().boundingBox();
+    if (box) {
+      widths.push(box.width);
+    }
+  }
+
+  expect(widths.length).toBeGreaterThan(0);
+  expect(Math.max(...widths.map((width) => Math.abs(width - before!.width)))).toBeLessThanOrEqual(1);
 });
 
 test("settings drawer renders backup controls", async ({ page }) => {

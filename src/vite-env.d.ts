@@ -30,6 +30,7 @@ declare const chrome:
         lastError?: {
           message?: string;
         };
+        sendMessage?: (message: unknown, callback: (response: unknown) => void) => void;
       };
       storage?: {
         local?: ChromeStorageArea;

@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect, type DragEvent } from "react";
+import { Pencil } from "lucide-react";
 import type { DropAction } from "../../../domain/dropActions";
 import { openShortcutUrl } from "../../../infrastructure/openShortcutUrl";
 import { type ResolvedFolder } from "../../../domain/tabOperations";
@@ -14,8 +15,8 @@ type FolderPanelProps = {
   activeShortcutPageIndex: number;
   dispatchDropAction: (action: DropAction) => void;
   onClose: () => void;
-  onEditFolder: (folder: ResolvedFolder) => void;
   onEditShortcut: (shortcut: Shortcut) => void;
+  onRenameFolder: (folderId: string, title: string) => void;
   onStartOutgoingDrag: (source: DragSource) => void;
   tabState: TabState;
 };
@@ -27,8 +28,8 @@ export function FolderPanel({
   activeShortcutPageIndex,
   dispatchDropAction,
   onClose,
-  onEditFolder,
   onEditShortcut,
+  onRenameFolder,
   onStartOutgoingDrag,
   tabState
 }: FolderPanelProps) {
@@ -37,6 +38,8 @@ export function FolderPanel({
   const [dropPosition, setDropPosition] = useState<"left" | "right">("left");
   const [overlayPos, setOverlayPos] = useState<{ x: number; y: number } | null>(null);
   const [overlayOffset, setOverlayOffset] = useState({ x: 40, y: 40 });
+  const [isRenamingFolder, setIsRenamingFolder] = useState(false);
+  const [folderTitleDraft, setFolderTitleDraft] = useState(activeFolder.title);
   const [initialRects, setInitialRects] = useState<Record<string, DOMRect>>({});
   const dragSourceRef = useRef<DragSource | null>(null);
   const folderGridRef = useRef<HTMLDivElement | null>(null);
@@ -46,6 +49,20 @@ export function FolderPanel({
   // fire onStartOutgoingDrag / onClose more than once per gesture.
   const outgoingDragStartedRef = useRef(false);
   const activePageId = tabState.pages[activeShortcutPageIndex]?.id ?? "page-1";
+
+  useEffect(() => {
+    if (!isRenamingFolder) {
+      setFolderTitleDraft(activeFolder.title);
+    }
+  }, [activeFolder.title, isRenamingFolder]);
+
+  function saveFolderTitle() {
+    const nextTitle = folderTitleDraft.trim();
+    if (nextTitle && nextTitle !== activeFolder.title) {
+      onRenameFolder(activeFolder.id, nextTitle);
+    }
+    setIsRenamingFolder(false);
+  }
 
   const clearMoveTimer = useCallback(() => {
     if (moveTimerRef.current) {
@@ -417,15 +434,38 @@ export function FolderPanel({
       >
         <div className="folder-header">
           <div>
-            <h1 id="folder-panel-title">{activeFolder.title}</h1>
+            {isRenamingFolder ? (
+              <input
+                aria-label="Folder name"
+                autoFocus
+                className="folder-title-input"
+                id="folder-panel-title"
+                onBlur={saveFolderTitle}
+                onChange={(event) => setFolderTitleDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    saveFolderTitle();
+                  }
+                  if (event.key === "Escape") {
+                    setFolderTitleDraft(activeFolder.title);
+                    setIsRenamingFolder(false);
+                  }
+                }}
+                value={folderTitleDraft}
+              />
+            ) : (
+              <h1
+                id="folder-panel-title"
+                onDoubleClick={() => setIsRenamingFolder(true)}
+                title="Double-click to rename"
+              >
+                {activeFolder.title}
+              </h1>
+            )}
             <span>{activeFolder.shortcuts.length} shortcuts</span>
           </div>
           <div className="folder-actions">
-            <button className="secondary-button" type="button" onClick={() => onEditFolder(activeFolder)}>
-              Edit
-            </button>
             <button className="modal-close" type="button" onClick={onClose} aria-label="Close">
-              <span>Close</span>
               <span aria-hidden="true">×</span>
             </button>
           </div>
@@ -493,7 +533,7 @@ export function FolderPanel({
                   onEditShortcut(shortcut);
                 }}
               >
-                Edit shortcut
+                <Pencil aria-hidden="true" />
               </button>
             </div>
           );

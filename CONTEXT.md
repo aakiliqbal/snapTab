@@ -23,6 +23,24 @@ The Widget containing the search input and search-provider controls.
 **Shortcut Grid Widget**  
 The Widget containing Shortcut Pages, Top-Level Tiles, and tile/folder drag behavior.
 
+**Weather Widget**  
+The Widget showing a cached weather snapshot for a configured location, display mode, unit system, and refresh interval.
+
+**Date & Time Widget**  
+The Widget showing clock/date information. It supports digital, percentage-complete, and vertical clock modes plus date formatting and per-part colors.
+
+**Snap Feed Widget**  
+The Widget showing RSS/Atom feed articles from user-configured feed sources. It fetches feeds through the extension background worker, supports all-feeds and selected-feed modes, and displays feed/article thumbnails or fallback initials.
+
+**Feed Source**  
+A user-configured RSS/Atom subscription with ID, title, and URL. Feed Sources are persisted in `TabState` under the Snap Feed Widget settings.
+
+**Feed Item**  
+A normalized RSS/Atom article with title, link, source, optional snippet, publication date, author, and image URL. Feed Items are fetched/cache data, not user configuration.
+
+**OPML**  
+A portable XML subscription list used by the Snap Feed Widget. OPML import merges Feed Sources by default, skips duplicates, and can replace the current Feed Source list after confirmation.
+
 **Shortcut**  
 A top-level or folder-contained link with a title, URL, and icon.
 
@@ -91,12 +109,15 @@ A domain command produced from Drag Intent: `REORDER`, `COMBINE`, `ADD_TO_FOLDER
 - Wallpapers and uploaded icons remain portable as data URLs.
 - IndexedDB media storage is not part of the MVP runtime persistence path.
 - Theme choice is persisted in `TabState` and applies globally through CSS variables.
+- Snap Feed subscriptions are persisted in `TabState`; fetched Feed Items and feed check results are cache/transient data.
+- OPML import/export is scoped to Snap Feed subscriptions and is separate from JSON Backup.
 
 ### Product Structure
 
 - The New Tab Surface is a single React app, not multiple extension pages.
 - The Canvas is the whole interactive New Tab workspace and contains all user-arrangeable Widgets.
 - SnapTab has exactly one Search Widget and exactly one Shortcut Grid Widget.
+- SnapTab also has one Weather Widget, one Date & Time Widget, and one Snap Feed Widget.
 - Widgets can be disabled; disabled Widgets keep settings and last placement but do not reserve Canvas space.
 - Canvas Edit Mode is toggled from the toolbar, shows Widget frames/alignment guides, enables Widget movement/resizing, and disables tile drag.
 - The Toolbar Popup is a second React entry point that reuses the shortcut editor form and persisted store.
@@ -105,6 +126,19 @@ A domain command produced from Drag Intent: `REORDER`, `COMBINE`, `ADD_TO_FOLDER
 - A Folder always contains at least two Shortcuts; removal that leaves one child promotes it to the page.
 - Deleting a Folder deletes its contained Shortcuts.
 - The Toolbar Popup is the shortcut creation flow; the New Tab Surface does not show a Shortcut creation tile.
+
+### Snap Feed
+
+- Snap Feed fetches RSS/Atom XML through the Manifest V3 background service worker so host permissions apply to feeds that block browser CORS.
+- The manifest declares default `http` and `https` host permissions because feed fetching is a core Snap Feed capability.
+- The New Tab Surface still owns rendering and settings; the background worker only fetches feed text and returns it to the page for parsing.
+- Feed Source configuration stays clean: ID, title, and URL only.
+- Feed cache metadata records feed URL, cached items, last fetched time, last successful fetch, and last error outside Widget settings.
+- OPML import merges by default, skips duplicate feed URLs, and has a replace mode guarded by confirmation.
+- Feed checks validate whether each Feed Source can be fetched and parsed, then show green/red status in the Snap Feed context menu.
+- All-feeds mode is the default. Selected-feed mode is available in settings.
+- All-feeds mode applies an items-per-feed cap before applying the global item limit so one noisy source cannot hide other Feed Sources.
+- Feed rows prefer article image, then source favicon, then a generated initials fallback tile.
 
 ### Tile Management
 
@@ -150,6 +184,7 @@ A domain command produced from Drag Intent: `REORDER`, `COMBINE`, `ADD_TO_FOLDER
 - React 19 + TypeScript + Vite
 - Zustand + Immer for state management
 - chrome.storage.local for persistence
+- Manifest V3 background service worker for RSS/Atom feed fetches
 - Native HTML drag events
 - Motion (Framer Motion) with reduced motion support
 - Global CSS imported through `src/ui/styles.css`; selectors live in Module-owned CSS files beside their UI Modules.
@@ -173,6 +208,9 @@ A domain command produced from Drag Intent: `REORDER`, `COMBINE`, `ADD_TO_FOLDER
 - [x] Wallpaper upload
 - [x] JSON Backup export/import
 - [x] Page navigation (dots, wheel, keyboard)
+- [x] Weather Widget
+- [x] Date & Time Widget
+- [x] Snap Feed Widget with RSS/Atom parsing, OPML import/export, feed checks, refresh, thumbnails, and per-feed item limits
 - [x] Reduced motion support
 
 ### Reference Extension

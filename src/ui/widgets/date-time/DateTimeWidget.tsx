@@ -55,9 +55,9 @@ function ClockView({
   if (settings.clockMode === "verticalClock") {
     return (
       <div className="date-time-vertical" aria-label={timeParts.accessibleLabel}>
-        <strong style={{ color: settings.hourColor }}>{timeParts.hour}</strong>
-        <strong style={{ color: settings.minuteColor }}>{timeParts.minute}</strong>
-        {settings.showSeconds ? <strong style={{ color: settings.secondColor }}>{timeParts.second}</strong> : null}
+        <strong style={{ color: settings.hourColor }}><span className="date-time-vertical-digit">{timeParts.hour}</span></strong>
+        <strong style={{ color: settings.minuteColor }}><span className="date-time-vertical-digit">{timeParts.minute}</span></strong>
+        {settings.showSeconds ? <strong style={{ color: settings.secondColor }}><span className="date-time-vertical-digit">{timeParts.second}</span></strong> : null}
         {timeParts.period ? <span>{timeParts.period}</span> : null}
       </div>
     );

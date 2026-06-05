@@ -1,9 +1,10 @@
 import { useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useReducedMotion } from "motion/react";
+import { Pencil } from "lucide-react";
 import { brandIcons } from "../../../domain/brandIcons";
 import type { DropAction } from "../../../domain/dropActions";
-import type { ResolvedFolder, ResolvedTopLevelTile } from "../../../domain/tabOperations";
+import type { ResolvedTopLevelTile } from "../../../domain/tabOperations";
 import type { Shortcut, TabState } from "../../../domain/tabState";
 import { openShortcutUrl } from "../../../infrastructure/openShortcutUrl";
 import type { DragSource } from "../../drag/dragModel";
@@ -18,7 +19,6 @@ type ShortcutGridProps = {
   gridRef: React.RefObject<HTMLElement | null>;
   outgoingDragSource: DragSource | null;
   onClearOutgoingDrag: () => void;
-  onEditFolder: (folder: ResolvedFolder) => void;
   onEditShortcut: (shortcut: Shortcut) => void;
   onSetActiveFolderId: (folderId: string | null) => void;
   onSetActiveShortcutPage: (pageIndex: number | ((current: number) => number)) => void;
@@ -37,7 +37,6 @@ export function ShortcutGrid({
   gridRef,
   outgoingDragSource,
   onClearOutgoingDrag,
-  onEditFolder,
   onEditShortcut,
   onSetActiveFolderId,
   onSetActiveShortcutPage,
@@ -157,7 +156,7 @@ export function ShortcutGrid({
                     onEditShortcut(tile.shortcut);
                   }}
                 >
-                  Edit shortcut
+                  <Pencil aria-hidden="true" />
                 </button>
               </div>
             );
@@ -189,17 +188,6 @@ export function ShortcutGrid({
               }}
             >
               <TileContent tile={tile} showLabels={showLabels} />
-              <button
-                className="quick-link-edit"
-                type="button"
-                aria-label={`Edit ${tile.folder.title}`}
-                onClick={(event: React.MouseEvent) => {
-                  event.stopPropagation();
-                  onEditFolder(tile.folder);
-                }}
-                >
-                  Edit folder
-                </button>
             </div>
           );
         })}
