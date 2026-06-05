@@ -22,6 +22,7 @@ SnapTab is a local-first Chrome new tab extension for building a personalized, f
 [![Zustand](https://img.shields.io/badge/Zustand-5.0-443E38)](https://zustand-demo.pmnd.rs/)
 [![Vitest](https://img.shields.io/badge/Vitest-4.1-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev/)
 [![Playwright](https://img.shields.io/badge/Playwright-1.59-2EAD33?logo=playwright&logoColor=white)](https://playwright.dev/)
+[![Visitors](https://api.visitorbadge.io/api/visitors?path=aakiliqbal%2FsnapTab&label=Visitors&countColor=%232EAD33&style=flat)](https://visitorbadge.io/status?path=aakiliqbal%2FsnapTab)
 
 </div>
 
