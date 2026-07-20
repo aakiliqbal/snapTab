@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { createJSONStorage, persist, type StateStorage } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import {
   compactShortcutPages,
@@ -13,6 +13,7 @@ import {
   type TabState
 } from "../domain/tabState";
 import type { ThemeId } from "../domain/themes";
+import { createExtensionStateStorage } from "../infrastructure/extensionStorage";
 
 const storageKey = "snapTabState";
 const legacyStorageKey = ["in", "fi", "TabState"].join("");
@@ -71,7 +72,7 @@ export const useTabStore = create<TabStoreState>()(
     })),
     {
       name: storageKey,
-      storage: createJSONStorage(() => createChromeStorage()),
+      storage: createJSONStorage(() => createExtensionStateStorage({ legacyStorageKey, getSchemaVersion })),
       version: 2,
       partialize: (state) => stripActions(state),
       merge: (persistedState, currentState) => ({
@@ -142,95 +143,6 @@ function rebalancePages(pages: ShortcutPage[], capacity: number): ShortcutPage[]
   return compactShortcutPages(nextPages);
 }
 
-function createChromeStorage(): StateStorage {
-  return {
-    getItem: async (key) => {
-      const chromeLocal = getChromeLocalStorage();
-
-      if (chromeLocal) {
-        return new Promise((resolve) => {
-          chromeLocal.get([key, legacyStorageKey], (items) => {
-            const value = items[key] ?? items[legacyStorageKey];
-            if (!value) {
-              resolve(null);
-              return;
-            }
-
-            const parsed = typeof value === "string" ? parseStorageValue(value) : toRecord(value);
-            if (isZustandStorageValue(parsed)) {
-              resolve(JSON.stringify(parsed));
-              return;
-            }
-
-            resolve(JSON.stringify({ state: parsed, version: getSchemaVersion(parsed) }));
-          });
-        });
-      }
-
-      const value = window.localStorage.getItem(key) ?? window.localStorage.getItem(legacyStorageKey);
-      if (!value) {
-        return null;
-      }
-
-      const parsed = parseStorageValue(value);
-      return JSON.stringify(isZustandStorageValue(parsed) ? parsed : { state: parsed, version: getSchemaVersion(parsed) });
-    },
-    setItem: async (key, value) => {
-      const chromeLocal = getChromeLocalStorage();
-
-      if (chromeLocal) {
-        await new Promise<void>((resolve, reject) => {
-          chromeLocal.set({ [key]: value }, () => {
-            const error = typeof chrome !== "undefined" ? chrome.runtime?.lastError : undefined;
-            if (error) {
-              reject(new Error(error.message ?? "Chrome storage write failed"));
-              return;
-            }
-
-            resolve();
-          });
-        });
-        return;
-      }
-
-      window.localStorage.setItem(key, value);
-    },
-    removeItem: async (key) => {
-      const chromeLocal = getChromeLocalStorage();
-
-      const remove = chromeLocal?.remove;
-      if (remove) {
-        await new Promise<void>((resolve, reject) => {
-          remove([key], () => {
-            const error = typeof chrome !== "undefined" ? chrome.runtime?.lastError : undefined;
-            if (error) {
-              reject(new Error(error.message ?? "Chrome storage remove failed"));
-              return;
-            }
-
-            resolve();
-          });
-        });
-        return;
-      }
-
-      window.localStorage.removeItem(key);
-    }
-  };
-}
-
-function getChromeLocalStorage() {
-  return typeof chrome !== "undefined" ? chrome.storage?.local : undefined;
-}
-
-function parseStorageValue(value: string): Record<string, unknown> {
-  try {
-    return JSON.parse(value) as Record<string, unknown>;
-  } catch {
-    return {};
-  }
-}
-
 function toRecord(value: unknown): Record<string, unknown> {
   return typeof value === "object" && value !== null ? (value as Record<string, unknown>) : {};
 }
@@ -247,15 +159,5 @@ function isGridLayoutSettings(value: unknown): value is LayoutSettings["gridLayo
     "columns" in value &&
     typeof value.rows === "number" &&
     typeof value.columns === "number"
-  );
-}
-
-function isZustandStorageValue(value: unknown): value is { state: unknown; version: number } {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "state" in value &&
-    "version" in value &&
-    typeof value.version === "number"
   );
 }

@@ -1,5 +1,7 @@
 import type { RssFeed, RssWidgetSettings } from "../../../domain/canvas";
 import { dedupeRssItems, parseRssXml, type RssFeedCache, type RssItem } from "../../../domain/rss";
+import { pruneRssCache } from "../../../domain/rssCache";
+import { fetchFeedText } from "../../../infrastructure/feedFetch";
 
 export type RssFeedFailure = {
   feedId: string;
@@ -19,15 +21,6 @@ type RssFetchOptions = {
 const cache = new Map<string, RssFeedCache>();
 const persistentRssCacheKey = "snapTabRssCache";
 
-type FeedFetchResponse = {
-  ok: boolean;
-  status: number;
-  text?: string;
-  error?: string;
-};
-
-type SendRuntimeMessage = (message: unknown, callback: (response: unknown) => void) => void;
-
 export async function fetchRssItems(settings: RssWidgetSettings, signal?: AbortSignal, options: RssFetchOptions = {}): Promise<RssFetchResult> {
   const feeds = getActiveFeeds(settings);
   if (feeds.length === 0) {
@@ -46,7 +39,17 @@ export async function fetchRssItems(settings: RssWidgetSettings, signal?: AbortS
 
 export async function checkRssFeed(feed: RssFeed, signal?: AbortSignal): Promise<{ ok: true } | { ok: false; message: string }> {
   try {
-    parseRssXml(await fetchFeedText(feed.url, signal), feed);
+    const parsed = parseRssXml(await fetchFeedText(feed.url, signal), feed);
+    const now = new Date().toISOString();
+    const nextCache: RssFeedCache = {
+      feedUrl: feed.url,
+      items: parsed.items,
+      lastFetchedAt: now,
+      lastSuccessAt: now
+    };
+
+    cache.set(feed.url, nextCache);
+    await writePersistentCache(feed.url, nextCache);
     return { ok: true };
   } catch (error) {
     if (signal?.aborted) {
@@ -109,56 +112,6 @@ async function fetchFeedItems(
   }
 }
 
-async function fetchFeedText(url: string, signal?: AbortSignal): Promise<string> {
-  const sendMessage = typeof chrome !== "undefined" ? chrome.runtime?.sendMessage : undefined;
-  if (sendMessage) {
-    return fetchFeedTextViaBackground(url, signal, sendMessage);
-  }
-
-  const response = await fetch(url, { signal });
-  if (!response.ok) {
-    throw new Error(`Feed returned ${response.status}.`);
-  }
-
-  return response.text();
-}
-
-function fetchFeedTextViaBackground(
-  url: string,
-  signal: AbortSignal | undefined,
-  sendMessage: SendRuntimeMessage
-): Promise<string> {
-  return new Promise((resolve, reject) => {
-    if (signal?.aborted) {
-      reject(new DOMException("Aborted", "AbortError"));
-      return;
-    }
-
-    const abort = () => reject(new DOMException("Aborted", "AbortError"));
-    signal?.addEventListener("abort", abort, { once: true });
-    sendMessage({ type: "SNAPTAB_FETCH_RSS_FEED", url }, (response) => {
-      signal?.removeEventListener("abort", abort);
-      const lastError = chrome?.runtime?.lastError?.message;
-      if (lastError) {
-        reject(new Error(lastError));
-        return;
-      }
-
-      if (!isFeedFetchResponse(response)) {
-        reject(new Error("Feed fetch failed."));
-        return;
-      }
-
-      if (!response.ok) {
-        reject(new Error(response.error ?? `Feed returned ${response.status}.`));
-        return;
-      }
-
-      resolve(response.text ?? "");
-    });
-  });
-}
-
 function getActiveFeeds(settings: RssWidgetSettings) {
   if (settings.feedMode !== "selected") {
     return settings.feeds;
@@ -211,7 +164,10 @@ async function readPersistentCache(): Promise<Record<string, unknown>> {
 }
 
 async function writePersistentCache(feedUrl: string, value: RssFeedCache) {
-  const nextCache = { ...(await readPersistentCache()), [feedUrl]: value };
+  const currentCache = Object.fromEntries(
+    Object.entries(await readPersistentCache()).filter((entry): entry is [string, RssFeedCache] => isRssFeedCache(entry[1]))
+  );
+  const nextCache = pruneRssCache({ ...currentCache, [feedUrl]: value });
   const chromeLocal = typeof chrome !== "undefined" ? chrome.storage?.local : undefined;
   if (chromeLocal) {
     await new Promise<void>((resolve) => chromeLocal.set({ [persistentRssCacheKey]: nextCache }, () => resolve()));
@@ -232,10 +188,6 @@ function isRssFeedCache(value: unknown): value is RssFeedCache {
     Array.isArray(value.items) &&
     typeof value.lastFetchedAt === "string"
   );
-}
-
-function isFeedFetchResponse(value: unknown): value is FeedFetchResponse {
-  return isRecord(value) && typeof value.ok === "boolean" && typeof value.status === "number";
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

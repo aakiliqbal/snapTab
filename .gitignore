@@ -1,8 +1,10 @@
 node_modules/
 dist/
 test-results/
+graphify-out/
 .codex/
 .opencode/
 references/
 .DS_Store
 *.log
+*.zip

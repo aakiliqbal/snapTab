@@ -31,7 +31,7 @@ describe("canvas placement", () => {
       shortcutGrid: { x: 3.5, y: 5, width: 13, height: 6, zIndex: 5 },
       weather: { x: 0, y: 8, width: 7, height: 4, zIndex: 8 },
       dateTime: { x: 0, y: 0, width: 7, height: 3, zIndex: 8 },
-      rss: { x: 12, y: 0, width: 8, height: 5, zIndex: 8 }
+      rss: { x: 12, y: 5, width: 8, height: 5, zIndex: 8 }
     });
   });
 
@@ -50,7 +50,7 @@ describe("canvas placement", () => {
     ).toEqual({ x: 0, y: 0, width: 7, height: 3, zIndex: 8 });
     expect(
       resolveResponsiveDefaultWidgetPlacement("rss", { x: 26, y: 0, width: 8, height: 5, zIndex: 8 }, { columns: 20, rows: 12 })
-    ).toEqual({ x: 12, y: 0, width: 8, height: 5, zIndex: 8 });
+    ).toEqual({ x: 12, y: 5, width: 8, height: 5, zIndex: 8 });
   });
 
   it("keeps fractional placement while clamping inside the canvas", () => {

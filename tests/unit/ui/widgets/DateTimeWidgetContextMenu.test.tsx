@@ -20,14 +20,12 @@ describe("DateTimeWidgetContextMenu", () => {
     container = undefined;
   });
 
-  it("routes hour, minute, and second choices through one shared color picker", () => {
+  it("routes custom palette choices to the selected clock color", () => {
     container = document.createElement("div");
     document.body.append(container);
     root = createRoot(container);
 
     const changeDateTimeWidgetSetting = vi.fn();
-    const settings = defaultCanvasState.widgets.dateTime.settings;
-
     act(() => {
       root?.render(
         <DateTimeWidgetContextMenu
@@ -38,24 +36,26 @@ describe("DateTimeWidgetContextMenu", () => {
       );
     });
 
-    const colorInputs = container.querySelectorAll<HTMLInputElement>('input[type="color"]');
-    expect(colorInputs).toHaveLength(1);
-
-    const colorInput = colorInputs[0];
-    const click = vi.spyOn(colorInput, "click").mockImplementation(() => undefined);
+    expect(container.querySelectorAll<HTMLInputElement>('input[type="color"]')).toHaveLength(0);
 
     clickColorButton("Minute");
-    expect(colorInput.value).toBe(settings.minuteColor);
+    clickPaletteSwatch("#38bdf8");
+    expect(changeDateTimeWidgetSetting).toHaveBeenLastCalledWith("minuteColor", "#38bdf8");
+
+    const hexInput = container.querySelector<HTMLInputElement>('input[aria-label="Minute hex colour"]');
+    expect(hexInput).toBeDefined();
 
     act(() => {
-      colorInput.value = "#123456";
-      colorInput.dispatchEvent(new Event("input", { bubbles: true }));
+      if (hexInput) {
+        setInputValue(hexInput, "#123456");
+        hexInput.dispatchEvent(new Event("input", { bubbles: true }));
+      }
     });
     expect(changeDateTimeWidgetSetting).toHaveBeenLastCalledWith("minuteColor", "#123456");
 
     clickColorButton("Second");
-    expect(colorInput.value).toBe(settings.secondColor);
-    expect(click).toHaveBeenCalledTimes(2);
+    clickPaletteSwatch("#f472b6");
+    expect(changeDateTimeWidgetSetting).toHaveBeenLastCalledWith("secondColor", "#f472b6");
 
     function clickColorButton(label: string) {
       const button = Array.from(container?.querySelectorAll("button") ?? []).find((candidate) =>
@@ -64,6 +64,17 @@ describe("DateTimeWidgetContextMenu", () => {
 
       expect(button).toBeDefined();
       act(() => button?.click());
+    }
+
+    function clickPaletteSwatch(color: string) {
+      const button = container?.querySelector<HTMLButtonElement>(`button[data-color="${color}"]`);
+
+      expect(button).toBeDefined();
+      act(() => button?.click());
+    }
+
+    function setInputValue(input: HTMLInputElement, value: string) {
+      Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set?.call(input, value);
     }
   });
 });
