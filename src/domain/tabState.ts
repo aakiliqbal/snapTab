@@ -472,6 +472,7 @@ function normalizeSearchWidget(
 
   const settings = isRecord(value.settings) ? value.settings : {};
   return {
+    type: "search",
     enabled: typeof value.enabled === "boolean" ? value.enabled : fallback.enabled,
     placement: normalizeSearchWidgetPlacement(value.placement, fallback.placement),
     settings: {
@@ -505,6 +506,7 @@ function normalizeShortcutGridWidget(
 
   const settings = isRecord(value.settings) ? value.settings : {};
   return {
+    type: "shortcutGrid",
     enabled: typeof value.enabled === "boolean" ? value.enabled : fallback.enabled,
     placement: normalizeWidgetPlacement(value.placement, fallback.placement),
     settings: {
@@ -529,6 +531,7 @@ function normalizeWeatherWidget(
 
   const settings = isRecord(value.settings) ? value.settings : {};
   return {
+    type: "weather",
     enabled: typeof value.enabled === "boolean" ? value.enabled : fallback.enabled,
     placement: normalizeWidgetPlacement(value.placement, fallback.placement),
     settings: {
@@ -559,6 +562,7 @@ function normalizeDateTimeWidget(
 
   const settings = isRecord(value.settings) ? value.settings : {};
   return {
+    type: "dateTime",
     enabled: typeof value.enabled === "boolean" ? value.enabled : fallback.enabled,
     placement: normalizeWidgetPlacement(value.placement, fallback.placement),
     settings: {
@@ -596,6 +600,7 @@ function normalizeRssWidget(value: unknown, fallback: CanvasState["widgets"]["rs
   const feeds = normalizeRssFeeds(settings.feeds, fallback.settings.feeds);
   const selectedFeedId = normalizeSelectedRssFeedId(settings.selectedFeedId, feeds, fallback.settings.selectedFeedId);
   return {
+    type: "rss",
     enabled: typeof value.enabled === "boolean" ? value.enabled : fallback.enabled,
     placement: normalizeWidgetPlacement(value.placement, fallback.placement),
     settings: {

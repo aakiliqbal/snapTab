@@ -3,6 +3,7 @@ import type { RssDisplayMode, RssFeed, RssFeedMode, RssWidgetSettings, WidgetSta
 import { createRssFeedId, normalizeFeedUrl, parseOpmlFeeds, serializeOpmlFeeds } from "../../../domain/rss";
 import { RangeRow, WidgetVisualControls } from "../WidgetContextMenuControls";
 import { checkRssFeed } from "./rssService";
+import { requestPermissionsForUrls } from "../../../infrastructure/feedFetch";
 
 type RssWidgetContextMenuProps = {
   changeRssWidgetSetting: <K extends keyof RssWidgetSettings>(key: K, value: RssWidgetSettings[K]) => void;
@@ -16,6 +17,12 @@ type FeedCheckStatus =
   | { state: "ok"; message: string }
   | { state: "error"; message: string };
 
+type PendingFeedCheck = {
+  feeds: RssFeed[];
+  importedCount: number;
+  selectedFeedId: string | null;
+};
+
 export function RssWidgetContextMenu({
   changeRssWidgetSetting,
   changeRssWidgetSettings,
@@ -27,6 +34,7 @@ export function RssWidgetContextMenu({
   const [feedTitle, setFeedTitle] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [feedStatuses, setFeedStatuses] = useState<Record<string, FeedCheckStatus>>({});
+  const [pendingFeedCheck, setPendingFeedCheck] = useState<PendingFeedCheck | null>(null);
   const importModeRef = useRef<"merge" | "replace">("merge");
   const settings = rssWidget.settings;
 
@@ -48,11 +56,12 @@ export function RssWidgetContextMenu({
       title: feedTitle.trim() || getFeedTitleFromUrl(url),
       url
     };
-    changeRssWidgetSettings({ feeds: [...settings.feeds, nextFeed], selectedFeedId: settings.selectedFeedId ?? nextFeed.id });
+    const nextFeeds = [...settings.feeds, nextFeed];
+    changeRssWidgetSettings({ feeds: nextFeeds, selectedFeedId: settings.selectedFeedId ?? nextFeed.id });
     setFeedUrl("");
     setFeedTitle("");
     setMessage("Feed added. Checking feed...");
-    checkFeeds([nextFeed]);
+    void checkFeeds([nextFeed], nextFeeds);
   }
 
   function removeFeed(feedId: string) {
@@ -85,9 +94,9 @@ export function RssWidgetContextMenu({
         setFeedStatuses({});
       }
 
-      changeRssWidgetSettings({ feeds, selectedFeedId: settings.selectedFeedId && feeds.some((feed) => feed.id === settings.selectedFeedId) ? settings.selectedFeedId : feeds[0]?.id ?? null });
-      setMessage(`${importedFeeds.length} feed${importedFeeds.length === 1 ? "" : "s"} imported. Checking feeds...`);
-      checkFeeds(importedFeeds);
+      const selectedFeedId = settings.selectedFeedId && feeds.some((feed) => feed.id === settings.selectedFeedId) ? settings.selectedFeedId : feeds[0]?.id ?? null;
+      setPendingFeedCheck({ feeds, importedCount: importedFeeds.length, selectedFeedId });
+      setMessage(`${importedFeeds.length} feed${importedFeeds.length === 1 ? "" : "s"} ready to import. Click yes to grant access and load them.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Could not import OPML.");
     } finally {
@@ -108,9 +117,19 @@ export function RssWidgetContextMenu({
     setMessage("OPML exported.");
   }
 
-  async function checkFeeds(feeds: RssFeed[]) {
+  async function checkFeeds(feeds: RssFeed[], nextFeeds = rssWidget.settings.feeds, settingsAfterCheck: Partial<RssWidgetSettings> = {}) {
     if (feeds.length === 0) {
       setMessage("No feeds to check.");
+      return;
+    }
+
+    const permissions = await requestPermissionsForUrls(feeds.map((feed) => feed.url));
+    if (permissions.denied > 0 && permissions.granted === 0) {
+      setMessage("Feed access was not granted.");
+      setFeedStatuses((current) => ({
+        ...current,
+        ...Object.fromEntries(feeds.map((feed) => [feed.id, { state: "error", message: "Permission denied" } satisfies FeedCheckStatus]))
+      }));
       return;
     }
 
@@ -133,6 +152,10 @@ export function RssWidgetContextMenu({
         ])
       )
     }));
+    // Re-fetch after checks complete so the widget reads the freshly populated cache.
+    changeRssWidgetSettings({ ...settingsAfterCheck, feeds: [...nextFeeds] });
+    setPendingFeedCheck(null);
+    setMessage(`${results.filter(({ result }) => result.ok).length} of ${feeds.length} feed${feeds.length === 1 ? "" : "s"} reachable.`);
   }
 
   return (
@@ -158,6 +181,19 @@ export function RssWidgetContextMenu({
         <button type="submit">Add feed</button>
         {message ? <p>{message}</p> : null}
       </form>
+
+      {pendingFeedCheck ? (
+        <div className="rss-context-permission-prompt" role="status">
+          <strong>Check imported feeds?</strong>
+          <span>{pendingFeedCheck.importedCount} feed{pendingFeedCheck.importedCount === 1 ? "" : "s"} will be imported. This will ask for feed access, verify all feeds, and show articles in the widget.</span>
+          <button
+            onClick={() => void checkFeeds(pendingFeedCheck.feeds, pendingFeedCheck.feeds, { selectedFeedId: pendingFeedCheck.selectedFeedId })}
+            type="button"
+          >
+            Yes, check feeds
+          </button>
+        </div>
+      ) : null}
 
       {settings.feeds.length > 0 ? (
         <div className="rss-context-feed-list" aria-label="RSS feeds">

@@ -9,7 +9,7 @@ The browser page rendered by SnapTab when Chrome opens a new tab.
 The fixed, full-viewport workspace inside the New Tab Surface. It never browser-scrolls and contains Widgets snapped to a logical grid.
 
 **Widget**  
-A user-configurable surface placed on the Canvas. Widgets have enabled state, freeform placement, visual settings, and type-specific settings.
+A user-configurable surface placed on the Canvas. Split into a generic **Widget Instance** (persisted state like placement and type) and a **Widget Definition** (the adapter containing type-specific render logic, settings schema, and default state). Registered via compile-time **Widget Registry**.
 
 **Widget Placement**  
 A Widget's persisted Canvas-relative rectangle: x, y, width, height, and z-index. Placement can be fractional, must fit inside the Canvas, and enabled Widgets must not overlap.

@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useState } from "react";
 import type {
   DateTimeClockMode,
   DateTimeDateMode,
@@ -24,30 +24,41 @@ const clockColorSettings: Array<{ key: ColorSettingKey; label: string }> = [
   { key: "secondColor", label: "Second" }
 ];
 
+const clockColorPalette = [
+  "#f8fafc", "#e2e8f0", "#94a3b8", "#475569", "#1e293b", "#020617",
+  "#fee2e2", "#fecaca", "#f87171", "#ef4444", "#b91c1c", "#7f1d1d",
+  "#ffedd5", "#fed7aa", "#fb923c", "#f97316", "#c2410c", "#7c2d12",
+  "#fef3c7", "#fde68a", "#fbbf24", "#f59e0b", "#b45309", "#78350f",
+  "#dcfce7", "#bbf7d0", "#4ade80", "#22c55e", "#15803d", "#14532d",
+  "#ccfbf1", "#99f6e4", "#2dd4bf", "#14b8a6", "#0f766e", "#134e4a",
+  "#e0f2fe", "#bae6fd", "#38bdf8", "#0ea5e9", "#0369a1", "#0c4a6e",
+  "#dbeafe", "#bfdbfe", "#60a5fa", "#3b82f6", "#1d4ed8", "#1e3a8a",
+  "#ede9fe", "#ddd6fe", "#a78bfa", "#8b5cf6", "#6d28d9", "#4c1d95",
+  "#fce7f3", "#fbcfe8", "#f472b6", "#ec4899", "#be185d", "#831843"
+];
+
 export function DateTimeWidgetContextMenu({
   changeDateTimeWidgetSetting,
   dateTimeWidget,
   setEnabled
 }: DateTimeWidgetContextMenuProps) {
   const settings = dateTimeWidget.settings;
-  const colorInputRef = useRef<HTMLInputElement>(null);
-  const activeColorSettingRef = useRef<ColorSettingKey>("hourColor");
+  const [activeColorSetting, setActiveColorSetting] = useState<ColorSettingKey>("hourColor");
+  const [hexDraft, setHexDraft] = useState(settings.hourColor);
 
-  function openColorPicker(key: ColorSettingKey) {
-    const input = colorInputRef.current;
-
-    activeColorSettingRef.current = key;
-    if (!input) {
-      return;
-    }
-
-    input.blur();
-    input.value = settings[key];
-    input.click();
-  }
+  useEffect(() => {
+    setHexDraft(settings[activeColorSetting]);
+  }, [activeColorSetting, settings]);
 
   function changeActiveColor(value: string) {
-    changeDateTimeWidgetSetting(activeColorSettingRef.current, value);
+    changeDateTimeWidgetSetting(activeColorSetting, value);
+  }
+
+  function changeHexDraft(value: string) {
+    setHexDraft(value);
+    if (/^#[0-9a-fA-F]{6}$/.test(value)) {
+      changeActiveColor(value);
+    }
   }
 
   return (
@@ -104,24 +115,47 @@ export function DateTimeWidgetContextMenu({
         {clockColorSettings.map((colorSetting) => (
           <button
             aria-label={`Choose ${colorSetting.label.toLowerCase()} colour`}
-            className="date-time-color-button"
+            aria-pressed={activeColorSetting === colorSetting.key}
+            className={`date-time-color-button${activeColorSetting === colorSetting.key ? " active" : ""}`}
             key={colorSetting.key}
-            onClick={() => openColorPicker(colorSetting.key)}
+            onClick={() => setActiveColorSetting(colorSetting.key)}
             type="button"
           >
             <span>{colorSetting.label}</span>
             <span className="date-time-color-swatch" style={{ backgroundColor: settings[colorSetting.key] }} />
           </button>
         ))}
-        <input
-          aria-hidden="true"
-          className="date-time-shared-color-input"
-          ref={colorInputRef}
-          tabIndex={-1}
-          type="color"
-          defaultValue={settings.hourColor}
-          onInput={(event) => changeActiveColor(event.currentTarget.value)}
-        />
+        <div className="date-time-palette" aria-label={`${getColorSettingLabel(activeColorSetting)} colour palette`} role="group">
+          <div className="date-time-palette-preview">
+            <span>{getColorSettingLabel(activeColorSetting)} colour</span>
+            <strong>{settings[activeColorSetting]}</strong>
+            <i aria-hidden="true" style={{ backgroundColor: settings[activeColorSetting] }} />
+          </div>
+          <div className="date-time-palette-grid">
+            {clockColorPalette.map((color) => (
+              <button
+                aria-label={`Use ${color} for ${getColorSettingLabel(activeColorSetting)}`}
+                aria-pressed={settings[activeColorSetting].toLowerCase() === color}
+                className="date-time-palette-swatch"
+                data-color={color}
+                key={color}
+                onClick={() => changeActiveColor(color)}
+                style={{ backgroundColor: color }}
+                type="button"
+              />
+            ))}
+          </div>
+          <label className="date-time-palette-hex">
+            <span>Hex</span>
+            <input
+              aria-label={`${getColorSettingLabel(activeColorSetting)} hex colour`}
+              value={hexDraft}
+              onChange={(event) => changeHexDraft(event.currentTarget.value)}
+              spellCheck={false}
+              type="text"
+            />
+          </label>
+        </div>
       </div>
 
       <label>
@@ -196,4 +230,8 @@ export function DateTimeWidgetContextMenu({
       <WidgetVisualControls visual={settings.visual} onChange={(visual) => changeDateTimeWidgetSetting("visual", visual)} />
     </>
   );
+}
+
+function getColorSettingLabel(key: ColorSettingKey) {
+  return clockColorSettings.find((setting) => setting.key === key)?.label ?? "Clock";
 }

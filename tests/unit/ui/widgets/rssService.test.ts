@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { defaultCanvasState } from "../../../../src/domain/canvas";
-import { fetchRssItems } from "../../../../src/ui/widgets/rss/rssService";
+import { checkRssFeed, fetchRssItems } from "../../../../src/ui/widgets/rss/rssService";
 
 describe("fetchRssItems", () => {
   afterEach(() => {
@@ -30,6 +30,26 @@ describe("fetchRssItems", () => {
     });
 
     expect(result.items.map((item) => item.feedId)).toEqual(["feed-a", "feed-a", "feed-b", "feed-b"]);
+  });
+
+  it("populates the widget cache when a feed check succeeds", async () => {
+    const fetch = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(feedXml("Checked", 2, "2024-01-03"), {
+      status: 200,
+      headers: { "Content-Type": "application/xml" }
+    }));
+    const feed = { id: "checked-feed", title: "Checked Feed", url: "https://example.com/checked-feed.xml" };
+
+    await expect(checkRssFeed(feed)).resolves.toEqual({ ok: true });
+
+    const result = await fetchRssItems({
+      ...defaultCanvasState.widgets.rss.settings,
+      feeds: [feed],
+      feedMode: "all"
+    });
+
+    expect(result.items).toHaveLength(2);
+    expect(result.items[0]?.feedId).toBe("checked-feed");
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
 });
 

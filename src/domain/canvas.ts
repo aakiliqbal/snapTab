@@ -2,6 +2,8 @@ import type { SearchProviderId, SearchVerticalId } from "./tabState";
 
 export type WidgetId = "search" | "shortcutGrid" | "weather" | "dateTime" | "rss";
 
+export type WidgetInstanceId = string;
+
 export type WidgetPlacement = {
   x: number;
   y: number;
@@ -111,19 +113,24 @@ export type RssWidgetSettings = {
   visual: WidgetVisualSettings;
 };
 
-export type WidgetState<TSettings> = {
+export type WidgetState<TSettings, TType extends WidgetId = WidgetId> = {
+  type: TType;
   enabled: boolean;
   placement: WidgetPlacement;
   settings: TSettings;
 };
 
-export type CanvasWidgets = {
-  search: WidgetState<SearchWidgetSettings>;
-  shortcutGrid: WidgetState<ShortcutGridWidgetSettings>;
-  weather: WidgetState<WeatherWidgetSettings>;
-  dateTime: WidgetState<DateTimeWidgetSettings>;
-  rss: WidgetState<RssWidgetSettings>;
+export type WidgetInstanceByType = {
+  search: WidgetState<SearchWidgetSettings, "search">;
+  shortcutGrid: WidgetState<ShortcutGridWidgetSettings, "shortcutGrid">;
+  weather: WidgetState<WeatherWidgetSettings, "weather">;
+  dateTime: WidgetState<DateTimeWidgetSettings, "dateTime">;
+  rss: WidgetState<RssWidgetSettings, "rss">;
 };
+
+export type WidgetInstance = WidgetInstanceByType[WidgetId];
+
+export type CanvasWidgets = { [K in WidgetId]: WidgetInstanceByType[K] };
 
 export type CanvasState = {
   targetCellSize: number;
@@ -161,6 +168,7 @@ export const defaultCanvasState: CanvasState = {
   targetCellSize: 56,
   widgets: {
     search: {
+      type: "search",
       enabled: true,
       placement: deriveDefaultWidgetPlacements(fallbackCanvasGrid).search,
       settings: {
@@ -174,6 +182,7 @@ export const defaultCanvasState: CanvasState = {
       }
     },
     shortcutGrid: {
+      type: "shortcutGrid",
       enabled: true,
       placement: deriveDefaultWidgetPlacements(fallbackCanvasGrid).shortcutGrid,
       settings: {
@@ -186,6 +195,7 @@ export const defaultCanvasState: CanvasState = {
       }
     },
     weather: {
+      type: "weather",
       enabled: true,
       placement: deriveDefaultWidgetPlacements(fallbackCanvasGrid).weather,
       settings: {
@@ -209,6 +219,7 @@ export const defaultCanvasState: CanvasState = {
       }
     },
     dateTime: {
+      type: "dateTime",
       enabled: true,
       placement: deriveDefaultWidgetPlacements(fallbackCanvasGrid).dateTime,
       settings: {
@@ -237,6 +248,7 @@ export const defaultCanvasState: CanvasState = {
       }
     },
     rss: {
+      type: "rss",
       enabled: true,
       placement: deriveDefaultWidgetPlacements(fallbackCanvasGrid).rss,
       settings: {
@@ -290,6 +302,15 @@ export function deriveDefaultWidgetPlacements(grid: CanvasGrid): Record<WidgetId
   const dateTimeHeight = Math.min(defaultDateTimeSize.height, grid.rows);
   const rssWidth = Math.min(defaultRssSize.width, grid.columns);
   const rssHeight = Math.min(defaultRssSize.height, grid.rows);
+  const rssX = Math.max(0, grid.columns - rssWidth);
+
+  // On narrow grids the centered search widget overlaps the right-aligned RSS
+  // widget. Shift RSS below search to prevent search's backdrop-filter from
+  // showing RSS's scrolling content behind it.
+  const rssY =
+    searchPlacement.x < rssX + rssWidth && searchPlacement.x + searchPlacement.width > rssX
+      ? Math.min(searchPlacement.y + searchPlacement.height + widgetGap, Math.max(0, grid.rows - rssHeight))
+      : 0;
 
   return {
     search: searchPlacement,
@@ -325,8 +346,8 @@ export function deriveDefaultWidgetPlacements(grid: CanvasGrid): Record<WidgetId
     ),
     rss: clampPlacementToCanvas(
       {
-        x: Math.max(0, grid.columns - rssWidth),
-        y: 0,
+        x: rssX,
+        y: rssY,
         width: rssWidth,
         height: rssHeight,
         zIndex: 8

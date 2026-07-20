@@ -9,6 +9,12 @@ import { getThemePreset, isThemeId, type ThemeId } from "../../domain/themes";
 import type { TabState } from "../../domain/tabState";
 import { ShortcutForm } from "../shortcut-editor";
 
+// Define permission status types
+export type PermissionStatus = "granted" | "prompt" | "denied";
+export type PermissionState = {
+  activeTab: PermissionStatus;
+};
+
 const storageKey = "snapTabState";
 const legacyStorageKey = ["in", "fi", "TabState"].join("");
 
