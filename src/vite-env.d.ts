@@ -10,13 +10,12 @@ type ChromeTab = {
   id?: number;
   title?: string;
   url?: string;
+  favIconUrl?: string;
 };
 
 type ChromeTabs = {
   create: (createProperties: { url: string; active?: boolean }, callback?: (tab: ChromeTab) => void) => void;
-  getCurrent?: (callback: (tab: ChromeTab) => void) => void;
-  query: (queryInfo: { active: boolean; currentWindow: boolean }, callback: (tabs: ChromeTab[]) => void) => void;
-  remove?: (tabId: number, callback?: () => void) => void;
+  query: (queryInfo: { active: boolean; lastFocusedWindow: boolean }, callback: (tabs: ChromeTab[]) => void) => void;
 };
 
 type ChromeStorageChangeEvent = {

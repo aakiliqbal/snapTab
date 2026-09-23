@@ -9,18 +9,13 @@ import { getThemePreset, isThemeId, type ThemeId } from "../../domain/themes";
 import type { TabState } from "../../domain/tabState";
 import { ShortcutForm } from "../shortcut-editor";
 
-// Define permission status types
-export type PermissionStatus = "granted" | "prompt" | "denied";
-export type PermissionState = {
-  activeTab: PermissionStatus;
-};
-
 const storageKey = "snapTabState";
 const legacyStorageKey = ["in", "fi", "TabState"].join("");
 
 type ActiveTab = {
   title?: string;
   url?: string;
+  favIconUrl?: string;
 };
 
 export function PopupApp() {
@@ -156,7 +151,8 @@ function useCurrentTabShortcutDraft() {
         ...emptyShortcutDraft,
         title,
         url,
-        iconLabel: title.slice(0, 2).toUpperCase()
+        iconLabel: title.slice(0, 2).toUpperCase(),
+        iconImageDataUrl: tab?.favIconUrl ?? null
       });
       setMessage(url ? "Review and save this site to SnapTab." : "Could not read the current tab URL.");
     });
@@ -219,7 +215,7 @@ function getActiveTab(): Promise<ActiveTab | null> {
   }
 
   return new Promise((resolve) => {
-    tabs.query({ active: true, currentWindow: true }, (activeTabs) => {
+    tabs.query({ active: true, lastFocusedWindow: true }, (activeTabs) => {
       if (runtime?.lastError) {
         resolve(null);
         return;
@@ -237,3 +233,4 @@ function getTitleFromUrl(url: string) {
     return "Current site";
   }
 }
+

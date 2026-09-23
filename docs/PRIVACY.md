@@ -33,7 +33,7 @@ SnapTab requests the following Chrome permissions:
 | Permission | Purpose |
 |------------|---------|
 | `storage` | Store your shortcuts, settings, and configuration locally. |
-| `activeTab` (optional) | Read the current tab's URL when you use the toolbar popup to save a shortcut. Only used when you click the extension icon. |
+| `activeTab` | Temporarily read the current tab's title and URL when you use the toolbar popup to save a shortcut. Only used when you click the extension icon. |
 | Host permissions (optional) | Fetch RSS/Atom feeds from URLs you explicitly subscribe to. SnapTab requests access only when needed for a feed domain, and the permission is used only for RSS/Atom fetches. |
 
 ## Data Retention and Deletion

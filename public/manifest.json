@@ -23,7 +23,6 @@
     "48": "icons/48x48.png",
     "128": "icons/128x128.png"
   },
-  "permissions": ["storage"],
-  "optional_permissions": ["activeTab"],
+  "permissions": ["storage", "activeTab"],
   "optional_host_permissions": ["http://*/*", "https://*/*"]
 }

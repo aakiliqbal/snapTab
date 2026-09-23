@@ -12,8 +12,7 @@ test("new tab shell renders core surfaces", async ({ page }) => {
 test("shortcut click launches destination without navigating extension document", async ({ page }) => {
   await page.addInitScript(() => {
     const openedTabs: Array<{ url?: string; active?: boolean }> = [];
-    const removedTabs: number[] = [];
-    Object.assign(window, { __openedTabs: openedTabs, __removedTabs: removedTabs });
+    Object.assign(window, { __openedTabs: openedTabs });
     Object.assign(window, {
       chrome: {
         runtime: {},
@@ -22,10 +21,6 @@ test("shortcut click launches destination without navigating extension document"
             openedTabs.push(properties);
             callback?.({ id: 100 });
           },
-          getCurrent: (callback: (tab: { id: number }) => void) => callback({ id: 42 }),
-          remove: (tabId: number) => {
-            removedTabs.push(tabId);
-          }
         }
       }
     });
@@ -36,12 +31,10 @@ test("shortcut click launches destination without navigating extension document"
 
   const launch = await page.evaluate(() => ({
     openedTabs: (window as unknown as { __openedTabs: Array<{ url?: string; active?: boolean }> }).__openedTabs,
-    removedTabs: (window as unknown as { __removedTabs: number[] }).__removedTabs,
     location: window.location.href
   }));
 
   expect(launch.openedTabs).toEqual([{ url: "https://docs.google.com", active: true }]);
-  expect(launch.removedTabs).toEqual([42]);
   expect(launch.location).toContain("/newtab.html");
 });
 
@@ -55,9 +48,7 @@ test("shortcut edit opens modal without launching shortcut", async ({ page }) =>
         tabs: {
           create: (properties: { url?: string; active?: boolean }) => {
             openedTabs.push(properties);
-          },
-          getCurrent: (callback: (tab: { id: number }) => void) => callback({ id: 42 }),
-          remove: () => {}
+          }
         }
       }
     });
@@ -188,6 +179,15 @@ test("toolbar popup shell renders add shortcut form", async ({ page }) => {
   page.on("pageerror", (error) => pageErrors.push(error));
   await page.addInitScript(() => {
     window.localStorage.setItem("snapTabState", JSON.stringify({ state: { schemaVersion: 2, themeId: "neon" }, version: 2 }));
+    Object.assign(window, {
+      chrome: {
+        runtime: {},
+        tabs: {
+          query: (_queryInfo: { active: boolean; lastFocusedWindow: boolean }, callback: (tabs: Array<{ title: string; url: string; favIconUrl: string }>) => void) =>
+            callback([{ title: "Example site", url: "https://example.com", favIconUrl: "https://example.com/favicon.ico" }])
+        }
+      }
+    });
   });
 
   await page.goto("/popup.html");
@@ -197,6 +197,8 @@ test("toolbar popup shell renders add shortcut form", async ({ page }) => {
 
   await expect(page.locator(".popup-root")).toHaveAttribute("data-theme", "neon");
   await expect(page.getByRole("heading", { name: "Add current site" })).toBeVisible();
+  await expect(page.getByLabel("Title")).toHaveValue("Example site");
+  await expect(page.getByLabel("URL")).toHaveValue("https://example.com");
   await expect(page.getByRole("button", { name: "Add" })).toBeVisible();
 });
 
