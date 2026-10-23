@@ -31,9 +31,9 @@ type DragState = {
   initialRects: Record<string, DOMRect>;
 };
 
-const PAGE_EDGE_HOVER_MS = 300;
-const PAGE_EDGE_REPEAT_MS = 900;
-const ZONE_DEBOUNCE_MS = 200;
+const PAGE_EDGE_HOVER_MS = 180;
+const PAGE_EDGE_REPEAT_MS = 560;
+const ZONE_DEBOUNCE_MS = 90;
 
 export type GridDragSession = {
   dragState: DragState | null;
