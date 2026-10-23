@@ -64,15 +64,6 @@ export function ShortcutForm({
           >
             {draft.iconImageDataUrl ? (
               <img src={draft.iconImageDataUrl} alt="" />
-            ) : draft.url && getHighResolutionFaviconUrl(draft.url) ? (
-              <img
-                className="shortcut-favicon"
-                src={getHighResolutionFaviconUrl(draft.url)}
-                alt=""
-                onError={(event) => {
-                  event.currentTarget.style.display = "none";
-                }}
-              />
             ) : draft.brandIconId && brandIcons[draft.brandIconId] ? (
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d={brandIcons[draft.brandIconId].path} />
