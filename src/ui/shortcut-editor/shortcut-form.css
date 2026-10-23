@@ -245,3 +245,16 @@
 .icon-preview-card .quick-link-icon { overflow: hidden; }
 .icon-preview-card .quick-link-icon img { width: 100%; height: 100%; transition: transform 120ms ease; }
 @media (prefers-reduced-motion: reduce) { .icon-transform-controls button, .icon-preview-card .quick-link-icon img { transition: none; } }
+
+
+/* NewGrid-inspired framing and swatch palette. */
+.icon-control-row { grid-template-columns: minmax(0, 1fr); }
+.icon-color-editor { display: grid; gap: 9px; }
+.icon-color-editor > span { color: var(--theme-modal-muted-text, #4b5563); font-size: 11px; font-weight: 650; text-transform: uppercase; }
+.icon-color-palette { display: grid; grid-template-columns: repeat(6, 28px); gap: 8px; }
+.icon-color-palette button { width: 28px; height: 28px; padding: 0; border: 2px solid rgba(148,163,184,.4); border-radius: 8px; cursor: pointer; }
+.icon-color-palette button.selected { outline: 2px solid var(--theme-primary-bg, #2563eb); outline-offset: 2px; }
+.icon-color-palette button:focus-visible { outline: 2px solid var(--theme-primary-bg, #2563eb); outline-offset: 2px; }
+.icon-zoom-value { color: var(--theme-modal-muted-text, #4b5563); font-size: 12px; font-variant-numeric: tabular-nums; }
+.icon-preview-card .quick-link-icon { border-radius: var(--quick-link-icon-radius, 22%) !important; }
+.icon-preview-card .quick-link-icon img { object-position: center; }
