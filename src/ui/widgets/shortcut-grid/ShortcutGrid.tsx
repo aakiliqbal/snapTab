@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useReducedMotion } from "motion/react";
-import { Copy, ExternalLink, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
+import { Copy, ExternalLink, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { brandIcons } from "../../../domain/brandIcons";
 import type { DropAction } from "../../../domain/dropActions";
 import type { ResolvedTopLevelTile } from "../../../domain/tabOperations";
@@ -19,7 +19,6 @@ type ShortcutGridProps = {
   gridRef: React.RefObject<HTMLElement | null>;
   outgoingDragSource: DragSource | null;
   onClearOutgoingDrag: () => void;
-  onAddShortcut: () => void;
   onEditShortcut: (shortcut: Shortcut) => void;
   onRemoveShortcut: (shortcut: Shortcut) => void;
   onSetActiveFolderId: (folderId: string | null) => void;
@@ -39,7 +38,6 @@ export function ShortcutGrid({
   gridRef,
   outgoingDragSource,
   onClearOutgoingDrag,
-  onAddShortcut,
   onEditShortcut,
   onRemoveShortcut,
   onSetActiveFolderId,
@@ -277,10 +275,6 @@ export function ShortcutGrid({
             </div>
           );
         })}
-        <button className="quick-link quick-link-add" type="button" onClick={onAddShortcut} aria-label="Add shortcut" title="Add shortcut">
-          <span className="quick-link-icon add-link-icon" aria-hidden="true"><Plus /></span>
-          {showLabels ? <span className="quick-link-title">Add shortcut</span> : null}
-        </button>
       </section>
       <nav className="shortcut-page-footer" aria-label="Shortcut pages">
         {showPageDots && pageCount > 1 ? (
