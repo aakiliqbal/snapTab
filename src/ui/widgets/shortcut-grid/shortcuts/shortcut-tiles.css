@@ -123,6 +123,15 @@
   object-fit: cover;
 }
 
+.quick-link-icon img.shortcut-favicon {
+  width: 72%;
+  height: 72%;
+  object-fit: contain;
+  border-radius: 0;
+  image-rendering: auto;
+  transform: translateZ(0);
+}
+
 .quick-link-icon svg {
   width: 52%;
   height: 52%;
