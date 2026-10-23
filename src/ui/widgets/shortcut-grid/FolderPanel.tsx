@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect, type DragEvent } from "react";
-import { ArrowUpFromLine, Pencil } from "lucide-react";
+import { ArrowUpFromLine, Pencil, Trash2 } from "lucide-react";
 import type { DropAction } from "../../../domain/dropActions";
 import { openShortcutUrl } from "../../../infrastructure/openShortcutUrl";
 import { type ResolvedFolder } from "../../../domain/tabOperations";
@@ -17,6 +17,7 @@ type FolderPanelProps = {
   onClose: () => void;
   onEditShortcut: (shortcut: Shortcut) => void;
   onReleaseFolder: (folderId: string) => void;
+  onDeleteFolder: (folderId: string) => void;
   onRenameFolder: (folderId: string, title: string) => void;
   onStartOutgoingDrag: (source: DragSource) => void;
   tabState: TabState;
