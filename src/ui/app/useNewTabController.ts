@@ -304,7 +304,9 @@ export function useNewTabController() {
       iconMediaId: shortcut.icon.imageMediaId ?? null,
       brandIconId: shortcut.icon.brandIconId ?? null,
       iconZoom: shortcut.icon.zoom ?? 1,
-      iconFit: shortcut.icon.fit ?? "contain"
+      iconFit: shortcut.icon.fit ?? "contain",
+      iconOffsetX: shortcut.icon.offsetX ?? 0,
+      iconOffsetY: shortcut.icon.offsetY ?? 0
     });
   }
 
