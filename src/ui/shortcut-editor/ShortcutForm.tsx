@@ -1,6 +1,5 @@
 import type { FormEvent } from "react";
 import { brandIcons, type BrandIcon } from "../../domain/brandIcons";
-import { getHighResolutionFaviconUrl } from "../widgets/shortcut-grid/shortcuts/ShortcutIcon";
 import type { ShortcutDraft } from "../../domain/drafts";
 
 type ShortcutFormProps = {
