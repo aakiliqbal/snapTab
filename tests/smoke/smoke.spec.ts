@@ -64,8 +64,8 @@ test("shortcut edit opens modal without launching shortcut", async ({ page }) =>
 test("shortcut edit can persist a manual fallback icon", async ({ page }) => {
   await page.goto("/newtab.html");
   await page.getByRole("button", { name: "Edit Docs" }).click();
-  await page.getByLabel("Icon label").fill("DX");
-  await page.getByLabel("Icon color").fill("#123456");
+  await page.getByLabel("Icon text").fill("DX");
+  await page.getByLabel("Background color").fill("#123456");
   await page.getByRole("button", { name: "Save" }).click();
 
   const docsIcon = page.locator('[data-tile-key="shortcut:docs"] .quick-link-icon');
