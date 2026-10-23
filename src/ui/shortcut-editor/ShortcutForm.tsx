@@ -1,4 +1,4 @@
-import { useRef, type FormEvent, type PointerEvent } from "react";
+import { useRef, type CSSProperties, type FormEvent, type PointerEvent } from "react";
 import { getHighResolutionFaviconUrl } from "../widgets/shortcut-grid/shortcuts/ShortcutIcon";
 import { brandIcons, type BrandIcon } from "../../domain/brandIcons";
 import type { ShortcutDraft } from "../../domain/drafts";
@@ -94,7 +94,7 @@ export function ShortcutForm({
             onPointerMove={movePan}
             onPointerUp={endPan}
             onPointerCancel={endPan}
-            style={{ "--quick-link-icon-radius": "var(--quick-link-icon-radius, 22%)" } as React.CSSProperties}
+            style={{ "--quick-link-icon-radius": "var(--quick-link-icon-radius, 22%)" } as CSSProperties}
           >
             <span className={`quick-link-icon ${draft.iconImageDataUrl || (draft.brandIconId && brandIcons[draft.brandIconId]) ? "image-icon" : ""}`} style={{ backgroundColor: draft.iconBackground }}>
               {draft.iconImageDataUrl ? (
