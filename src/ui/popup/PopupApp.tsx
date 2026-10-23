@@ -60,7 +60,8 @@ export function PopupApp() {
       iconMediaId: currentDraft.iconMediaId,
       iconZoom: 1,
       iconOffsetX: 0,
-      iconOffsetY: 0
+      iconOffsetY: 0,
+      iconMode: "image"
     }));
   }
 
@@ -154,6 +155,7 @@ function useCurrentTabShortcutDraft() {
       const title = tab?.title?.trim() || getTitleFromUrl(url);
       setDraft({
         ...emptyShortcutDraft,
+        iconMode: "site",
         title,
         url,
         iconLabel: title.slice(0, 2).toUpperCase(),
