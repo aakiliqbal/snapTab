@@ -279,3 +279,5 @@
 .icon-editor-hint { margin:0; color:var(--theme-modal-muted-text,#64748b); font-size:10px; line-height:1.45; }
 .icon-preview-card .quick-link-icon { border-radius:var(--quick-link-icon-radius,22%) !important; overflow:hidden; }
 @media (max-width:480px) { .icon-workspace { grid-template-columns:minmax(0,1fr); } .icon-editor-stage { width:min(100%,220px); justify-self:center; } .icon-editor-tools { width:100%; } }
+
+.icon-editor-placeholder { max-width: 85%; color: var(--theme-modal-muted-text,#64748b); font-size: 12px; font-weight: 600; line-height: 1.4; text-align: center; }
