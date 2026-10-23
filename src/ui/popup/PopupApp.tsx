@@ -8,6 +8,7 @@ import { useTabStore } from "../../stores/useTabStore";
 import { getThemePreset, isThemeId, type ThemeId } from "../../domain/themes";
 import type { TabState } from "../../domain/tabState";
 import { ShortcutForm } from "../shortcut-editor";
+import { getHighResolutionFaviconUrl } from "../widgets/shortcut-grid/shortcuts/ShortcutIcon";
 
 const storageKey = "snapTabState";
 const legacyStorageKey = ["in", "fi", "TabState"].join("");
@@ -152,7 +153,7 @@ function useCurrentTabShortcutDraft() {
         title,
         url,
         iconLabel: title.slice(0, 2).toUpperCase(),
-        iconImageDataUrl: tab?.favIconUrl ?? null
+        iconImageDataUrl: getHighResolutionFaviconUrl(url) || tab?.favIconUrl || null
       });
       setMessage(url ? "Review and save this site to SnapTab." : "Could not read the current tab URL.");
     });
