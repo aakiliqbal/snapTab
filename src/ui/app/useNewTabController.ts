@@ -264,6 +264,12 @@ export function useNewTabController() {
     );
   }
 
+  function deleteFolderById(folderId: string) {
+    persistState(deleteFolderFromState(tabState, folderId));
+    setActiveFolderId(null);
+    setFolderDraft(null);
+  }
+
   function releaseFolderShortcuts(folderId: string) {
     updateTabState((state) =>
       produce(state, (draft) => {
@@ -511,6 +517,7 @@ export function useNewTabController() {
     changeWeatherWidgetSettings,
     chooseRecommendedIcon,
     deleteFolder,
+    deleteFolderById,
     deleteShortcut,
     dispatchDropAction,
     exportBackup,
