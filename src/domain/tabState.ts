@@ -27,6 +27,8 @@ export type ShortcutIcon = {
   imageDataUrl?: string | null;
   imageMediaId?: string | null;
   brandIconId?: BrandIconId | null;
+  zoom?: number;
+  fit?: "contain" | "cover";
 };
 
 export type Shortcut = {
