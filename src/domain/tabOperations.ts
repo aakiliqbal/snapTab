@@ -64,7 +64,9 @@ export function createShortcutFromDraft(draft: ShortcutDraft): Shortcut | null {
       imageMediaId: draft.iconMediaId,
       brandIconId: matchedBrandIcon?.id ?? null,
       zoom: Math.min(6, Math.max(0.2, draft.iconZoom ?? 1)),
-      fit: draft.iconFit ?? "contain"
+      fit: draft.iconFit ?? "contain",
+      offsetX: Math.max(-200, Math.min(200, draft.iconOffsetX ?? 0)),
+      offsetY: Math.max(-200, Math.min(200, draft.iconOffsetY ?? 0))
     }
   };
 }
