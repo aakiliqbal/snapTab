@@ -158,3 +158,10 @@
     scroll-behavior: auto !important;
   }
 }
+
+
+/* Use the same icon radius and NewGrid-style swatches in the browser popup. */
+.popup-panel .icon-preview-card .quick-link-icon { border-radius: var(--quick-link-icon-radius, 22%); }
+.popup-panel .icon-control-row { grid-template-columns: minmax(0, 1fr); }
+.popup-panel .icon-color-palette { grid-template-columns: repeat(6, 28px); }
+.popup-panel .icon-transform-controls { justify-content: flex-start; }
