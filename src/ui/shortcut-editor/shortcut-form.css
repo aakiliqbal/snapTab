@@ -281,3 +281,26 @@
 @media (max-width:480px) { .icon-workspace { grid-template-columns:minmax(0,1fr); } .icon-editor-stage { width:min(100%,220px); justify-self:center; } .icon-editor-tools { width:100%; } }
 
 .icon-editor-placeholder { max-width: 85%; color: var(--theme-modal-muted-text,#64748b); font-size: 12px; font-weight: 600; line-height: 1.4; text-align: center; }
+
+
+/* Prevent editor controls and color swatches from escaping the modal column. */
+.quick-link-form,
+.icon-editor,
+.icon-workspace,
+.icon-editor-tools,
+.icon-color-editor,
+.icon-label-field { min-width: 0; max-width: 100%; box-sizing: border-box; }
+.icon-workspace { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.icon-editor-tools > * { min-width: 0; max-width: 100%; }
+.icon-transform-controls { min-width: 0; max-width: 100%; gap: 5px; }
+.icon-transform-controls button { min-width: 0; flex: 0 1 auto; padding-inline: clamp(6px, 1.4vw, 10px); }
+.icon-color-palette { width: 100%; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: clamp(4px, 1.2vw, 8px); }
+.icon-color-palette button { width: 100%; min-width: 0; aspect-ratio: 1; height: auto; }
+.icon-label-field input { width: 100%; min-width: 0; box-sizing: border-box; }
+.quick-link-modal { max-width: min(720px, calc(100vw - 24px)); }
+@media (max-width: 560px) {
+  .icon-workspace { grid-template-columns: minmax(0, 1fr); }
+  .icon-editor-stage { width: min(100%, 220px); justify-self: center; }
+  .icon-editor-tools { width: 100%; }
+  .icon-color-palette { grid-template-columns: repeat(6, minmax(24px, 1fr)); }
+}
