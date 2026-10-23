@@ -27,9 +27,7 @@ export function deriveShortcutGridWidgetModel({
   widgetPlacement
 }: ShortcutGridWidgetModelInput) {
   const gridLayout = deriveShortcutGridLayoutFromWidget({ canvasMetrics, settings, tabState, widgetPlacement });
-  // Keep one visible slot for the Infinity-style quick-add tile on every page.
-  const slotCapacity = gridLayout.rows * gridLayout.columns;
-  const pageCapacity = Math.max(1, slotCapacity - 1);
+  const pageCapacity = Math.max(1, gridLayout.rows * gridLayout.columns);
   const pageCount = Math.max(1, Math.ceil(topLevelTiles.length / pageCapacity));
   const activeShortcutPageIndex = Math.min(activeShortcutPage, pageCount - 1);
   const visibleShortcutPageItems: ShortcutPageItem[] = topLevelTiles.slice(
