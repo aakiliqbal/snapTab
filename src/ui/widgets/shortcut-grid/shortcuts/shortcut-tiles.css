@@ -444,3 +444,47 @@
     transition: none;
   }
 }
+
+
+/* Compact Release action in the folder panel header. */
+.folder-release-button {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+  color: #0f172a;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  padding: 0 13px;
+  white-space: nowrap;
+  transition: background 140ms ease, transform 140ms ease, box-shadow 140ms ease;
+}
+
+.folder-release-button svg {
+  width: 15px;
+  height: 15px;
+}
+
+.folder-release-button:hover {
+  background: #ffffff;
+  box-shadow: 0 11px 27px rgba(15, 23, 42, 0.14);
+  transform: translateY(-1px);
+}
+
+.folder-release-button:focus-visible {
+  outline: 2px solid var(--theme-accent, #38bdf8);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .folder-release-button {
+    transition: none;
+  }
+}
