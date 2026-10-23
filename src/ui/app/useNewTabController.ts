@@ -264,6 +264,24 @@ export function useNewTabController() {
     );
   }
 
+  function releaseFolderShortcuts(folderId: string) {
+    updateTabState((state) =>
+      produce(state, (draft) => {
+        const folder = draft.tiles[folderId];
+        if (folder?.kind !== "folder") return;
+
+        const page = draft.pages.find((candidate) => candidate.tileIds.includes(folderId));
+        if (!page) return;
+
+        const folderIndex = page.tileIds.indexOf(folderId);
+        page.tileIds.splice(folderIndex, 1, ...folder.childIds);
+        delete draft.tiles[folderId];
+        compactReleasedPages(draft.pages, draft.layout.gridLayout.rows * draft.layout.gridLayout.columns);
+      })
+    );
+    setActiveFolderId(null);
+  }
+
   function openNewShortcutDialog() {
     setShortcutDraft({ ...emptyShortcutDraft });
   }
@@ -509,6 +527,7 @@ export function useNewTabController() {
     shortcutIconRecommendations,
     resetWallpaper,
     renameFolder,
+    releaseFolderShortcuts,
     saveFolder,
     saveShortcut,
     setActiveFolderId,
@@ -525,4 +544,13 @@ export function useNewTabController() {
     uploadWallpaper,
     wallpaperMessage
   };
+}
+
+function compactReleasedPages(pages: TabState["pages"], capacity: number) {
+  const ids = pages.flatMap((page) => page.tileIds);
+  const pageCount = Math.max(1, Math.ceil(ids.length / Math.max(1, capacity)));
+  pages.splice(0, pages.length, ...Array.from({ length: pageCount }, (_, index) => ({
+    id: pages[index]?.id ?? `page-${index + 1}`,
+    tileIds: ids.slice(index * capacity, (index + 1) * capacity)
+  })));
 }
