@@ -1,4 +1,4 @@
-import { CSSProperties, WheelEvent, useEffect, useMemo, useRef, type RefObject } from "react";
+import { CSSProperties, WheelEvent, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import type { DropAction } from "../../../domain/dropActions";
 import type { ResolvedTopLevelTile } from "../../../domain/tabOperations";
 import type { Shortcut, TabState } from "../../../domain/tabState";
@@ -74,10 +74,15 @@ export function ShortcutGridWidget({
   const tileGap = `${fittedTileGap}px`;
   const footerHeight = settings.showPageDots && pageCount > 1 ? 56 : 18;
   const previousPageRef = useRef(activeShortcutPageIndex);
-  const pageDirection = activeShortcutPageIndex >= previousPageRef.current ? 1 : -1;
+  const [pageDirection, setPageDirection] = useState<1 | -1>(1);
   useEffect(() => {
-    previousPageRef.current = activeShortcutPageIndex;
-  }, [activeShortcutPageIndex]);
+    if (activeShortcutPageIndex !== previousPageRef.current) {
+      const forward = activeShortcutPageIndex > previousPageRef.current ||
+        (previousPageRef.current === pageCount - 1 && activeShortcutPageIndex === 0);
+      setPageDirection(forward ? 1 : -1);
+      previousPageRef.current = activeShortcutPageIndex;
+    }
+  }, [activeShortcutPageIndex, pageCount]);
   const layoutStyle = {
     "--icon-size": iconSize,
     "--grid-column-gap": `${(34 * gridLayout.columnSpacing) / 100}px`,
