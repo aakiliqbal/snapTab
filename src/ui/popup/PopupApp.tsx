@@ -38,6 +38,7 @@ export function PopupApp() {
   const updateState = useTabStore((state) => state.updateState);
   const popupThemeId = usePopupThemeId(tabState.themeId);
   const theme = getThemePreset(popupThemeId);
+  const iconRadius = tabState.canvas.widgets.shortcutGrid.settings.iconRadius;
   const { draft, message, setDraft, setMessage } = useCurrentTabShortcutDraft();
   const iconRecommendations = useMemo(() => findBrandIconRecommendations(draft.title, draft.url), [draft.title, draft.url]);
 
@@ -80,7 +81,7 @@ export function PopupApp() {
   }
 
   return (
-    <main className="popup-root" data-theme={theme.id} style={theme.tokens as CSSProperties}>
+    <main className="popup-root" data-theme={theme.id} style={{ ...theme.tokens, "--quick-link-icon-radius": `${iconRadius}%`, "--quick-link-mini-radius": `${Math.round(iconRadius * 0.8)}%` } as CSSProperties}>
       <section className="quick-link-modal popup-panel" aria-labelledby="popup-title">
         <div className="modal-header">
           <div>
