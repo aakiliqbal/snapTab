@@ -34,6 +34,7 @@ export function ShortcutIcon({ shortcut }: { shortcut: Shortcut }) {
       {iconImage && !imageFailed ? (
         <img
           className={isRemoteFavicon ? "shortcut-favicon" : undefined}
+          style={{ objectFit: shortcut.icon.fit ?? "contain", transform: `scale(${shortcut.icon.zoom ?? 1})` }}
           src={isRemoteFavicon ? getHighResolutionFaviconUrl(shortcut.url) || iconImage : iconImage}
           alt=""
           loading={isRemoteFavicon ? "lazy" : undefined}
