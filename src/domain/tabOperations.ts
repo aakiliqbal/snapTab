@@ -42,7 +42,7 @@ export function createShortcutFromDraft(draft: ShortcutDraft): Shortcut | null {
     return null;
   }
 
-  const iconLabel = (draft.iconLabel.trim() || title.slice(0, 1) || "?").slice(0, 2).toUpperCase();
+  const iconLabel = (draft.iconLabel.trim() || title.slice(0, 1) || "?").slice(0, 32).toUpperCase();
   const matchedBrandIcon = draft.iconImageDataUrl
     ? null
     : draft.brandIconId
