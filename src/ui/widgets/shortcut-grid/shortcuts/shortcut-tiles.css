@@ -251,3 +251,193 @@
     transform: none;
   }
 }
+
+
+/* Infinity-inspired shortcut controls: quiet until hover/focus, then easy to reach. */
+.quick-link-actions {
+  position: absolute;
+  top: -9px;
+  right: calc(50% - var(--icon-size) / 2 - 13px);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 150ms ease, transform 150ms ease;
+  z-index: 8;
+}
+
+.quick-link:hover .quick-link-actions,
+.quick-link:focus-within .quick-link-actions,
+.quick-link-actions:has(.shortcut-context-menu) {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.quick-link-actions .quick-link-edit,
+.quick-link-more {
+  position: static;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--theme-tile-edit-text, #1f2937) 10%, transparent);
+  border-radius: 50%;
+  background: var(--theme-tile-edit-bg, rgba(255, 255, 255, 0.96));
+  box-shadow: 0 7px 18px rgba(15, 23, 42, 0.2);
+  color: var(--theme-tile-edit-text, #1f2937);
+  cursor: pointer;
+  opacity: 1;
+  padding: 0;
+  pointer-events: auto;
+  transform: none;
+  transition: background 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+}
+
+.quick-link-actions .quick-link-edit svg,
+.quick-link-more svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2.4;
+}
+
+.quick-link-actions .quick-link-edit:hover,
+.quick-link-more:hover {
+  background: var(--theme-primary-bg, #38bdf8);
+  color: var(--theme-primary-text, #082f49);
+  box-shadow: 0 9px 22px rgba(15, 23, 42, 0.28);
+  transform: translateY(-1px);
+}
+
+.quick-link-more {
+  border: 1px solid color-mix(in srgb, var(--theme-tile-edit-text, #1f2937) 10%, transparent);
+}
+
+.shortcut-context-menu {
+  position: absolute;
+  top: 26px;
+  right: 0;
+  display: grid;
+  min-width: 192px;
+  gap: 3px;
+  padding: 6px;
+  border: 1px solid var(--theme-input-border, rgba(148, 163, 184, 0.28));
+  border-radius: 13px;
+  background: var(--theme-modal-surface-bg, rgba(15, 23, 42, 0.97));
+  box-shadow: 0 16px 36px rgba(2, 6, 23, 0.28);
+  color: var(--theme-modal-text, #f8fafc);
+  text-align: left;
+  z-index: 80;
+  backdrop-filter: blur(18px);
+}
+
+.shortcut-context-menu button {
+  display: flex;
+  min-height: 35px;
+  align-items: center;
+  gap: 9px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  padding: 7px 9px;
+  white-space: nowrap;
+}
+
+.shortcut-context-menu button:hover,
+.shortcut-context-menu button:focus-visible {
+  background: var(--theme-secondary-bg, rgba(148, 163, 184, 0.18));
+  outline: none;
+}
+
+.shortcut-context-menu button svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+  opacity: 0.82;
+}
+
+.shortcut-context-menu .shortcut-context-danger {
+  color: #fb7185;
+}
+
+.shortcut-context-menu .shortcut-context-danger:hover {
+  background: rgba(244, 63, 94, 0.12);
+}
+
+.folder-context-menu {
+  top: 26px;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+}
+
+.quick-link-add {
+  align-self: start;
+  cursor: pointer;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font: inherit;
+}
+
+.quick-link-add .add-link-icon {
+  display: grid;
+  border: 1.5px dashed color-mix(in srgb, var(--theme-tile-label-text, #ffffff) 62%, transparent);
+  background: color-mix(in srgb, var(--theme-folder-bg, rgba(255, 255, 255, 0.14)) 78%, transparent);
+  color: var(--theme-tile-label-text, rgba(255, 255, 255, 0.92));
+  transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
+}
+
+.quick-link-add .add-link-icon svg {
+  width: 36%;
+  height: 36%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+}
+
+.quick-link-add:hover .add-link-icon,
+.quick-link-add:focus-visible .add-link-icon {
+  border-color: var(--theme-accent, #38bdf8);
+  background: color-mix(in srgb, var(--theme-accent, #38bdf8) 19%, var(--theme-folder-bg, rgba(255, 255, 255, 0.14)));
+  transform: translateY(-2px) scale(1.03);
+}
+
+.quick-link-add:focus-visible {
+  outline: 2px solid var(--theme-accent, #38bdf8);
+  outline-offset: 5px;
+  border-radius: 12px;
+}
+
+.quick-link-grid:has(.shortcut-context-menu) {
+  isolation: isolate;
+}
+
+@media (max-width: 760px) {
+  .quick-link-actions {
+    opacity: 1;
+    transform: none;
+  }
+
+  .quick-link-actions .quick-link-edit,
+  .quick-link-more {
+    width: 26px;
+    height: 26px;
+    flex-basis: 26px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quick-link-actions,
+  .quick-link-actions .quick-link-edit,
+  .quick-link-more,
+  .quick-link-add .add-link-icon {
+    transition: none;
+  }
+}
