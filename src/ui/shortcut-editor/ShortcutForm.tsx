@@ -1,5 +1,6 @@
 import type { FormEvent } from "react";
 import { brandIcons, type BrandIcon } from "../../domain/brandIcons";
+import { getHighResolutionFaviconUrl } from "../widgets/shortcut-grid/shortcuts/ShortcutIcon";
 import type { ShortcutDraft } from "../../domain/drafts";
 
 type ShortcutFormProps = {
@@ -63,6 +64,15 @@ export function ShortcutForm({
           >
             {draft.iconImageDataUrl ? (
               <img src={draft.iconImageDataUrl} alt="" />
+            ) : draft.url && getHighResolutionFaviconUrl(draft.url) ? (
+              <img
+                className="shortcut-favicon"
+                src={getHighResolutionFaviconUrl(draft.url)}
+                alt=""
+                onError={(event) => {
+                  event.currentTarget.style.display = "none";
+                }}
+              />
             ) : draft.brandIconId && brandIcons[draft.brandIconId] ? (
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d={brandIcons[draft.brandIconId].path} />
@@ -73,7 +83,7 @@ export function ShortcutForm({
           </span>
           <div>
             <strong>Shortcut icon</strong>
-            <p>Use initials, a brand icon, or upload your own image.</p>
+            <p>Website favicon by default. You can also use a brand icon or upload an image.</p>
           </div>
         </div>
 
