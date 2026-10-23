@@ -115,6 +115,7 @@ export function App() {
             dispatchDropAction={controller.dispatchDropAction}
             onClose={() => controller.setActiveFolderId(null)}
             onEditShortcut={(shortcut) => controller.openEditShortcutDialog(shortcut, controller.activeFolder?.id ?? null)}
+            onReleaseFolder={controller.releaseFolderShortcuts}
             onRenameFolder={controller.renameFolder}
             onStartOutgoingDrag={(source) => {
               setOutgoingDragSource(source);
