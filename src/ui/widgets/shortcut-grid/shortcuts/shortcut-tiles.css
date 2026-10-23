@@ -521,3 +521,15 @@
 .folder-release-button { padding: 0; width: 38px; min-width: 38px; height: 38px; border-radius: 50%; font-size: 0; }
 .folder-release-button svg { width: 17px; height: 17px; }
 @media (prefers-reduced-motion: reduce) { .folder-icon-action { transition: none; } }
+
+
+/* Global icon silhouette: clip image pixels to the same saved radius as every preview. */
+.quick-link-icon,
+.quick-link-icon img,
+.quick-link-icon svg,
+.icon-editor-stage > .quick-link-icon,
+.popup-root .quick-link-icon {
+  border-radius: var(--quick-link-icon-radius, 22%) !important;
+}
+.quick-link-icon { isolation: isolate; }
+.quick-link-icon img { overflow: hidden; }
