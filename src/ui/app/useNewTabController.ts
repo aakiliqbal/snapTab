@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { produce } from "immer";
 import { useShallow } from "zustand/react/shallow";
 import { findBrandIconRecommendations, type BrandIcon } from "../../domain/brandIcons";
-import { type FolderEditDraft, type ShortcutDraft } from "../../domain/drafts";
+import { emptyShortcutDraft, type FolderEditDraft, type ShortcutDraft } from "../../domain/drafts";
 import {
   describeBackupReplacement,
   getBackupImportErrorMessage,
@@ -264,6 +264,10 @@ export function useNewTabController() {
     );
   }
 
+  function openNewShortcutDialog() {
+    setShortcutDraft({ ...emptyShortcutDraft });
+  }
+
   function openEditShortcutDialog(shortcut: Shortcut, folderId: string | null = null) {
     setShortcutDraft({
       id: shortcut.id,
@@ -495,6 +499,7 @@ export function useNewTabController() {
     isSettingsDrawerOpen,
     openEditFolderDialog,
     openEditShortcutDialog,
+    openNewShortcutDialog,
     shortcutDraft,
     shortcutIconRecommendations,
     resetWallpaper,
