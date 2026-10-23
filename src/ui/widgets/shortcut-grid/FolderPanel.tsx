@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect, type DragEvent } from "react";
-import { Pencil } from "lucide-react";
+import { ArrowUpFromLine, Pencil } from "lucide-react";
 import type { DropAction } from "../../../domain/dropActions";
 import { openShortcutUrl } from "../../../infrastructure/openShortcutUrl";
 import { type ResolvedFolder } from "../../../domain/tabOperations";
@@ -16,6 +16,7 @@ type FolderPanelProps = {
   dispatchDropAction: (action: DropAction) => void;
   onClose: () => void;
   onEditShortcut: (shortcut: Shortcut) => void;
+  onReleaseFolder: (folderId: string) => void;
   onRenameFolder: (folderId: string, title: string) => void;
   onStartOutgoingDrag: (source: DragSource) => void;
   tabState: TabState;
@@ -29,6 +30,7 @@ export function FolderPanel({
   dispatchDropAction,
   onClose,
   onEditShortcut,
+  onReleaseFolder,
   onRenameFolder,
   onStartOutgoingDrag,
   tabState
@@ -465,6 +467,17 @@ export function FolderPanel({
             <span>{activeFolder.shortcuts.length} shortcuts</span>
           </div>
           <div className="folder-actions">
+            {activeFolder.shortcuts.length > 0 ? (
+              <button
+                className="folder-release-button"
+                type="button"
+                onClick={() => onReleaseFolder(activeFolder.id)}
+                title="Release all shortcuts onto the main grid"
+              >
+                <ArrowUpFromLine aria-hidden="true" />
+                Release all
+              </button>
+            ) : null}
             <button className="modal-close" type="button" onClick={onClose} aria-label="Close">
               <span aria-hidden="true">×</span>
             </button>
