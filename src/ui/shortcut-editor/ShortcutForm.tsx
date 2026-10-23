@@ -1,4 +1,4 @@
-import type { FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { brandIcons, type BrandIcon } from "../../domain/brandIcons";
 import type { ShortcutDraft } from "../../domain/drafts";
 
@@ -25,6 +25,14 @@ export function ShortcutForm({
   onUploadIcon,
   saveLabel = "Save"
 }: ShortcutFormProps) {
+  const [imageZoom, setImageZoom] = useState(1);
+  const [imageFit, setImageFit] = useState<"contain" | "cover">("contain");
+
+  useEffect(() => {
+    setImageZoom(1);
+    setImageFit("contain");
+  }, [draft.iconImageDataUrl]);
+
   return (
     <form className="quick-link-form" onSubmit={onSave}>
       <label>
@@ -62,7 +70,7 @@ export function ShortcutForm({
             aria-hidden="true"
           >
             {draft.iconImageDataUrl ? (
-              <img src={draft.iconImageDataUrl} alt="" />
+              <img src={draft.iconImageDataUrl} alt="" style={{ objectFit: imageFit, transform: "scale(" + imageZoom + ")" }} />
             ) : draft.brandIconId && brandIcons[draft.brandIconId] ? (
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d={brandIcons[draft.brandIconId].path} />
@@ -75,6 +83,13 @@ export function ShortcutForm({
             <strong>Shortcut icon</strong>
             <p>Website favicon by default. You can also use a brand icon or upload an image.</p>
           </div>
+        </div>
+
+        <div className="icon-transform-controls" role="group" aria-label="Image zoom and fit controls">
+          <button type="button" title="Zoom out" aria-label="Zoom out" disabled={imageZoom <= 0.5} onClick={() => setImageZoom((zoom) => Math.max(0.5, Number((zoom - 0.25).toFixed(2))))}>−</button>
+          <button type="button" title="Zoom in" aria-label="Zoom in" disabled={imageZoom >= 3} onClick={() => setImageZoom((zoom) => Math.min(3, Number((zoom + 0.25).toFixed(2))))}>+</button>
+          <button type="button" title="Fit image inside the icon" aria-label="Fit image" className={imageFit === "contain" ? "selected" : ""} onClick={() => { setImageFit("contain"); setImageZoom(1); }}>Fit</button>
+          <button type="button" title="Fill the icon with the image" aria-label="Fill icon" className={imageFit === "cover" ? "selected" : ""} onClick={() => { setImageFit("cover"); setImageZoom(1); }}>Fill</button>
         </div>
 
         <div className="icon-control-row">
