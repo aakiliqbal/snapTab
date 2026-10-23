@@ -426,6 +426,7 @@ export function normalizeCanvasState(value: unknown, fallbackState?: Partial<Tab
           settings: {
             ...fallback.widgets.shortcutGrid.settings,
             iconSize: clampInteger(legacyLayout?.gridLayout?.iconSize, 50, 220, fallback.widgets.shortcutGrid.settings.iconSize),
+            iconRadius: fallback.widgets.shortcutGrid.settings.iconRadius,
             columnSpacing: clampInteger(
               legacyLayout?.gridLayout?.columnSpacing,
               0,
@@ -512,6 +513,7 @@ function normalizeShortcutGridWidget(
     settings: {
       ...fallback.settings,
       iconSize: clampInteger(settings.iconSize, 50, 220, fallback.settings.iconSize),
+      iconRadius: clampInteger(settings.iconRadius, 0, 50, fallback.settings.iconRadius),
       columnSpacing: clampInteger(settings.columnSpacing, 0, 100, fallback.settings.columnSpacing),
       lineSpacing: clampInteger(settings.lineSpacing, 0, 100, fallback.settings.lineSpacing),
       showLabels: typeof settings.showLabels === "boolean" ? settings.showLabels : fallback.settings.showLabels,
