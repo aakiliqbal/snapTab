@@ -14,6 +14,7 @@ export type ShortcutDraft = {
   iconFit?: "contain" | "cover";
   iconOffsetX?: number;
   iconOffsetY?: number;
+  iconMode?: "site" | "image" | "text";
 };
 
 export type FolderEditDraft = {
@@ -36,5 +37,6 @@ export const emptyShortcutDraft: ShortcutDraft = {
   iconZoom: 1,
   iconFit: "contain",
   iconOffsetX: 0,
-  iconOffsetY: 0
+  iconOffsetY: 0,
+  iconMode: "text"
 };
