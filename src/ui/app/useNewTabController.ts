@@ -320,6 +320,10 @@ export function useNewTabController() {
     setShortcutDraft(null);
   }
 
+  function removeShortcutFromGrid(shortcut: Shortcut) {
+    persistState(deleteShortcutFromState(tabState, { ...emptyShortcutDraft, id: shortcut.id }));
+  }
+
   async function saveFolder(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -500,6 +504,7 @@ export function useNewTabController() {
     openEditFolderDialog,
     openEditShortcutDialog,
     openNewShortcutDialog,
+    removeShortcutFromGrid,
     shortcutDraft,
     shortcutIconRecommendations,
     resetWallpaper,
