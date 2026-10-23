@@ -34,7 +34,7 @@ export function ShortcutForm({
   const offsetX = draft.iconOffsetX ?? 0;
   const offsetY = draft.iconOffsetY ?? 0;
   const isRemoteFavicon = !!draft.iconImageDataUrl && draft.iconImageDataUrl.startsWith("https://t0.gstatic.com/faviconV2?");
-  const editorMode = draft.brandIconId ? "site" : draft.iconImageDataUrl ? (isRemoteFavicon ? "site" : "image") : "text";
+  const editorMode = draft.iconMode ?? (draft.brandIconId ? "site" : draft.iconImageDataUrl ? (isRemoteFavicon ? "site" : "image") : "text");
   function startPan(event: PointerEvent<HTMLDivElement>) {
     if (!draft.iconImageDataUrl) return;
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -80,9 +80,9 @@ export function ShortcutForm({
         <div className="icon-editor-heading">
           <div><strong>Icon editor</strong><p>Choose an icon, then zoom or drag to position it.</p></div>
           <div className="icon-editor-modes" role="group" aria-label="Icon source">
-            <button type="button" className={editorMode === "site" ? "selected" : ""} title="Use website favicon" onClick={() => onChangeDraft({ ...draft, iconImageDataUrl: getHighResolutionFaviconUrl(draft.url) || null, iconMediaId: null, brandIconId: null, iconZoom: 1, iconOffsetX: 0, iconOffsetY: 0 })}>Website</button>
-            <button type="button" className={editorMode === "image" ? "selected" : ""} title="Use uploaded image" onClick={() => { if (draft.iconImageDataUrl && !isRemoteFavicon) onChangeDraft({ ...draft, brandIconId: null }); }}>Image</button>
-            <button type="button" className={editorMode === "text" ? "selected" : ""} title="Use text label" onClick={() => onChangeDraft({ ...draft, iconImageDataUrl: null, iconMediaId: null, brandIconId: null, iconZoom: 1, iconOffsetX: 0, iconOffsetY: 0 })}>Text</button>
+            <button type="button" className={editorMode === "site" ? "selected" : ""} title="Use website favicon" onClick={() => onChangeDraft({ ...draft, iconImageDataUrl: getHighResolutionFaviconUrl(draft.url) || null, iconMediaId: null, brandIconId: null, iconZoom: 1, iconOffsetX: 0, iconOffsetY: 0, iconMode: "site" })}>Website</button>
+            <button type="button" className={editorMode === "image" ? "selected" : ""} title="Use uploaded image" onClick={() => onChangeDraft({ ...draft, iconImageDataUrl: isRemoteFavicon ? null : draft.iconImageDataUrl, iconMediaId: isRemoteFavicon ? null : draft.iconMediaId, brandIconId: null, iconMode: "image" })}>Image</button>
+            <button type="button" className={editorMode === "text" ? "selected" : ""} title="Use text label" onClick={() => onChangeDraft({ ...draft, iconImageDataUrl: null, iconMediaId: null, brandIconId: null, iconZoom: 1, iconOffsetX: 0, iconOffsetY: 0, iconMode: "text" })}>Text</button>
           </div>
         </div>
         <div className="icon-workspace">
