@@ -31,6 +31,7 @@ export function ShortcutForm({
   const setZoom = (zoom: number) => onChangeDraft({ ...draft, iconZoom: Math.min(6, Math.max(0.2, Math.round(zoom * 100) / 100)) });
   const palette = ["transparent", "#ffffff", "#f5a623", "#e74c3c", "#7ed321", "#4a90e2", "#50e3c2", "#bd10e0", "#9013fe", "#417505", "#4a4a4a", "#000000"];
   const dragRef = useRef<{ x: number; y: number; offsetX: number; offsetY: number } | null>(null);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
   const offsetX = draft.iconOffsetX ?? 0;
   const offsetY = draft.iconOffsetY ?? 0;
   const isRemoteFavicon = !!draft.iconImageDataUrl && draft.iconImageDataUrl.startsWith("https://t0.gstatic.com/faviconV2?");
@@ -81,7 +82,7 @@ export function ShortcutForm({
           <div><strong>Icon editor</strong><p>Choose an icon, then zoom or drag to position it.</p></div>
           <div className="icon-editor-modes" role="group" aria-label="Icon source">
             <button type="button" className={editorMode === "site" ? "selected" : ""} title="Use website favicon" onClick={() => onChangeDraft({ ...draft, iconImageDataUrl: getHighResolutionFaviconUrl(draft.url) || null, iconMediaId: null, brandIconId: null, iconZoom: 1, iconOffsetX: 0, iconOffsetY: 0, iconMode: "site" })}>Website</button>
-            <button type="button" className={editorMode === "image" ? "selected" : ""} title="Use uploaded image" onClick={() => onChangeDraft({ ...draft, iconImageDataUrl: isRemoteFavicon ? null : draft.iconImageDataUrl, iconMediaId: isRemoteFavicon ? null : draft.iconMediaId, brandIconId: null, iconMode: "image" })}>Image</button>
+            <button type="button" className={editorMode === "image" ? "selected" : ""} title="Use uploaded image" onClick={() => { onChangeDraft({ ...draft, iconImageDataUrl: isRemoteFavicon ? null : draft.iconImageDataUrl, iconMediaId: isRemoteFavicon ? null : draft.iconMediaId, brandIconId: null, iconMode: "image" }); uploadInputRef.current?.click(); }}>Image</button>
             <button type="button" className={editorMode === "text" ? "selected" : ""} title="Use text label" onClick={() => onChangeDraft({ ...draft, iconImageDataUrl: null, iconMediaId: null, brandIconId: null, iconZoom: 1, iconOffsetX: 0, iconOffsetY: 0, iconMode: "text" })}>Text</button>
           </div>
         </div>
@@ -151,19 +152,17 @@ export function ShortcutForm({
         </div>
       ) : null}
 
-      <div className="icon-image-actions">
-        <label className="secondary-button file-button">
-          Upload icon image
-          <input
-            accept="image/*"
-            type="file"
-            onChange={(event) => {
-              onUploadIcon(event.target.files?.[0] ?? null);
-              event.currentTarget.value = "";
-            }}
-          />
-        </label>
-      </div>
+      <input
+        ref={uploadInputRef}
+        className="icon-upload-input"
+        aria-label="Upload icon image"
+        accept="image/*"
+        type="file"
+        onChange={(event) => {
+          onUploadIcon(event.currentTarget.files?.[0] ?? null);
+          event.currentTarget.value = "";
+        }}
+      />
 
       <div className="modal-actions">
         {draft.id && onDelete ? (
