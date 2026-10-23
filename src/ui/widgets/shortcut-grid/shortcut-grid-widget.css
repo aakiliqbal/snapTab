@@ -110,3 +110,9 @@
     width: min(100%, 920px);
   }
 }
+
+
+/* The widget surface normally clips its contents; menus and hover tools must be reachable. */
+.shortcut-grid-widget.widget-surface {
+  overflow: visible;
+}
