@@ -62,7 +62,9 @@ export function createShortcutFromDraft(draft: ShortcutDraft): Shortcut | null {
       background: matchedBrandIcon ? `#${matchedBrandIcon.hex}` : draft.iconBackground,
       imageDataUrl: draft.iconImageDataUrl,
       imageMediaId: draft.iconMediaId,
-      brandIconId: matchedBrandIcon?.id ?? null
+      brandIconId: matchedBrandIcon?.id ?? null,
+      zoom: Math.min(6, Math.max(0.2, draft.iconZoom ?? 1)),
+      fit: draft.iconFit ?? "contain"
     }
   };
 }
