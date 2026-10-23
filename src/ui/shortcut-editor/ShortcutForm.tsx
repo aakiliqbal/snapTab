@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { type FormEvent } from "react";
 import { brandIcons, type BrandIcon } from "../../domain/brandIcons";
 import type { ShortcutDraft } from "../../domain/drafts";
 
@@ -25,13 +25,10 @@ export function ShortcutForm({
   onUploadIcon,
   saveLabel = "Save"
 }: ShortcutFormProps) {
-  const [imageZoom, setImageZoom] = useState(1);
-  const [imageFit, setImageFit] = useState<"contain" | "cover">("contain");
-
-  useEffect(() => {
-    setImageZoom(1);
-    setImageFit("contain");
-  }, [draft.iconImageDataUrl]);
+  const imageZoom = draft.iconZoom ?? 1;
+  const imageFit = draft.iconFit ?? "contain";
+  const setZoom = (zoom: number) => onChangeDraft({ ...draft, iconZoom: Math.min(6, Math.max(0.2, Math.round(zoom * 100) / 100)) });
+  const palette = ["transparent", "#ffffff", "#f5a623", "#e74c3c", "#7ed321", "#4a90e2", "#50e3c2", "#bd10e0", "#9013fe", "#417505", "#4a4a4a", "#000000"];
 
   return (
     <form className="quick-link-form" onSubmit={onSave}>
@@ -76,7 +73,7 @@ export function ShortcutForm({
                 <path d={brandIcons[draft.brandIconId].path} />
               </svg>
             ) : (
-              (draft.iconLabel || draft.title.slice(0, 1) || "?").slice(0, 2).toUpperCase()
+              (draft.iconLabel || draft.title.slice(0, 1) || "?").toUpperCase()
             )}
           </span>
           <div>
@@ -86,31 +83,34 @@ export function ShortcutForm({
         </div>
 
         <div className="icon-transform-controls" role="group" aria-label="Image zoom and fit controls">
-          <button type="button" title="Zoom out" aria-label="Zoom out" disabled={imageZoom <= 0.5} onClick={() => setImageZoom((zoom) => Math.max(0.5, Number((zoom - 0.25).toFixed(2))))}>−</button>
-          <button type="button" title="Zoom in" aria-label="Zoom in" disabled={imageZoom >= 3} onClick={() => setImageZoom((zoom) => Math.min(3, Number((zoom + 0.25).toFixed(2))))}>+</button>
-          <button type="button" title="Fit image inside the icon" aria-label="Fit image" className={imageFit === "contain" ? "selected" : ""} onClick={() => { setImageFit("contain"); setImageZoom(1); }}>Fit</button>
-          <button type="button" title="Fill the icon with the image" aria-label="Fill icon" className={imageFit === "cover" ? "selected" : ""} onClick={() => { setImageFit("cover"); setImageZoom(1); }}>Fill</button>
+          <button type="button" title="Zoom out" aria-label="Zoom out" disabled={imageZoom <= 0.2} onClick={() => setZoom(imageZoom - 0.2)}>−</button>
+          <button type="button" title="Zoom in" aria-label="Zoom in" disabled={imageZoom >= 6} onClick={() => setZoom(imageZoom + 0.2)}>+</button>
+          <button type="button" title="Fit image inside the icon" aria-label="Fit image" className={imageFit === "contain" ? "selected" : ""} onClick={() => onChangeDraft({ ...draft, iconFit: "contain", iconZoom: 1 })}>Fit</button>
+          <button type="button" title="Fill the icon with the image" aria-label="Fill icon" className={imageFit === "cover" ? "selected" : ""} onClick={() => onChangeDraft({ ...draft, iconFit: "cover", iconZoom: 1 })}>Fill</button>
+          <output className="icon-zoom-value">{Math.round(imageZoom * 100)}%</output>
         </div>
 
         <div className="icon-control-row">
           <label>
             <span>Icon label</span>
             <input
-              maxLength={2}
+              maxLength={32}
               value={draft.iconLabel}
               onChange={(event) => onChangeDraft({ ...draft, iconLabel: event.target.value, iconImageDataUrl: null, iconMediaId: null, brandIconId: null })}
             />
           </label>
 
-          <label>
-            <span>Icon color</span>
-            <input
-              className="color-input"
-              type="color"
-              value={draft.iconBackground}
-              onChange={(event) => onChangeDraft({ ...draft, iconBackground: event.target.value, iconImageDataUrl: null, iconMediaId: null, brandIconId: null })}
-            />
-          </label>
+          <div className="icon-color-editor">
+            <span>Background color</span>
+            <div className="icon-color-palette" role="group" aria-label="Icon background color">
+              {palette.map((color) => (
+                <button key={color} type="button" className={draft.iconBackground === color ? "selected" : ""}
+                  title={color === "transparent" ? "Transparent" : color} aria-label={color === "transparent" ? "Transparent background" : `Background ${color}`}
+                  aria-pressed={draft.iconBackground === color} style={{ background: color === "transparent" ? "repeating-conic-gradient(#aaa 0% 25%, #fff 0% 50%) 50% / 12px 12px" : color }}
+                  onClick={() => onChangeDraft({ ...draft, iconBackground: color })} />
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
