@@ -101,6 +101,8 @@ export function ShortcutForm({
                 <img draggable={false} src={draft.iconImageDataUrl} alt="" style={{ objectFit: imageFit, transform: `translate(${offsetX}px, ${offsetY}px) scale(${imageZoom})` }} />
               ) : draft.brandIconId && brandIcons[draft.brandIconId] ? (
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d={brandIcons[draft.brandIconId].path} /></svg>
+              ) : editorMode === "image" ? (
+                <span className="icon-editor-placeholder">Upload an image below</span>
               ) : (
                 <span className="icon-editor-text">{(draft.iconLabel || draft.title.slice(0, 1) || "?").toUpperCase()}</span>
               )}
