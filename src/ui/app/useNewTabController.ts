@@ -306,7 +306,8 @@ export function useNewTabController() {
       iconZoom: shortcut.icon.zoom ?? 1,
       iconFit: shortcut.icon.fit ?? "contain",
       iconOffsetX: shortcut.icon.offsetX ?? 0,
-      iconOffsetY: shortcut.icon.offsetY ?? 0
+      iconOffsetY: shortcut.icon.offsetY ?? 0,
+      iconMode: shortcut.icon.type === "image" ? "image" : shortcut.icon.type === "brand" ? "site" : "text"
     });
   }
 
@@ -434,7 +435,8 @@ export function useNewTabController() {
             brandIconId: null,
             iconZoom: 1,
             iconOffsetX: 0,
-            iconOffsetY: 0
+            iconOffsetY: 0,
+            iconMode: "image"
           }
         : currentDraft
     );
