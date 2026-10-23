@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import type { BrandIcon } from "../../domain/brandIcons";
+import { brandIcons, type BrandIcon } from "../../domain/brandIcons";
 import type { ShortcutDraft } from "../../domain/drafts";
 
 type ShortcutFormProps = {
@@ -31,6 +31,9 @@ export function ShortcutForm({
         <span>Title</span>
         <input
           autoFocus
+          autoComplete="off"
+          autoCapitalize="words"
+          spellCheck={false}
           value={draft.title}
           onChange={(event) => onChangeDraft({ ...draft, title: event.target.value })}
           required
@@ -41,6 +44,9 @@ export function ShortcutForm({
         <span>URL</span>
         <input
           inputMode="url"
+          autoComplete="url"
+          autoCapitalize="off"
+          spellCheck={false}
           placeholder="https://example.com"
           value={draft.url}
           onChange={(event) => onChangeDraft({ ...draft, url: event.target.value })}
@@ -57,6 +63,10 @@ export function ShortcutForm({
           >
             {draft.iconImageDataUrl ? (
               <img src={draft.iconImageDataUrl} alt="" />
+            ) : draft.brandIconId && brandIcons[draft.brandIconId] ? (
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d={brandIcons[draft.brandIconId].path} />
+              </svg>
             ) : (
               (draft.iconLabel || draft.title.slice(0, 1) || "?").slice(0, 2).toUpperCase()
             )}
