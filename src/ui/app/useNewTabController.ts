@@ -302,7 +302,9 @@ export function useNewTabController() {
       iconBackground: shortcut.icon.background,
       iconImageDataUrl: shortcut.icon.imageDataUrl ?? null,
       iconMediaId: shortcut.icon.imageMediaId ?? null,
-      brandIconId: shortcut.icon.brandIconId ?? null
+      brandIconId: shortcut.icon.brandIconId ?? null,
+      iconZoom: shortcut.icon.zoom ?? 1,
+      iconFit: shortcut.icon.fit ?? "contain"
     });
   }
 
