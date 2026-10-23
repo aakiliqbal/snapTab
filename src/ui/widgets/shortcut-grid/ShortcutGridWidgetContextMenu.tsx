@@ -34,6 +34,14 @@ export function ShortcutGridWidgetContextMenu({
         value={shortcutGridWidget.settings.iconSize}
       />
       <RangeRow
+        label="Icon corner radius"
+        max={50}
+        min={0}
+        onChange={(value) => changeShortcutGridWidgetSetting("iconRadius", value)}
+        suffix="%"
+        value={shortcutGridWidget.settings.iconRadius}
+      />
+      <RangeRow
         label="Column spacing"
         max={100}
         min={0}
