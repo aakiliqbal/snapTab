@@ -431,7 +431,10 @@ export function useNewTabController() {
             ...currentDraft,
             iconImageDataUrl: iconDataUrl,
             iconMediaId: currentDraft.iconMediaId,
-            brandIconId: null
+            brandIconId: null,
+            iconZoom: 1,
+            iconOffsetX: 0,
+            iconOffsetY: 0
           }
         : currentDraft
     );
