@@ -234,3 +234,14 @@
     transition: none;
   }
 }
+
+
+/* Image framing controls remain visible beside the live icon preview. */
+.icon-transform-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; }
+.icon-transform-controls button { display: inline-flex; min-width: 38px; height: 34px; align-items: center; justify-content: center; padding: 0 10px; border: 1px solid var(--theme-input-border, #d1d5db); border-radius: 9px; background: var(--theme-input-bg, #fff); color: var(--theme-input-text, #111827); font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; transition: background 120ms ease, border-color 120ms ease; }
+.icon-transform-controls button:hover:not(:disabled), .icon-transform-controls button.selected { border-color: var(--theme-primary-bg, #2563eb); background: color-mix(in srgb, var(--theme-primary-bg, #2563eb) 12%, var(--theme-input-bg, #fff)); }
+.icon-transform-controls button:disabled { opacity: 0.42; cursor: not-allowed; }
+.icon-transform-controls button:focus-visible { outline: 2px solid var(--theme-primary-bg, #2563eb); outline-offset: 2px; }
+.icon-preview-card .quick-link-icon { overflow: hidden; }
+.icon-preview-card .quick-link-icon img { width: 100%; height: 100%; transition: transform 120ms ease; }
+@media (prefers-reduced-motion: reduce) { .icon-transform-controls button, .icon-preview-card .quick-link-icon img { transition: none; } }
