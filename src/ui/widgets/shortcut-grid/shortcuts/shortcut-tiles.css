@@ -106,7 +106,7 @@
   width: var(--icon-size);
   height: var(--icon-size);
   place-items: center;
-  border-radius: 50%;
+  border-radius: var(--quick-link-icon-radius, 22%);
   color: var(--theme-tile-text, #ffffff);
   font-size: calc(var(--icon-size) * 0.42);
   font-weight: 800;
@@ -224,7 +224,7 @@
   aspect-ratio: 1;
   min-width: 0;
   place-items: center;
-  border-radius: 50%;
+  border-radius: var(--quick-link-mini-radius, 18%);
   color: var(--theme-tile-text, #ffffff);
   font-size: max(6px, calc(var(--icon-size) * 0.075));
   font-weight: 900;
