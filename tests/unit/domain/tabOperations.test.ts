@@ -37,7 +37,11 @@ describe("tabOperations", () => {
       background: "#123456",
       imageDataUrl: null,
       imageMediaId: null,
-      brandIconId: null
+      brandIconId: null,
+      zoom: 1,
+      fit: "contain",
+      offsetX: 0,
+      offsetY: 0
     });
   });
 
