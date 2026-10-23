@@ -73,6 +73,11 @@ export function ShortcutGridWidget({
   const labelFontSize = `${fittedLabelSize}px`;
   const tileGap = `${fittedTileGap}px`;
   const footerHeight = settings.showPageDots && pageCount > 1 ? 56 : 18;
+  const previousPageRef = useRef(activeShortcutPageIndex);
+  const pageDirection = activeShortcutPageIndex >= previousPageRef.current ? 1 : -1;
+  useEffect(() => {
+    previousPageRef.current = activeShortcutPageIndex;
+  }, [activeShortcutPageIndex]);
   const layoutStyle = {
     "--icon-size": iconSize,
     "--grid-column-gap": `${(34 * gridLayout.columnSpacing) / 100}px`,
@@ -81,6 +86,9 @@ export function ShortcutGridWidget({
     "--grid-rows": `${gridLayout.rows}`,
     "--quick-link-label-font-size": labelFontSize,
     "--quick-link-tile-gap": tileGap,
+    "--quick-link-icon-radius": `${settings.iconRadius}%`,
+    "--quick-link-mini-radius": `${Math.round(settings.iconRadius * 0.8)}%`,
+    "--shortcut-page-direction": pageDirection,
     ...getWidgetSurfaceStyle(settings),
     "--widget-padding": settings.showPageDots && pageCount > 1 ? "18px 18px 8px" : "18px 18px 0",
     "--widget-radius": "28px",
@@ -89,7 +97,9 @@ export function ShortcutGridWidget({
   const dragOverlayStyle = {
     "--icon-size": iconSize,
     "--quick-link-label-font-size": labelFontSize,
-    "--quick-link-tile-gap": tileGap
+    "--quick-link-tile-gap": tileGap,
+    "--quick-link-icon-radius": `${settings.iconRadius}%`,
+    "--quick-link-mini-radius": `${Math.round(settings.iconRadius * 0.8)}%`
   } as CSSProperties;
 
   useEffect(() => {
