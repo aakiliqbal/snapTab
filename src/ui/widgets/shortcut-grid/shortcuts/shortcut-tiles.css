@@ -256,6 +256,7 @@
 /* Infinity-inspired shortcut controls: quiet until hover/focus, then easy to reach. */
 .quick-link-actions {
   position: absolute;
+  pointer-events: none;
   top: -9px;
   right: calc(50% - var(--icon-size) / 2 - 13px);
   display: flex;
@@ -271,6 +272,7 @@
 .quick-link:focus-within .quick-link-actions,
 .quick-link-actions:has(.shortcut-context-menu) {
   opacity: 1;
+  pointer-events: auto;
   transform: translateY(0);
 }
 
