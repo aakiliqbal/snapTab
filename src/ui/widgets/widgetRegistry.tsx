@@ -45,6 +45,8 @@ export type CanvasWidgetController = {
   gridRef: RefObject<HTMLElement | null>;
   hasOverlayOpen: boolean;
   openEditShortcutDialog: (shortcut: Shortcut, folderId?: string | null) => void;
+  openNewShortcutDialog: () => void;
+  removeShortcutFromGrid: (shortcut: Shortcut) => void;
   setActiveFolderId: (folderId: string | null) => void;
   setActiveShortcutPage: (pageIndex: number | ((current: number) => number)) => void;
   setWidgetEnabled: (widgetId: WidgetId, enabled: boolean, grid?: CanvasGrid) => void;
@@ -158,7 +160,9 @@ export const widgetDefinitions = [
         hasOverlayOpen={controller.hasOverlayOpen}
         isCanvasEditMode={isCanvasEditMode}
         onClearOutgoingDrag={() => setOutgoingDragSource(null)}
+        onAddShortcut={controller.openNewShortcutDialog}
         onEditShortcut={controller.openEditShortcutDialog}
+        onRemoveShortcut={controller.removeShortcutFromGrid}
         onSetActiveFolderId={controller.setActiveFolderId}
         outgoingDragSource={outgoingDragSource}
         setActiveShortcutPage={controller.setActiveShortcutPage}
