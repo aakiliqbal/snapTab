@@ -20,7 +20,6 @@ type ShortcutGridWidgetProps = {
   hasOverlayOpen: boolean;
   isCanvasEditMode: boolean;
   onClearOutgoingDrag: () => void;
-  onAddShortcut: () => void;
   onEditShortcut: (shortcut: Shortcut) => void;
   onRemoveShortcut: (shortcut: Shortcut) => void;
   onSetActiveFolderId: (folderId: string | null) => void;
@@ -41,7 +40,6 @@ export function ShortcutGridWidget({
   hasOverlayOpen,
   isCanvasEditMode,
   onClearOutgoingDrag,
-  onAddShortcut,
   onEditShortcut,
   onRemoveShortcut,
   onSetActiveFolderId,
@@ -144,7 +142,6 @@ export function ShortcutGridWidget({
         gridRef={gridRef}
         outgoingDragSource={isCanvasEditMode ? null : outgoingDragSource}
         onClearOutgoingDrag={onClearOutgoingDrag}
-        onAddShortcut={onAddShortcut}
         onEditShortcut={onEditShortcut}
         onRemoveShortcut={onRemoveShortcut}
         onSetActiveFolderId={onSetActiveFolderId}
