@@ -165,3 +165,8 @@
 .popup-panel .icon-control-row { grid-template-columns: minmax(0, 1fr); }
 .popup-panel .icon-color-palette { grid-template-columns: repeat(6, 28px); }
 .popup-panel .icon-transform-controls { justify-content: flex-start; }
+
+/* Enforce the user's saved icon corner radius in the popup preview. */
+.popup-panel .icon-preview-card .quick-link-icon, .popup-panel .icon-editor-stage > .quick-link-icon { border-radius: var(--quick-link-icon-radius, 22%) !important; overflow: hidden; }
+.popup-panel .icon-workspace { grid-template-columns: minmax(130px, 180px) minmax(0, 1fr); }
+@media (max-width: 400px) { .popup-panel .icon-workspace { grid-template-columns: minmax(0,1fr); } }
