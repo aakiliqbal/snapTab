@@ -12,6 +12,8 @@ export type ShortcutDraft = {
   brandIconId: BrandIconId | null;
   iconZoom?: number;
   iconFit?: "contain" | "cover";
+  iconOffsetX?: number;
+  iconOffsetY?: number;
 };
 
 export type FolderEditDraft = {
@@ -32,5 +34,7 @@ export const emptyShortcutDraft: ShortcutDraft = {
   iconMediaId: null,
   brandIconId: null,
   iconZoom: 1,
-  iconFit: "contain"
+  iconFit: "contain",
+  iconOffsetX: 0,
+  iconOffsetY: 0
 };
