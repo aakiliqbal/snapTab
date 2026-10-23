@@ -57,7 +57,10 @@ export function PopupApp() {
     setDraft((currentDraft) => ({
       ...currentDraft,
       iconImageDataUrl: iconDataUrl,
-      iconMediaId: currentDraft.iconMediaId
+      iconMediaId: currentDraft.iconMediaId,
+      iconZoom: 1,
+      iconOffsetX: 0,
+      iconOffsetY: 0
     }));
   }
 
