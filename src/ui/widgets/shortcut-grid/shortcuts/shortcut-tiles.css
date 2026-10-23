@@ -279,6 +279,7 @@
 .quick-link-actions .quick-link-edit,
 .quick-link-more {
   position: static;
+  pointer-events: auto;
   display: grid;
   width: 28px;
   height: 28px;
