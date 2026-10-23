@@ -533,3 +533,15 @@
 }
 .quick-link-icon { isolation: isolate; }
 .quick-link-icon img { overflow: hidden; }
+
+
+/* Clip the rendered image itself at the global shortcut radius, not just its preview. */
+.quick-link-icon {
+  overflow: hidden;
+  clip-path: inset(0 round var(--quick-link-icon-radius, 22%));
+}
+.quick-link-icon > img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: inherit !important;
+}
