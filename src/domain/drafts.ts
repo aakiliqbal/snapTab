@@ -10,6 +10,11 @@ export type ShortcutDraft = {
   iconImageDataUrl: string | null;
   iconMediaId: string | null;
   brandIconId: BrandIconId | null;
+  iconZoom?: number;
+  iconFit?: "contain" | "cover";
+  iconOffsetX?: number;
+  iconOffsetY?: number;
+  iconMode?: "site" | "image" | "text";
 };
 
 export type FolderEditDraft = {
@@ -28,5 +33,10 @@ export const emptyShortcutDraft: ShortcutDraft = {
   iconBackground: "#2d8cff",
   iconImageDataUrl: null,
   iconMediaId: null,
-  brandIconId: null
+  brandIconId: null,
+  iconZoom: 1,
+  iconFit: "contain",
+  iconOffsetX: 0,
+  iconOffsetY: 0,
+  iconMode: "text"
 };

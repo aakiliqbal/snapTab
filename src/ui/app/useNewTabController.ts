@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { produce } from "immer";
 import { useShallow } from "zustand/react/shallow";
 import { findBrandIconRecommendations, type BrandIcon } from "../../domain/brandIcons";
-import { type FolderEditDraft, type ShortcutDraft } from "../../domain/drafts";
+import { emptyShortcutDraft, type FolderEditDraft, type ShortcutDraft } from "../../domain/drafts";
 import {
   describeBackupReplacement,
   getBackupImportErrorMessage,
@@ -264,6 +264,34 @@ export function useNewTabController() {
     );
   }
 
+  function deleteFolderById(folderId: string) {
+    persistState(deleteFolderFromState(tabState, folderId));
+    setActiveFolderId(null);
+    setFolderDraft(null);
+  }
+
+  function releaseFolderShortcuts(folderId: string) {
+    updateTabState((state) =>
+      produce(state, (draft) => {
+        const folder = draft.tiles[folderId];
+        if (folder?.kind !== "folder") return;
+
+        const page = draft.pages.find((candidate) => candidate.tileIds.includes(folderId));
+        if (!page) return;
+
+        const folderIndex = page.tileIds.indexOf(folderId);
+        page.tileIds.splice(folderIndex, 1, ...folder.childIds);
+        delete draft.tiles[folderId];
+        compactReleasedPages(draft.pages, draft.layout.gridLayout.rows * draft.layout.gridLayout.columns);
+      })
+    );
+    setActiveFolderId(null);
+  }
+
+  function openNewShortcutDialog() {
+    setShortcutDraft({ ...emptyShortcutDraft });
+  }
+
   function openEditShortcutDialog(shortcut: Shortcut, folderId: string | null = null) {
     setShortcutDraft({
       id: shortcut.id,
@@ -274,7 +302,12 @@ export function useNewTabController() {
       iconBackground: shortcut.icon.background,
       iconImageDataUrl: shortcut.icon.imageDataUrl ?? null,
       iconMediaId: shortcut.icon.imageMediaId ?? null,
-      brandIconId: shortcut.icon.brandIconId ?? null
+      brandIconId: shortcut.icon.brandIconId ?? null,
+      iconZoom: shortcut.icon.zoom ?? 1,
+      iconFit: shortcut.icon.fit ?? "contain",
+      iconOffsetX: shortcut.icon.offsetX ?? 0,
+      iconOffsetY: shortcut.icon.offsetY ?? 0,
+      iconMode: shortcut.icon.type === "image" ? "image" : shortcut.icon.type === "brand" ? "site" : "text"
     });
   }
 
@@ -314,6 +347,10 @@ export function useNewTabController() {
 
     persistState(deleteShortcutFromState(tabState, shortcutDraft));
     setShortcutDraft(null);
+  }
+
+  function removeShortcutFromGrid(shortcut: Shortcut) {
+    persistState(deleteShortcutFromState(tabState, { ...emptyShortcutDraft, id: shortcut.id }));
   }
 
   async function saveFolder(event: FormEvent<HTMLFormElement>) {
@@ -395,7 +432,11 @@ export function useNewTabController() {
             ...currentDraft,
             iconImageDataUrl: iconDataUrl,
             iconMediaId: currentDraft.iconMediaId,
-            brandIconId: null
+            brandIconId: null,
+            iconZoom: 1,
+            iconOffsetX: 0,
+            iconOffsetY: 0,
+            iconMode: "image"
           }
         : currentDraft
     );
@@ -485,6 +526,7 @@ export function useNewTabController() {
     changeWeatherWidgetSettings,
     chooseRecommendedIcon,
     deleteFolder,
+    deleteFolderById,
     deleteShortcut,
     dispatchDropAction,
     exportBackup,
@@ -495,10 +537,13 @@ export function useNewTabController() {
     isSettingsDrawerOpen,
     openEditFolderDialog,
     openEditShortcutDialog,
+    openNewShortcutDialog,
+    removeShortcutFromGrid,
     shortcutDraft,
     shortcutIconRecommendations,
     resetWallpaper,
     renameFolder,
+    releaseFolderShortcuts,
     saveFolder,
     saveShortcut,
     setActiveFolderId,
@@ -515,4 +560,13 @@ export function useNewTabController() {
     uploadWallpaper,
     wallpaperMessage
   };
+}
+
+function compactReleasedPages(pages: TabState["pages"], capacity: number) {
+  const ids = pages.flatMap((page) => page.tileIds);
+  const pageCount = Math.max(1, Math.ceil(ids.length / Math.max(1, capacity)));
+  pages.splice(0, pages.length, ...Array.from({ length: pageCount }, (_, index) => ({
+    id: pages[index]?.id ?? `page-${index + 1}`,
+    tileIds: ids.slice(index * capacity, (index + 1) * capacity)
+  })));
 }

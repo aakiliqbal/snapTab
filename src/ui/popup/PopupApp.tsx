@@ -8,6 +8,7 @@ import { useTabStore } from "../../stores/useTabStore";
 import { getThemePreset, isThemeId, type ThemeId } from "../../domain/themes";
 import type { TabState } from "../../domain/tabState";
 import { ShortcutForm } from "../shortcut-editor";
+import { getHighResolutionFaviconUrl } from "../widgets/shortcut-grid/shortcuts/ShortcutIcon";
 
 const storageKey = "snapTabState";
 const legacyStorageKey = ["in", "fi", "TabState"].join("");
@@ -37,6 +38,7 @@ export function PopupApp() {
   const updateState = useTabStore((state) => state.updateState);
   const popupThemeId = usePopupThemeId(tabState.themeId);
   const theme = getThemePreset(popupThemeId);
+  const iconRadius = tabState.canvas.widgets.shortcutGrid.settings.iconRadius;
   const { draft, message, setDraft, setMessage } = useCurrentTabShortcutDraft();
   const iconRecommendations = useMemo(() => findBrandIconRecommendations(draft.title, draft.url), [draft.title, draft.url]);
 
@@ -55,7 +57,11 @@ export function PopupApp() {
     setDraft((currentDraft) => ({
       ...currentDraft,
       iconImageDataUrl: iconDataUrl,
-      iconMediaId: currentDraft.iconMediaId
+      iconMediaId: currentDraft.iconMediaId,
+      iconZoom: 1,
+      iconOffsetX: 0,
+      iconOffsetY: 0,
+      iconMode: "image"
     }));
   }
 
@@ -79,7 +85,7 @@ export function PopupApp() {
   }
 
   return (
-    <main className="popup-root" data-theme={theme.id} style={theme.tokens as CSSProperties}>
+    <main className="popup-root" data-theme={theme.id} style={{ ...theme.tokens, "--quick-link-icon-radius": `${iconRadius}%`, "--quick-link-mini-radius": `${Math.round(iconRadius * 0.8)}%` } as CSSProperties}>
       <section className="quick-link-modal popup-panel" aria-labelledby="popup-title">
         <div className="modal-header">
           <div>
@@ -149,10 +155,11 @@ function useCurrentTabShortcutDraft() {
       const title = tab?.title?.trim() || getTitleFromUrl(url);
       setDraft({
         ...emptyShortcutDraft,
+        iconMode: "site",
         title,
         url,
         iconLabel: title.slice(0, 2).toUpperCase(),
-        iconImageDataUrl: tab?.favIconUrl ?? null
+        iconImageDataUrl: getHighResolutionFaviconUrl(url) || tab?.favIconUrl || null
       });
       setMessage(url ? "Review and save this site to SnapTab." : "Could not read the current tab URL.");
     });

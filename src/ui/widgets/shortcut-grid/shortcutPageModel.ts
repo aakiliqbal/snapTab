@@ -27,7 +27,7 @@ export function deriveShortcutGridWidgetModel({
   widgetPlacement
 }: ShortcutGridWidgetModelInput) {
   const gridLayout = deriveShortcutGridLayoutFromWidget({ canvasMetrics, settings, tabState, widgetPlacement });
-  const pageCapacity = gridLayout.rows * gridLayout.columns;
+  const pageCapacity = Math.max(1, gridLayout.rows * gridLayout.columns);
   const pageCount = Math.max(1, Math.ceil(topLevelTiles.length / pageCapacity));
   const activeShortcutPageIndex = Math.min(activeShortcutPage, pageCount - 1);
   const visibleShortcutPageItems: ShortcutPageItem[] = topLevelTiles.slice(

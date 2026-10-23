@@ -1,7 +1,7 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useReducedMotion } from "motion/react";
-import { Pencil } from "lucide-react";
+import { Copy, ExternalLink, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { brandIcons } from "../../../domain/brandIcons";
 import type { DropAction } from "../../../domain/dropActions";
 import type { ResolvedTopLevelTile } from "../../../domain/tabOperations";
@@ -9,7 +9,7 @@ import type { Shortcut, TabState } from "../../../domain/tabState";
 import { openShortcutUrl } from "../../../infrastructure/openShortcutUrl";
 import type { DragSource } from "../../drag/dragModel";
 import { ShortcutIcon } from "./shortcuts";
-import { getTilePagePosition, type ShortcutPageItem } from "./shortcutPageModel";
+import type { ShortcutPageItem } from "./shortcutPageModel";
 import { useGridDragSession } from "./useGridDragSession";
 
 type ShortcutGridProps = {
@@ -20,6 +20,7 @@ type ShortcutGridProps = {
   outgoingDragSource: DragSource | null;
   onClearOutgoingDrag: () => void;
   onEditShortcut: (shortcut: Shortcut) => void;
+  onRemoveShortcut: (shortcut: Shortcut) => void;
   onSetActiveFolderId: (folderId: string | null) => void;
   onSetActiveShortcutPage: (pageIndex: number | ((current: number) => number)) => void;
   pageCapacity: number;
@@ -38,6 +39,7 @@ export function ShortcutGrid({
   outgoingDragSource,
   onClearOutgoingDrag,
   onEditShortcut,
+  onRemoveShortcut,
   onSetActiveFolderId,
   onSetActiveShortcutPage,
   pageCapacity,
@@ -48,6 +50,17 @@ export function ShortcutGrid({
   visibleShortcutPageItems
 }: ShortcutGridProps) {
   const reducedMotion = useReducedMotion();
+  const [contextMenuKey, setContextMenuKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!contextMenuKey) return;
+    function closeShortcutMenu(event: KeyboardEvent) {
+      if (event.key === "Escape") setContextMenuKey(null);
+    }
+    window.addEventListener("keydown", closeShortcutMenu);
+    return () => window.removeEventListener("keydown", closeShortcutMenu);
+  }, [contextMenuKey]);
+
   const dragSession = useGridDragSession({
     activeShortcutPageIndex,
     dispatchDropAction,
@@ -91,6 +104,7 @@ export function ShortcutGrid({
         aria-label="Quick links"
         key={`shortcut-page-${activeShortcutPageIndex}`}
         ref={gridRef}
+        onClick={() => setContextMenuKey(null)}
         onDragEnter={onGridDragEnter}
         onDragOver={onGridDragOver}
         onDrop={onGridDrop}
@@ -126,6 +140,11 @@ export function ShortcutGrid({
                   ...tileShiftStyle
                 }}
                 draggable={true}
+                onContextMenu={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setContextMenuKey((current) => current === tile.key ? null : tile.key);
+                }}
                 onDragStart={(e) => onTileDragStart(e as unknown as React.DragEvent<HTMLElement>, tile.key, index)}
                 onDragOver={(e) => onTileDragOver(e as unknown as React.DragEvent<HTMLElement>, tile.key)}
                 onDragLeave={(e) => onTileDragLeave(e as unknown as React.DragEvent<HTMLElement>)}
@@ -147,17 +166,67 @@ export function ShortcutGrid({
                 >
                   <TileContent tile={tile} showLabels={showLabels} />
                 </a>
-                <button
-                  className="quick-link-edit"
-                  type="button"
-                  aria-label={`Edit ${tile.shortcut.title}`}
-                  onClick={(event: React.MouseEvent) => {
-                    event.stopPropagation();
-                    onEditShortcut(tile.shortcut);
-                  }}
-                >
-                  <Pencil aria-hidden="true" />
-                </button>
+                <div className="quick-link-actions" data-shortcut-menu-anchor>
+                  <button
+                    className="quick-link-edit"
+                    type="button"
+                    aria-label={"Edit " + tile.shortcut.title}
+                    title="Edit shortcut"
+                    onClick={(event: React.MouseEvent) => {
+                      event.stopPropagation();
+                      setContextMenuKey(null);
+                      onEditShortcut(tile.shortcut);
+                    }}
+                  >
+                    <Pencil aria-hidden="true" />
+                  </button>
+                  <button
+                    className="quick-link-more"
+                    type="button"
+                    aria-label={"More actions for " + tile.shortcut.title}
+                    aria-haspopup="menu"
+                    aria-expanded={contextMenuKey === tile.key}
+                    title="More shortcut actions"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setContextMenuKey((current) => current === tile.key ? null : tile.key);
+                    }}
+                  >
+                    <MoreHorizontal aria-hidden="true" />
+                  </button>
+                  {contextMenuKey === tile.key ? (
+                    <div className="shortcut-context-menu" role="menu" aria-label={tile.shortcut.title + " actions"} onClick={(event) => event.stopPropagation()}>
+                      <button role="menuitem" type="button" onClick={() => {
+                        window.open(tile.shortcut.url, "_blank", "noopener,noreferrer");
+                        setContextMenuKey(null);
+                      }}>
+                        <ExternalLink aria-hidden="true" /> Open in new tab
+                      </button>
+                      <button role="menuitem" type="button" onClick={() => {
+                        if (navigator.clipboard?.writeText) {
+                          void navigator.clipboard.writeText(tile.shortcut.url).catch(() => window.prompt("Copy shortcut URL", tile.shortcut.url));
+                        } else {
+                          window.prompt("Copy shortcut URL", tile.shortcut.url);
+                        }
+                        setContextMenuKey(null);
+                      }}>
+                        <Copy aria-hidden="true" /> Copy link
+                      </button>
+                      <button role="menuitem" type="button" onClick={() => {
+                        setContextMenuKey(null);
+                        onEditShortcut(tile.shortcut);
+                      }}>
+                        <Pencil aria-hidden="true" /> Edit shortcut
+                      </button>
+                      <button role="menuitem" type="button" className="shortcut-context-danger" onClick={() => {
+                        setContextMenuKey(null);
+                        if (window.confirm("Remove “" + tile.shortcut.title + "” from SnapTab?")) onRemoveShortcut(tile.shortcut);
+                      }}>
+                        <Trash2 aria-hidden="true" /> Remove shortcut
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
               </div>
             );
           }
@@ -172,6 +241,11 @@ export function ShortcutGrid({
                 ...tileShiftStyle
               }}
               draggable={true}
+              onContextMenu={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                setContextMenuKey((current) => current === tile.key ? null : tile.key);
+              }}
               onDragStart={(e) => onTileDragStart(e as unknown as React.DragEvent<HTMLElement>, tile.key, index)}
               onDragOver={(e) => onTileDragOver(e as unknown as React.DragEvent<HTMLElement>, tile.key)}
               onDragLeave={(e) => onTileDragLeave(e as unknown as React.DragEvent<HTMLElement>)}
@@ -179,7 +253,7 @@ export function ShortcutGrid({
               onDragEnd={(e) => onTileDragEnd(e as unknown as React.DragEvent<HTMLElement>)}
               role="button"
               tabIndex={0}
-              onClick={() => onSetActiveFolderId(tile.folder.id)}
+              onClick={() => { setContextMenuKey(null); onSetActiveFolderId(tile.folder.id); }}
               onKeyDown={(event: React.KeyboardEvent) => {
                 if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
@@ -188,6 +262,16 @@ export function ShortcutGrid({
               }}
             >
               <TileContent tile={tile} showLabels={showLabels} />
+              {contextMenuKey === tile.key ? (
+                <div className="shortcut-context-menu folder-context-menu" role="menu" aria-label={tile.folder.title + " actions"} onClick={(event) => event.stopPropagation()}>
+                  <button role="menuitem" type="button" onClick={() => {
+                    setContextMenuKey(null);
+                    onSetActiveFolderId(tile.folder.id);
+                  }}>
+                    <ExternalLink aria-hidden="true" /> Open folder
+                  </button>
+                </div>
+              ) : null}
             </div>
           );
         })}

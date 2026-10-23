@@ -1,4 +1,5 @@
 import { CSSProperties, Suspense, lazy, useEffect, useState } from "react";
+import { Trash2 } from "lucide-react";
 import { getThemePreset } from "../../domain/themes";
 import { subscribeToExternalTabStateChanges, useTabStore } from "../../stores/useTabStore";
 import type { DragSource } from "../drag/dragModel";
@@ -41,7 +42,9 @@ export function App() {
     "--search-box-radius": `${searchBoxRadius}px`,
     "--search-box-opacity": `${searchSettings.opacity / 100}`,
     "--wallpaper-dim": `${tabState.wallpaper.dim / 100}`,
-    "--wallpaper-blur": `${tabState.wallpaper.blur}px`
+    "--wallpaper-blur": `${tabState.wallpaper.blur}px`,
+    "--quick-link-icon-radius": `${tabState.canvas.widgets.shortcutGrid.settings.iconRadius}%`,
+    "--quick-link-mini-radius": `${Math.round(tabState.canvas.widgets.shortcutGrid.settings.iconRadius * 0.8)}%`
   } as CSSProperties;
 
   if (!hasHydrated) {
@@ -115,6 +118,12 @@ export function App() {
             dispatchDropAction={controller.dispatchDropAction}
             onClose={() => controller.setActiveFolderId(null)}
             onEditShortcut={(shortcut) => controller.openEditShortcutDialog(shortcut, controller.activeFolder?.id ?? null)}
+            onReleaseFolder={controller.releaseFolderShortcuts}
+            onDeleteFolder={(folderId) => {
+              if (window.confirm(`Delete folder “${controller.activeFolder?.title ?? "folder"}” and its shortcuts?`)) {
+                controller.deleteFolderById(folderId);
+              }
+            }}
             onRenameFolder={controller.renameFolder}
             onStartOutgoingDrag={(source) => {
               setOutgoingDragSource(source);

@@ -36,6 +36,7 @@ export type SearchWidgetSettings = {
 
 export type ShortcutGridWidgetSettings = {
   iconSize: number;
+  iconRadius: number;
   columnSpacing: number;
   lineSpacing: number;
   showLabels: boolean;
@@ -187,6 +188,7 @@ export const defaultCanvasState: CanvasState = {
       placement: deriveDefaultWidgetPlacements(fallbackCanvasGrid).shortcutGrid,
       settings: {
         iconSize: 100,
+        iconRadius: 22,
         columnSpacing: 100,
         lineSpacing: 100,
         showLabels: true,
