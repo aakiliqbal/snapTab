@@ -492,7 +492,11 @@ test("workspace widget layout save persists across reload", async ({ page }) => 
   const reloadedWeather = page.locator('[data-workspace-item-id="widget:weather"]');
   await expect(reloadedWeather).toBeVisible();
   const reloadedStyle = await reloadedWeather.getAttribute("style");
-  expect(reloadedStyle).toContain(`grid-column: ${savedPlacement!.x! + 1} / span ${savedPlacement!.width}`);
-  expect(reloadedStyle).toContain(`grid-row: ${savedPlacement!.y! + 1} / span ${savedPlacement!.height}`);
+  const gridArea = reloadedStyle?.match(/grid-area:\s*(\d+)\s*\/\s*(\d+)\s*\/\s*span\s*(\d+)\s*\/\s*span\s*(\d+)/);
+  expect(gridArea).not.toBeNull();
+  expect(Number(gridArea?.[1])).toBe(savedPlacement!.y! + 1);
+  expect(Number(gridArea?.[2])).toBe(savedPlacement!.x! + 1);
+  expect(Number(gridArea?.[3])).toBe(savedPlacement!.height);
+  expect(Number(gridArea?.[4])).toBe(savedPlacement!.width);
   await page.getByRole("button", { name: "Close" }).click();
 });
