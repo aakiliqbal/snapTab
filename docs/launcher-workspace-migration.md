@@ -24,22 +24,26 @@ This plan is organized as vertical slices: each phase should deliver an end-to-e
 
 ### Slice 1 — Workspace contracts and compatibility seam
 
-Status: **in progress**
+Status: **compatibility seam complete; validation pending**
 
 - [x] Define stable namespaced item IDs, page membership, grid placement, and spans.
 - [x] Add pure layout normalization tests for stale IDs, duplicates, invalid geometry, and immutability.
 - [x] Add a read-only `TabState` adapter that projects existing shortcut pages, folders, and widget placements into the workspace contract without changing persisted state.
 - [x] Cover legacy page ordering, folder-child exclusion, geometry mapping, orphaned top-level tiles, and input immutability.
-- [ ] Add a reverse adapter and round-trip tests before changing the persisted source of truth.
+- [x] Add a pure typed resolver for mixed shortcut, folder, and widget page items, including deterministic fallback placement and stale-reference handling.
+- [ ] Add a reverse adapter and round-trip tests before changing the persisted source of truth. This remains blocked on deciding how shared workspace page membership maps to the legacy split state without data loss.
 - [ ] Validate build and unit tests in CI or a local checkout.
 
-The visible layout and persisted schema remain unchanged in this slice.
+The visible layout and persisted schema remain unchanged. The adapter and resolver are domain-only and are not yet wired into rendering or persistence.
 
 **Exit criteria:** old state normalizes deterministically; no data loss; domain tests cover mixed item types and malformed state.
 
 ### Slice 2 — Shared workspace renderer
 
-- Introduce a workspace page/grid renderer and item host.
+Status: **in progress — typed render model foundation added; UI integration next**
+
+- [x] Add a pure resolver that projects mixed workspace IDs into typed widget/shortcut/folder render models.
+- [ ] Introduce a workspace page/grid renderer and item host.
 - Render shortcuts and folders as first-class items alongside widget frames.
 - Keep the existing Shortcut Grid available behind a compatibility path while the shared renderer is validated.
 - Move only the minimum UI required for the first end-to-end mixed page.
