@@ -70,7 +70,7 @@ Status: **integrated in App as a temporary read-only overlay; build, unit tests,
 - [ ] Manually review the overlay at different viewport sizes and confirm all widget interactions work acceptably before considering a default switch.
 - [x] Recover the pager to the first available page when its active page ID becomes stale; cover the regression with a focused UI test.
 
-This is a migration preview, not the new source of truth. It intentionally has no drag-to-persist behavior and does not change saved TabState. Widget rendering in the preview uses feature components without the legacy absolute-positioned WidgetFrame, so visual differences are expected and should be reviewed before broader integration.
+This is a migration preview, not the new source of truth. Drag/drop updates only the preview's in-memory projected layout and is discarded when the preview closes; it does not change saved TabState. Widget rendering in the preview uses feature components without the legacy absolute-positioned WidgetFrame, so visual differences are expected and should be reviewed before broader integration.
 
 ### Unified-grid compatibility projection
 
@@ -97,7 +97,7 @@ This is intentionally not wired into the legacy app yet: current canvas widgets 
 
 ### Slice 3 — Unified drag, drop, and edit mode
 
-Status: **in progress — pure operations, drag lifecycle, and bounded placement helpers added; UI wiring next**
+Status: **in progress — pure drag lifecycle wired to the opt-in preview for item-to-item and adjacent-page drops; persisted integration still pending**
 
 - [x] Add pure cross-page/in-page item movement and grid-placement updates.
 - [x] Add a shared drag-session state machine for begin, target preview, cancel, and commit, independent of item type.
@@ -108,7 +108,10 @@ Status: **in progress — pure operations, drag lifecycle, and bounded placement
 - [x] Add drag-commit tests for collision fallback, full-page rejection, and stale sessions after a concurrent move.
 - [x] Reject commits whose item no longer belongs to the session’s source page, avoiding stale drag sessions overwriting concurrent changes.
 - [x] Reject commits when the item’s placement or source-page index changed after drag start, preventing an old drag preview from overwriting a concurrent resize/reposition/reorder.
-- [ ] Wire the shared drag session and collision resolver to workspace item hosts and page-edge navigation.
+- [x] Wire native drag start/drop events through the shared item surface and page host while keeping the interaction behind the opt-in preview.
+- [x] Support dropping onto another item on the active page and onto the pager’s previous/next controls to move across adjacent pages.
+- [x] Commit preview-only moves through the shared stale-session and collision guards; discard temporary changes when the preview closes.
+- [ ] Add pointer/touch drag affordances and keyboard move controls; native HTML drag-and-drop is the first desktop interaction path.
 
 The domain guard now rejects stale source membership, source ordering, and source geometry. This protects the future UI integration from concurrent edits, but drag events are not yet wired into the preview surface.
 - Extract drag session lifecycle, pointer/keyboard intent, overlay, geometry, and cancellation into shared workspace drag infrastructure.
