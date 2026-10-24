@@ -7,6 +7,8 @@ export type WorkspacePageSurfaceProps = {
   rows: number;
   editMode: boolean;
   renderItem: (item: ResolvedWorkspaceItem) => ReactNode;
+  onItemDragStart?: (itemId: ResolvedWorkspaceItem["id"]) => void;
+  onItemDrop?: (draggedItemId: ResolvedWorkspaceItem["id"], targetItemId: ResolvedWorkspaceItem["id"]) => void;
 };
 
 /**
@@ -21,7 +23,9 @@ export function WorkspacePageSurface({
   editMode,
   items,
   renderItem,
-  rows
+  rows,
+  onItemDragStart,
+  onItemDrop
 }: WorkspacePageSurfaceProps) {
   return (
     <section
@@ -45,6 +49,22 @@ export function WorkspacePageSurface({
           className="workspace-page-item"
           data-workspace-item-id={item.id}
           key={item.id}
+          draggable={editMode && Boolean(onItemDragStart)}
+          onDragStart={(event) => {
+            if (!editMode || !onItemDragStart) return;
+            event.dataTransfer.effectAllowed = "move";
+            event.dataTransfer.setData("text/plain", item.id);
+            onItemDragStart(item.id);
+          }}
+          onDragOver={(event) => {
+            if (editMode && onItemDrop) event.preventDefault();
+          }}
+          onDrop={(event) => {
+            if (!editMode || !onItemDrop) return;
+            event.preventDefault();
+            const draggedItemId = event.dataTransfer.getData("text/plain");
+            if (draggedItemId && draggedItemId !== item.id) onItemDrop(draggedItemId as ResolvedWorkspaceItem["id"], item.id);
+          }}
           style={{
             gridColumn: `${item.placement.column + 1} / span ${item.placement.columnSpan}`,
             gridRow: `${item.placement.row + 1} / span ${item.placement.rowSpan}`,
