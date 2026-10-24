@@ -43,7 +43,7 @@ describe("WorkspacePager", () => {
     expect(markup).toContain('aria-label="Workspace pages"');
     expect(markup).toContain("Home (1 of 2)");
     expect(markup).toContain("Docs");
-    expect(markup).toContain('aria-label="Previous workspace page" disabled=""');
+    expect(markup).toMatch(/<button[^>]*aria-label="Previous workspace page"[^>]*disabled=""/);
     expect(markup).toContain('aria-label="Next workspace page"');
     expect(markup).not.toContain("Mail");
   });
@@ -105,7 +105,7 @@ describe("WorkspacePager", () => {
     );
 
     expect(markup).toContain('aria-label="Previous workspace page" disabled=""');
-    expect(markup).toContain('aria-label="Next workspace page" disabled=""');
+    expect(markup).toMatch(/<button[^>]*aria-label="Next workspace page"[^>]*disabled=""/);
   });
 
   it("renders a safe empty state for a layout without pages", () => {
