@@ -5,6 +5,8 @@ import { projectTabStateToWorkspaceGrid } from "../../domain/workspaceProjection
 import { beginWorkspaceDrag, commitWorkspaceDrag, updateWorkspaceDragTarget, type WorkspaceDragSession } from "../../domain/workspaceDrag";
 import { moveWorkspaceItemByKeyboard } from "../../domain/workspaceKeyboard";
 import type { WorkspaceItemId, WorkspaceLayout } from "../../domain/workspace";
+import { workspaceLayoutToTabState } from "../../domain/workspaceAdapter";
+import type { TabState } from "../../domain/tabState";
 import { subscribeToExternalTabStateChanges, useTabStore } from "../../stores/useTabStore";
 import type { DragSource } from "../drag/dragModel";
 import { CanvasWidgetHost } from "../canvas";
@@ -27,6 +29,8 @@ export function App() {
   const [isCanvasEditMode, setIsCanvasEditMode] = useState(false);
   const [isWorkspacePreviewOpen, setIsWorkspacePreviewOpen] = useState(false);
   const [workspacePreviewLayout, setWorkspacePreviewLayout] = useState<WorkspaceLayout | null>(null);
+  const [workspacePreviewBaseState, setWorkspacePreviewBaseState] = useState<TabState | null>(null);
+  const [workspaceSaveMessage, setWorkspaceSaveMessage] = useState<string | null>(null);
   const [workspaceDragSession, setWorkspaceDragSession] = useState<WorkspaceDragSession | null>(null);
   const [outgoingDragSource, setOutgoingDragSource] = useState<DragSource | null>(null);
 
@@ -127,6 +131,25 @@ export function App() {
     setWorkspaceDragSession(null);
   };
 
+  const saveWorkspacePreview = () => {
+    if (!workspacePreviewBaseState || !activePreviewLayout) return;
+
+    const latestState = snapshotTabState(useTabStore.getState());
+    if (JSON.stringify(latestState) !== JSON.stringify(workspacePreviewBaseState)) {
+      setWorkspaceSaveMessage("Saved settings changed in another tab or panel. Close and reopen the preview before saving.");
+      return;
+    }
+
+    useTabStore.getState().replaceState(
+      workspaceLayoutToTabState(workspacePreviewBaseState, activePreviewLayout)
+    );
+    setWorkspaceSaveMessage("Workspace layout saved.");
+    setIsWorkspacePreviewOpen(false);
+    setWorkspacePreviewLayout(null);
+    setWorkspacePreviewBaseState(null);
+    setWorkspaceDragSession(null);
+  };
+
   const searchBoxHeight = Math.max(44, searchWidget.placement.height * canvasMetrics.cellHeight);
   const searchBoxRoundness = Math.min(100, Math.max(0, searchSettings.radius));
   const searchBoxRadius = (searchBoxHeight / 2) * (searchBoxRoundness / 100);
@@ -175,9 +198,13 @@ export function App() {
             onClick={() => {
               if (!isWorkspacePreviewOpen && workspaceProjection.ok) {
                 setWorkspacePreviewLayout(workspaceProjection.layout);
+                setWorkspacePreviewBaseState(snapshotTabState(tabState));
+                setWorkspaceSaveMessage(null);
               }
               if (isWorkspacePreviewOpen) {
                 setWorkspacePreviewLayout(null);
+                setWorkspacePreviewBaseState(null);
+                setWorkspaceSaveMessage(null);
                 setWorkspaceDragSession(null);
               }
               setIsWorkspacePreviewOpen((current) => !current);
@@ -229,16 +256,24 @@ export function App() {
               <div>
                 <strong>Workspace migration preview</strong>
                 <div style={{ fontSize: 12, opacity: 0.75 }}>
-                  Interactive preview · drag changes are temporary and not saved
+                  Preview changes stay local until you save. Saving is blocked if the underlying state changes.
                 </div>
+                {workspaceSaveMessage ? <div role="status" style={{ fontSize: 12, marginTop: 4 }}>{workspaceSaveMessage}</div> : null}
               </div>
-              <button type="button" onClick={() => {
-                setIsWorkspacePreviewOpen(false);
-                setWorkspacePreviewLayout(null);
-                setWorkspaceDragSession(null);
-              }}>
-                Close
-              </button>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button type="button" disabled={!activePreviewLayout || !workspacePreviewBaseState} onClick={saveWorkspacePreview}>
+                  Save layout
+                </button>
+                <button type="button" onClick={() => {
+                  setIsWorkspacePreviewOpen(false);
+                  setWorkspacePreviewLayout(null);
+                  setWorkspacePreviewBaseState(null);
+                  setWorkspaceSaveMessage(null);
+                  setWorkspaceDragSession(null);
+                }}>
+                  Close
+                </button>
+              </div>
             </div>
             {activePreviewLayout ? (
               <div style={{ flex: 1, minHeight: 0 }}>
@@ -321,4 +356,17 @@ export function App() {
       </Suspense>
     </main>
   );
+}
+
+function snapshotTabState(state: TabState): TabState {
+  return structuredClone({
+    schemaVersion: state.schemaVersion,
+    searchProvider: state.searchProvider,
+    layout: state.layout,
+    themeId: state.themeId,
+    canvas: state.canvas,
+    wallpaper: state.wallpaper,
+    tiles: state.tiles,
+    pages: state.pages
+  });
 }
