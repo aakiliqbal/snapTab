@@ -113,7 +113,8 @@ Status: **in progress — pure drag lifecycle wired to the opt-in preview for it
 - [x] Correct same-page insertion indices after removing the dragged item, so dropping before a later item does not accidentally place it after that target.
 - [x] Show a grab cursor for draggable items while edit mode is enabled.
 - [x] Commit preview-only moves through the shared stale-session and collision guards; discard temporary changes when the preview closes.
-- [ ] Add pointer/touch drag affordances and keyboard move controls; native HTML drag-and-drop is the first desktop interaction path.
+- [ ] Add pointer/touch drag affordances; native HTML drag-and-drop is the current desktop interaction path.
+- [x] Add keyboard-accessible focus targets for workspace items and arrow-key movement within the active page; movement uses the same collision-safe placement resolver and remains preview-only.
 
 The domain guard now rejects stale source membership, source ordering, and source geometry. This protects the future UI integration from concurrent edits, but drag events are not yet wired into the preview surface.
 - Extract drag session lifecycle, pointer/keyboard intent, overlay, geometry, and cancellation into shared workspace drag infrastructure.
