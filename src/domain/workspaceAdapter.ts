@@ -78,18 +78,19 @@ function getTopLevelTileIds(state: TabState): TileId[] {
     }
   }
 
-  // Include valid top-level tiles omitted from pages. Folder children are
-  // deliberately excluded because folders are single workspace items.
+  // Include valid top-level tiles omitted from pages. Build the child set once
+  // so this remains linear in the number of tiles/folder links.
+  const folderChildIds = new Set<TileId>();
   for (const tile of Object.values(state.tiles)) {
     if (tile.kind === "folder") {
-      topLevelTileIds.add(tile.id);
-      continue;
+      for (const childId of tile.childIds) {
+        folderChildIds.add(childId);
+      }
     }
+  }
 
-    const isFolderChild = Object.values(state.tiles).some(
-      (candidate) => candidate.kind === "folder" && candidate.childIds.includes(tile.id)
-    );
-    if (!isFolderChild) {
+  for (const tile of Object.values(state.tiles)) {
+    if (tile.kind === "folder" || !folderChildIds.has(tile.id)) {
       topLevelTileIds.add(tile.id);
     }
   }
