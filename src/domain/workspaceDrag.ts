@@ -114,3 +114,11 @@ export function commitWorkspaceDrag(
 
   return setWorkspaceItemPlacement(moved, session.itemId, resolvedPlacement);
 }
+
+function samePlacement(left: WorkspaceGridPlacement, right: WorkspaceGridPlacement): boolean {
+  return left.column === right.column
+    && left.row === right.row
+    && left.columnSpan === right.columnSpan
+    && left.rowSpan === right.rowSpan
+    && left.zIndex === right.zIndex;
+}
