@@ -5,6 +5,7 @@ import { findWorkspacePlacement, type WorkspaceGridMetrics } from "./workspaceLa
 export type WorkspaceDragSession = {
   itemId: WorkspaceItemId;
   sourcePageId: string;
+  sourceIndex: number;
   sourcePlacement: WorkspaceGridPlacement;
   targetPageId: string;
   targetIndex: number | null;
@@ -32,6 +33,7 @@ export function beginWorkspaceDrag(
   return {
     itemId,
     sourcePageId: page.id,
+    sourceIndex: page.itemIds.indexOf(itemId),
     sourcePlacement: { ...placement },
     targetPageId: page.id,
     targetIndex: page.itemIds.indexOf(itemId),
@@ -73,7 +75,8 @@ export function commitWorkspaceDrag(
 
   // Do not let a drag started from stale state overwrite a concurrent move.
   const sourcePage = layout.pages.find((page) => page.id === session.sourcePageId);
-  if (!sourcePage?.itemIds.includes(session.itemId)) {
+  if (!sourcePage?.itemIds.includes(session.itemId)
+    || sourcePage.itemIds.indexOf(session.itemId) !== session.sourceIndex) {
     return layout;
   }
 
