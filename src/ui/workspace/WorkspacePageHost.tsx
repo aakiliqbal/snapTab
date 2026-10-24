@@ -9,6 +9,7 @@ export type WorkspacePageHostProps = {
   editMode: boolean;
   renderers: WorkspaceItemRenderers;
   onItemDragStart?: (itemId: ResolvedWorkspaceItem["id"]) => void;
+  onItemDragCancel?: () => void;
   onItemDrop?: (draggedItemId: ResolvedWorkspaceItem["id"], targetItemId: ResolvedWorkspaceItem["id"]) => void;
   onItemDropOnPage?: (draggedItemId: ResolvedWorkspaceItem["id"]) => void;
   onItemKeyboardMove?: (itemId: ResolvedWorkspaceItem["id"], columnDelta: number, rowDelta: number) => void;
@@ -26,6 +27,7 @@ export function WorkspacePageHost({
   renderers,
   rows,
   onItemDragStart,
+  onItemDragCancel,
   onItemDrop,
   onItemDropOnPage,
   onItemKeyboardMove
@@ -38,6 +40,7 @@ export function WorkspacePageHost({
       rows={rows}
       renderItem={(item) => <WorkspaceItemRenderer item={item} renderers={renderers} />}
       onItemDragStart={onItemDragStart}
+      onItemDragCancel={onItemDragCancel}
       onItemDrop={onItemDrop}
       onItemDropOnPage={onItemDropOnPage}
       onItemKeyboardMove={onItemKeyboardMove}
