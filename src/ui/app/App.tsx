@@ -212,10 +212,14 @@ export function App() {
               <div>
                 <strong>Workspace migration preview</strong>
                 <div style={{ fontSize: 12, opacity: 0.75 }}>
-                  Read-only layout preview · saved settings are unchanged
+                  Interactive preview · drag changes are temporary and not saved
                 </div>
               </div>
-              <button type="button" onClick={() => setIsWorkspacePreviewOpen(false)}>
+              <button type="button" onClick={() => {
+                setIsWorkspacePreviewOpen(false);
+                setWorkspacePreviewLayout(null);
+                setWorkspaceDragSession(null);
+              }}>
                 Close
               </button>
             </div>
