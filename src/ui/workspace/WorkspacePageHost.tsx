@@ -11,6 +11,7 @@ export type WorkspacePageHostProps = {
   onItemDragStart?: (itemId: ResolvedWorkspaceItem["id"]) => void;
   onItemDrop?: (draggedItemId: ResolvedWorkspaceItem["id"], targetItemId: ResolvedWorkspaceItem["id"]) => void;
   onItemDropOnPage?: (draggedItemId: ResolvedWorkspaceItem["id"]) => void;
+  onItemKeyboardMove?: (itemId: ResolvedWorkspaceItem["id"], columnDelta: number, rowDelta: number) => void;
 };
 
 /**
@@ -26,7 +27,8 @@ export function WorkspacePageHost({
   rows,
   onItemDragStart,
   onItemDrop,
-  onItemDropOnPage
+  onItemDropOnPage,
+  onItemKeyboardMove
 }: WorkspacePageHostProps) {
   return (
     <WorkspacePageSurface
@@ -38,6 +40,7 @@ export function WorkspacePageHost({
       onItemDragStart={onItemDragStart}
       onItemDrop={onItemDrop}
       onItemDropOnPage={onItemDropOnPage}
+      onItemKeyboardMove={onItemKeyboardMove}
     />
   );
 }
