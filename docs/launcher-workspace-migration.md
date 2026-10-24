@@ -62,6 +62,8 @@ Status: **in progress — pure operations, drag lifecycle, and bounded placement
 - [x] Add bounded grid placement, overlap detection, and deterministic row-major free-cell search for future shared drag previews.
 - [x] Cover stale drag sources/targets, cancellation, placement preservation, and cross-page commits with domain tests.
 - [x] Cover workspace placement bounds, edge-touching rectangles, collision resolution, and full-page behavior with domain tests.
+- [x] Allow drag commits to accept grid metrics and resolve overlapping previews to a deterministic free cell; reject the move atomically if the destination page is full.
+- [x] Add drag-commit tests for collision fallback and full-page rejection.
 - [ ] Wire the shared drag session and collision resolver to workspace item hosts and page-edge navigation.
 - Extract drag session lifecycle, pointer/keyboard intent, overlay, geometry, and cancellation into shared workspace drag infrastructure.
 - Keep drop decisions pure and domain-owned; adapters translate UI events into domain actions.
