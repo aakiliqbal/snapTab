@@ -68,7 +68,8 @@ export function WorkspacePageSurface({
           style={{
             gridColumn: `${item.placement.column + 1} / span ${item.placement.columnSpan}`,
             gridRow: `${item.placement.row + 1} / span ${item.placement.rowSpan}`,
-            zIndex: item.placement.zIndex
+            zIndex: item.placement.zIndex,
+            cursor: editMode && onItemDragStart ? "grab" : undefined
           }}
         >
           {renderItem(item)}
