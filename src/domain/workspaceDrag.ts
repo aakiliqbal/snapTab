@@ -71,6 +71,12 @@ export function commitWorkspaceDrag(
     return layout;
   }
 
+  // Do not let a drag started from stale state overwrite a concurrent move.
+  const sourcePage = layout.pages.find((page) => page.id === session.sourcePageId);
+  if (!sourcePage?.itemIds.includes(session.itemId)) {
+    return layout;
+  }
+
   const moved = moveWorkspaceItem(layout, session.itemId, {
     pageId: session.targetPageId,
     index: session.targetIndex ?? undefined
