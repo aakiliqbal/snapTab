@@ -59,14 +59,16 @@ Status: **in progress — shared surface and typed render adapter added; live UI
 
 ### Opt-in live workspace preview
 
-Status: **integrated in App as a temporary read-only overlay; CI validation pending**
+Status: **integrated in App as a temporary read-only overlay; build, unit tests, and browser smoke tests passed on the initial preview integration; pager stale-page recovery regression added afterward and awaits CI rerun**
 
 - [x] Add a toolbar toggle to open/close the migration preview without replacing the default legacy canvas.
 - [x] Derive the preview grid from the same viewport canvas metrics used by the current app.
 - [x] Resolve projected pages into mixed widget/shortcut/folder items and render them through the shared pager and feature adapters.
 - [x] Route shortcut editing and folder opening to existing controller actions.
 - [x] Display a clear failure state when the projected items cannot fit; do not write projected placements to persisted state.
-- [ ] Validate the overlay at different viewport sizes and confirm all widget interactions work acceptably before considering a default switch.
+- [x] Validate build, unit tests, and browser smoke tests for the initial preview integration.
+- [ ] Manually review the overlay at different viewport sizes and confirm all widget interactions work acceptably before considering a default switch.
+- [x] Recover the pager to the first available page when its active page ID becomes stale; cover the regression with a focused UI test.
 
 This is a migration preview, not the new source of truth. It intentionally has no drag-to-persist behavior and does not change saved TabState. Widget rendering in the preview uses feature components without the legacy absolute-positioned WidgetFrame, so visual differences are expected and should be reviewed before broader integration.
 
