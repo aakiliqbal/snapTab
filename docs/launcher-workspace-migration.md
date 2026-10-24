@@ -57,6 +57,18 @@ Status: **in progress — shared surface and typed render adapter added; live UI
 
 **Exit criteria:** a user can render a page with shortcuts, folders, and at least one widget without nested shortcut-grid ownership.
 
+### Unified-grid compatibility projection
+
+Status: **read-only projection helper and tests added; live integration pending**
+
+- [x] Add `projectTabStateToWorkspaceGrid`, which accepts explicit grid metrics, adapts legacy state, and normalizes every projected page without writing to storage.
+- [x] Prioritize existing widget geometry when assigning cells, then place shortcut/folder tiles in free cells.
+- [x] Return a failure result with the original projected layout if any page cannot fit; never persist a partial projection.
+- [x] Test immutability, non-overlapping output, mixed item membership, and small-grid failure.
+- [ ] Derive metrics from the actual viewport and target cell size in the live app, then expose this projection only behind an opt-in preview until interaction and reverse-persistence behavior are proven.
+
+The helper does not replace the saved TabState. It provides a testable migration preview and makes the unified grid size an explicit input instead of silently mixing shortcut-grid and canvas coordinates.
+
 ### Geometry safety seam — bounded collision-free placements
 
 Status: **pure domain helper added; renderer integration pending**
