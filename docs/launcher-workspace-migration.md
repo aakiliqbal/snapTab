@@ -71,6 +71,7 @@ Status: **integrated in App as an opt-in preview with explicit save and stale-st
 - [x] Recover the pager to the first available page when its active page ID becomes stale; cover the regression with a focused UI test.
 - [x] Add an explicit Save layout action that maps preview membership and widget geometry back to legacy state.
 - [x] Guard saves against stale whole-state overwrites by comparing the current persisted state to the snapshot taken when the preview opened; ask the user to reopen the preview if state changed elsewhere.
+- [x] Extract save preparation into a pure domain helper and test successful mapping, stale-state rejection, and equivalent snapshots.
 
 This remains an opt-in migration preview, not the new default launcher. Drag/drop stays local until Save layout is explicitly chosen. Save is blocked if the underlying state changed while the preview was open; the user must close and reopen the preview to rebase rather than overwrite another tab's edits. Widget rendering in the preview uses feature components without the legacy absolute-positioned WidgetFrame, so visual differences are expected and should be reviewed before broader integration.
 
