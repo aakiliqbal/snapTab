@@ -76,6 +76,35 @@ export function WorkspacePageSurface({
             event.preventDefault();
             onItemKeyboardMove(item.id, delta[0], delta[1]);
           }}
+          onPointerDown={(event) => {
+            if (!editMode || !onItemDragStart || event.button !== 0) return;
+            const target = event.target;
+            if (target instanceof Element && target.closest("button, a, input, textarea, select, [contenteditable='true']")) return;
+            event.currentTarget.setPointerCapture(event.pointerId);
+            event.currentTarget.dataset.pointerDragging = "true";
+            onItemDragStart(item.id);
+          }}
+          onPointerUp={(event) => {
+            if (!editMode || event.currentTarget.dataset.pointerDragging !== "true") return;
+            delete event.currentTarget.dataset.pointerDragging;
+            if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+              event.currentTarget.releasePointerCapture(event.pointerId);
+            }
+            const hit = event.currentTarget.ownerDocument.elementFromPoint(event.clientX, event.clientY);
+            const targetItem = hit?.closest<HTMLElement>("[data-workspace-item-id]");
+            const draggedId = item.id;
+            if (targetItem?.dataset.workspaceItemId && targetItem.dataset.workspaceItemId !== draggedId) {
+              onItemDrop?.(draggedId, targetItem.dataset.workspaceItemId as ResolvedWorkspaceItem["id"]);
+            } else if (hit?.closest(".workspace-page-surface")) {
+              onItemDropOnPage?.(draggedId);
+            }
+          }}
+          onPointerCancel={(event) => {
+            delete event.currentTarget.dataset.pointerDragging;
+            if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+              event.currentTarget.releasePointerCapture(event.pointerId);
+            }
+          }}
           onDragStart={(event) => {
             if (!editMode || !onItemDragStart) return;
             event.dataTransfer.effectAllowed = "move";
@@ -96,7 +125,8 @@ export function WorkspacePageSurface({
             gridColumn: `${item.placement.column + 1} / span ${item.placement.columnSpan}`,
             gridRow: `${item.placement.row + 1} / span ${item.placement.rowSpan}`,
             zIndex: item.placement.zIndex,
-            cursor: editMode && onItemDragStart ? "grab" : undefined
+            cursor: editMode && onItemDragStart ? "grab" : undefined,
+            touchAction: editMode && onItemDragStart ? "none" : undefined
           }}
         >
           {renderItem(item)}
