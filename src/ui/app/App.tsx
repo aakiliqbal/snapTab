@@ -146,10 +146,8 @@ export function App() {
     }
 
     useTabStore.getState().replaceState(saveResult.state);
-    setWorkspaceSaveMessage("Workspace layout saved.");
-    setIsWorkspacePreviewOpen(false);
-    setWorkspacePreviewLayout(null);
-    setWorkspacePreviewBaseState(null);
+    setWorkspacePreviewBaseState(snapshotTabState(saveResult.state));
+    setWorkspaceSaveMessage("Workspace layout saved. You can continue editing.");
     setWorkspaceDragSession(null);
   };
 
