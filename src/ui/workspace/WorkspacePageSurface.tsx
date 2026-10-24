@@ -34,6 +34,8 @@ export function WorkspacePageSurface({
         gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
         gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`,
         position: "relative",
+        width: "100%",
+        height: "100%",
         minWidth: 0,
         minHeight: 0
       } as CSSProperties}
