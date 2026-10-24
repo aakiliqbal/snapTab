@@ -474,6 +474,7 @@ test("workspace widget layout save persists across reload", async ({ page }) => 
   expect(editedStyle).not.toBe(beforeStyle);
 
   await page.getByRole("button", { name: "Save layout" }).click();
+  await expect(page.getByRole("status")).toHaveText("Workspace layout saved. You can continue editing.");
 
   const savedPlacement = await page.evaluate(() => {
     const stored = window.localStorage.getItem("snapTabState");
