@@ -20,6 +20,9 @@ export type WorkspacePagerProps = {
   activePageId?: string;
   defaultActivePageId?: string;
   onActivePageChange?: (pageId: string) => void;
+  onItemDragStart?: (itemId: ResolvedWorkspaceItem["id"]) => void;
+  onItemDrop?: (draggedItemId: ResolvedWorkspaceItem["id"], targetItemId: ResolvedWorkspaceItem["id"], targetPageId: string) => void;
+  onItemDropOnPage?: (draggedItemId: ResolvedWorkspaceItem["id"], targetPageId: string) => void;
 };
 
 /**
@@ -32,6 +35,9 @@ export function WorkspacePager({
   defaultActivePageId,
   editMode,
   onActivePageChange,
+  onItemDragStart,
+  onItemDrop,
+  onItemDropOnPage,
   pages,
   renderers,
   rows
@@ -80,6 +86,13 @@ export function WorkspacePager({
           aria-label="Previous workspace page"
           disabled={previousPageId === activePage.id}
           onClick={() => selectPage(previousPageId)}
+          onDragOver={(event) => { if (onItemDropOnPage && previousPageId !== activePage.id) event.preventDefault(); }}
+          onDrop={(event) => {
+            if (!onItemDropOnPage || previousPageId === activePage.id) return;
+            event.preventDefault();
+            const draggedItemId = event.dataTransfer.getData("text/plain");
+            if (draggedItemId) onItemDropOnPage(draggedItemId as ResolvedWorkspaceItem["id"], previousPageId);
+          }}
         >
           Previous
         </button>
@@ -91,6 +104,13 @@ export function WorkspacePager({
           aria-label="Next workspace page"
           disabled={nextPageId === activePage.id}
           onClick={() => selectPage(nextPageId)}
+          onDragOver={(event) => { if (onItemDropOnPage && nextPageId !== activePage.id) event.preventDefault(); }}
+          onDrop={(event) => {
+            if (!onItemDropOnPage || nextPageId === activePage.id) return;
+            event.preventDefault();
+            const draggedItemId = event.dataTransfer.getData("text/plain");
+            if (draggedItemId) onItemDropOnPage(draggedItemId as ResolvedWorkspaceItem["id"], nextPageId);
+          }}
         >
           Next
         </button>
@@ -101,6 +121,8 @@ export function WorkspacePager({
         items={activePage.items}
         renderers={renderers}
         rows={rows}
+        onItemDragStart={onItemDragStart}
+        onItemDrop={(draggedItemId, targetItemId) => onItemDrop?.(draggedItemId, targetItemId, activePage.id)}
       />
     </div>
   );
