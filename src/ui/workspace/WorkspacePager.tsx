@@ -21,6 +21,7 @@ export type WorkspacePagerProps = {
   defaultActivePageId?: string;
   onActivePageChange?: (pageId: string) => void;
   onItemDragStart?: (itemId: ResolvedWorkspaceItem["id"]) => void;
+  onItemDragCancel?: () => void;
   onItemDrop?: (draggedItemId: ResolvedWorkspaceItem["id"], targetItemId: ResolvedWorkspaceItem["id"], targetPageId: string) => void;
   onItemDropOnPage?: (draggedItemId: ResolvedWorkspaceItem["id"], targetPageId: string) => void;
   onItemKeyboardMove?: (itemId: ResolvedWorkspaceItem["id"], targetPageId: string, columnDelta: number, rowDelta: number) => void;
@@ -37,6 +38,7 @@ export function WorkspacePager({
   editMode,
   onActivePageChange,
   onItemDragStart,
+  onItemDragCancel,
   onItemDrop,
   onItemDropOnPage,
   onItemKeyboardMove,
@@ -130,6 +132,7 @@ export function WorkspacePager({
         renderers={renderers}
         rows={rows}
         onItemDragStart={onItemDragStart}
+        onItemDragCancel={onItemDragCancel}
         onItemDrop={(draggedItemId, targetItemId) => onItemDrop?.(draggedItemId, targetItemId, activePage.id)}
         onItemDropOnPage={(draggedItemId) => onItemDropOnPage?.(draggedItemId, activePage.id)}
         onItemKeyboardMove={(itemId, columnDelta, rowDelta) => onItemKeyboardMove?.(itemId, activePage.id, columnDelta, rowDelta)}
