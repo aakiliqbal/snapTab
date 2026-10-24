@@ -43,7 +43,8 @@ The visible layout and persisted schema remain unchanged. The adapter and resolv
 Status: **in progress — typed render model foundation added; UI integration next**
 
 - [x] Add a pure resolver that projects mixed workspace IDs into typed widget/shortcut/folder render models.
-- [ ] Introduce a workspace page/grid renderer and item host.
+- [x] Add a generic `WorkspacePageSurface` with shared CSS-grid placement, spans, z-order, and a render callback that does not branch on item type.
+- [ ] Connect the surface to the app behind a compatibility flag/path and add item-specific render adapters.
 - Render shortcuts and folders as first-class items alongside widget frames.
 - Keep the existing Shortcut Grid available behind a compatibility path while the shared renderer is validated.
 - Move only the minimum UI required for the first end-to-end mixed page.
