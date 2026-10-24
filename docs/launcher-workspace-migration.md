@@ -53,6 +53,12 @@ Status: **in progress — typed render model foundation added; UI integration ne
 
 ### Slice 3 — Unified drag, drop, and edit mode
 
+Status: **in progress — pure operations and drag lifecycle added; UI wiring next**
+
+- [x] Add pure cross-page/in-page item movement and grid-placement updates.
+- [x] Add a shared drag-session state machine for begin, target preview, cancel, and commit, independent of item type.
+- [x] Cover stale drag sources/targets, cancellation, placement preservation, and cross-page commits with domain tests.
+- [ ] Wire the shared drag session to workspace item hosts and page-edge navigation.
 - Extract drag session lifecycle, pointer/keyboard intent, overlay, geometry, and cancellation into shared workspace drag infrastructure.
 - Keep drop decisions pure and domain-owned; adapters translate UI events into domain actions.
 - Support reordering, moving across pages, widget movement/resizing, and valid shortcut/folder operations.
