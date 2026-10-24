@@ -500,3 +500,39 @@ test("workspace widget layout save persists across reload", async ({ page }) => 
   expect(Number(gridArea?.[4])).toBe(savedPlacement!.width);
   await page.getByRole("button", { name: "Close" }).click();
 });
+
+test("workspace preview refuses to save over an external state change", async ({ page }) => {
+  await page.goto("/newtab.html");
+  await page.getByRole("button", { name: "Workspace preview" }).click();
+
+  await page.evaluate(async () => {
+    const key = "snapTabState";
+    const raw = window.localStorage.getItem(key);
+    if (!raw) throw new Error("Expected persisted SnapTab state before conflict test.");
+    const persisted = JSON.parse(raw) as { state: Record<string, unknown>; version: number };
+    const nextTheme = persisted.state.themeId === "light" ? "dark" : "light";
+    const changed = {
+      ...persisted,
+      state: { ...persisted.state, themeId: nextTheme }
+    };
+    window.localStorage.setItem(key, JSON.stringify(changed));
+    window.dispatchEvent(new StorageEvent("storage", {
+      key,
+      oldValue: raw,
+      newValue: JSON.stringify(changed),
+      storageArea: window.localStorage
+    }));
+  });
+
+  await page.getByRole("button", { name: "Save layout" }).click();
+  await expect(page.getByRole("status")).toContainText("Saved settings changed in another tab or panel");
+
+  const savedTheme = await page.evaluate(() => {
+    const raw = window.localStorage.getItem("snapTabState");
+    if (!raw) throw new Error("SnapTab state disappeared.");
+    return (JSON.parse(raw) as { state: { themeId?: string } }).state.themeId;
+  });
+  expect(savedTheme).toBeDefined();
+  await expect(page.getByRole("region", { name: "Workspace migration preview" })).toBeVisible();
+  await page.getByRole("button", { name: "Close" }).click();
+});
