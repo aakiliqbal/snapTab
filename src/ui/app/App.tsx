@@ -249,6 +249,7 @@ export function App() {
                   editMode={true}
                   renderers={workspaceRenderers}
                   onItemDragStart={beginPreviewDrag}
+                  onItemDragCancel={() => setWorkspaceDragSession(null)}
                   onItemDrop={dropPreviewItem}
                   onItemDropOnPage={dropPreviewOnPage}
                   onItemKeyboardMove={movePreviewItemByKeyboard}
