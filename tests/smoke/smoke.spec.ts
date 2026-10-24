@@ -498,7 +498,7 @@ test("workspace widget layout save persists across reload", async ({ page }) => 
   expect(Number(gridArea?.[2])).toBe(savedPlacement!.x! + 1);
   expect(Number(gridArea?.[3])).toBe(savedPlacement!.height);
   expect(Number(gridArea?.[4])).toBe(savedPlacement!.width);
-  await page.getByRole("button", { name: "Close" }).click();
+  await page.getByRole("button", { name: "Close", exact: true }).click();
 });
 
 test("workspace preview refuses to save over an external state change", async ({ page }) => {
@@ -534,5 +534,5 @@ test("workspace preview refuses to save over an external state change", async ({
   });
   expect(savedTheme).toBeDefined();
   await expect(page.getByRole("region", { name: "Workspace migration preview" })).toBeVisible();
-  await page.getByRole("button", { name: "Close" }).click();
+  await page.getByRole("button", { name: "Close", exact: true }).click();
 });
