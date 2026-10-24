@@ -97,6 +97,29 @@ describe("workspace drag session", () => {
 
     expect(commitWorkspaceDrag(fullLayout, target, { columns: 6, rows: 1 })).toBe(fullLayout);
   });
+  it("does not overwrite a concurrent reorder on the source page", () => {
+    const multiItemLayout: WorkspaceLayout = {
+      ...layout,
+      pages: [
+        { id: "home", itemIds: [docs, workspaceTileItemId("other")] },
+        { id: "work", itemIds: [weather] }
+      ]
+    };
+    const session = beginWorkspaceDrag(multiItemLayout, docs)!;
+    const target = updateWorkspaceDragTarget(session, "work", 0, {
+      column: 4, row: 2, columnSpan: 1, rowSpan: 1, zIndex: 5
+    });
+    const concurrentlyReordered: WorkspaceLayout = {
+      ...multiItemLayout,
+      pages: [
+        { id: "home", itemIds: [workspaceTileItemId("other"), docs] },
+        { id: "work", itemIds: [weather] }
+      ]
+    };
+
+    expect(commitWorkspaceDrag(concurrentlyReordered, target)).toBe(concurrentlyReordered);
+  });
+
   it("does not overwrite a concurrent placement change on the source page", () => {
     const session = beginWorkspaceDrag(layout, docs)!;
     const target = updateWorkspaceDragTarget(session, "work", 0, {
