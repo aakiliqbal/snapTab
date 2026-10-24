@@ -1,0 +1,126 @@
+# Launcher Workspace Migration Plan
+
+Status: Draft implementation plan  
+Branch: `feat/launcher-workspace-modularity`
+
+## Goal
+
+Evolve SnapTab from a canvas containing a Shortcut Grid Widget into an Android-launcher-style workspace where shortcuts, folders, and widgets are peer workspace items. Keep the implementation modular so adding a widget primarily means adding its feature module and registering its definition.
+
+This plan is organized as vertical slices: each phase should deliver an end-to-end capability with domain behavior, UI integration, persistence compatibility, and tests where applicable. Avoid a large mechanical folder move.
+
+## Product decisions
+
+- The workspace is the root owner of horizontal pages and item placement.
+- Shortcuts, folders, Search, Weather, Date & Time, and Snap Feed are peer workspace items.
+- The Shortcut Grid Widget stops being the parent of shortcuts and folders.
+- A shared grid/placement engine handles cell coordinates and item spans.
+- A shared drag session supports moving any workspace item; item-specific drop policies remain in domain modules.
+- Widget rendering, settings, defaults, and optional lifecycle work belong to the widget module.
+- Existing shortcut/folder behavior, settings, imports, and backups must remain compatible through explicit normalization/migration.
+- Edit mode is transient. Persist user layout and widget configuration, not transient drag/edit state.
+
+## Vertical slices
+
+### Slice 1 — Workspace contracts and compatibility seam
+
+- Define a discriminated workspace item model for widgets, shortcuts, and folders.
+- Define page membership, grid placement, spans, and stable item IDs.
+- Add pure placement and normalization functions with tests.
+- Add migration/normalization that preserves current shortcut ordering, folders, widget settings, and placements.
+- Do not change the visible layout until the new model can round-trip existing state.
+
+**Exit criteria:** old state normalizes deterministically; no data loss; domain tests cover mixed item types and malformed state.
+
+### Slice 2 — Shared workspace renderer
+
+- Introduce a workspace page/grid renderer and item host.
+- Render shortcuts and folders as first-class items alongside widget frames.
+- Keep the existing Shortcut Grid available behind a compatibility path while the shared renderer is validated.
+- Move only the minimum UI required for the first end-to-end mixed page.
+
+**Exit criteria:** a user can render a page with shortcuts, folders, and at least one widget without nested shortcut-grid ownership.
+
+### Slice 3 — Unified drag, drop, and edit mode
+
+- Extract drag session lifecycle, pointer/keyboard intent, overlay, geometry, and cancellation into shared workspace drag infrastructure.
+- Keep drop decisions pure and domain-owned; adapters translate UI events into domain actions.
+- Support reordering, moving across pages, widget movement/resizing, and valid shortcut/folder operations.
+- Preserve accessibility and prevent edit-mode widget drag from conflicting with shortcut/folder operations.
+
+**Exit criteria:** shared drag tests cover mixed source/target types, cancellation, page changes, invalid folder operations, and widget span collisions.
+
+### Slice 4 — Widget module boundary and registry
+
+- Establish a typed widget definition contract: ID, label, defaults, renderer, settings UI, supported resize axes/spans, and optional lifecycle hooks.
+- Keep the registry as the single composition point; workspace and generic drag code must not branch on concrete widget IDs.
+- Co-locate each widget's component, styles, settings UI, defaults, and service adapter.
+- Remove concrete widget imports from unrelated modules where the registry or module API can own them.
+
+**Exit criteria:** a sample widget can be added by creating its module and registering its definition, without editing workspace rendering, drag logic, or persistence plumbing.
+
+### Slice 5 — Persistence, multi-tab safety, and performance hardening
+
+- Keep Chrome storage access behind the infrastructure adapter and preserve localStorage fallback.
+- Handle simultaneous new-tab instances safely: storage changes must converge without write/rehydration loops or stale whole-state overwrites.
+- Keep per-tab transient UI state local; avoid broad Zustand subscriptions that cause every item to re-render for unrelated changes.
+- Cache pure layout/placement calculations by stable inputs; avoid repeated full-tree derivation during pointer movement.
+- Deduplicate or cancel widget refreshes where possible, use bounded refresh behavior, and clean up listeners/timers on unmount.
+- Ensure expensive widgets defer work until visible/needed and do not block initial workspace paint.
+
+**Exit criteria:** build/tests pass; a multi-tab test or documented manual verification covers concurrent edits and storage events; profiling shows drag movement does not trigger unnecessary full-workspace recalculation.
+
+### Slice 6 — Remove compatibility path and finalize architecture
+
+- Remove the Shortcut Grid parent model once all shortcut/folder flows run through workspace pages.
+- Delete obsolete placement/page code and update architecture/ADR docs.
+- Add a widget authoring guide and a regression checklist.
+- Run build, unit tests, and Playwright smoke tests; document anything that cannot be run in the available environment.
+
+**Exit criteria:** no duplicate source of truth for page membership; docs match code; tests and performance checks are reported accurately.
+
+## Target module boundaries
+
+```text
+src/
+  app/                         # application composition and entry points
+  workspace/
+    domain/                    # page/item/placement contracts and pure rules
+    layout/                    # grid metrics, spans, collision and packing
+    drag-drop/                 # generic drag session and event adapters
+    components/                # pages, item host, edit mode
+    state/                     # workspace selectors and actions
+  widgets/
+    registry/                  # typed registration/composition seam
+    search/
+    weather/
+    date-time/
+    snap-feed/
+  shortcuts/                   # shortcut rendering, actions, and domain adapters
+  folders/                     # folder rules and UI
+  domain/                      # shared cross-feature domain types only
+  infrastructure/              # Chrome APIs, storage, network adapters
+  shared/                      # generic primitives and utilities
+```
+
+This is a target boundary, not a mandate to move every existing file immediately. Move files only when a vertical slice makes the new ownership real.
+
+## Performance requirements
+
+- **Fast first paint:** render the shell and persisted layout before non-critical widget data loads.
+- **No global drag state churn:** pointer movement must not update the entire persisted workspace store on every frame; use transient session state and commit placement at meaningful boundaries.
+- **Narrow subscriptions:** item components subscribe only to the state they need; use selectors and stable callbacks.
+- **Bounded work:** layout and collision operations should scale with visible items, not all possible future pages.
+- **Lifecycle hygiene:** listeners, timers, observers, and network requests must be cleaned up or cancelled.
+- **Multi-tab correctness:** treat `chrome.storage.onChanged` as external synchronization, avoid rehydrate/write feedback loops, and make normalization idempotent.
+- **No speculative dependencies:** prefer existing React/Zustand/Motion capabilities unless profiling proves a need.
+
+## Review and testing checklist
+
+- [ ] Existing settings and backup import/export remain compatible.
+- [ ] Shortcut and folder invariants remain enforced.
+- [ ] Widget enable/disable and settings survive reload.
+- [ ] Mixed item types can be moved and persisted.
+- [ ] Multiple tabs opened simultaneously remain responsive and converge on external storage changes.
+- [ ] Build, unit tests, and smoke tests are run and results recorded.
+- [ ] New-widget authoring requires no workspace-specific conditional branches.
