@@ -5,7 +5,7 @@ import { projectTabStateToWorkspaceGrid } from "../../domain/workspaceProjection
 import { beginWorkspaceDrag, commitWorkspaceDrag, updateWorkspaceDragTarget, type WorkspaceDragSession } from "../../domain/workspaceDrag";
 import { moveWorkspaceItemByKeyboard } from "../../domain/workspaceKeyboard";
 import type { WorkspaceItemId, WorkspaceLayout } from "../../domain/workspace";
-import { workspaceLayoutToTabState } from "../../domain/workspaceAdapter";
+import { prepareWorkspaceLayoutSave } from "../../domain/workspaceSave";
 import type { TabState } from "../../domain/tabState";
 import { subscribeToExternalTabStateChanges, useTabStore } from "../../stores/useTabStore";
 import type { DragSource } from "../drag/dragModel";
@@ -135,14 +135,17 @@ export function App() {
     if (!workspacePreviewBaseState || !activePreviewLayout) return;
 
     const latestState = snapshotTabState(useTabStore.getState());
-    if (JSON.stringify(latestState) !== JSON.stringify(workspacePreviewBaseState)) {
+    const saveResult = prepareWorkspaceLayoutSave(
+      workspacePreviewBaseState,
+      latestState,
+      activePreviewLayout
+    );
+    if (!saveResult.ok) {
       setWorkspaceSaveMessage("Saved settings changed in another tab or panel. Close and reopen the preview before saving.");
       return;
     }
 
-    useTabStore.getState().replaceState(
-      workspaceLayoutToTabState(workspacePreviewBaseState, activePreviewLayout)
-    );
+    useTabStore.getState().replaceState(saveResult.state);
     setWorkspaceSaveMessage("Workspace layout saved.");
     setIsWorkspacePreviewOpen(false);
     setWorkspacePreviewLayout(null);
