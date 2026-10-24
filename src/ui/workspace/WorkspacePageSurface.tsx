@@ -10,6 +10,7 @@ export type WorkspacePageSurfaceProps = {
   onItemDragStart?: (itemId: ResolvedWorkspaceItem["id"]) => void;
   onItemDrop?: (draggedItemId: ResolvedWorkspaceItem["id"], targetItemId: ResolvedWorkspaceItem["id"]) => void;
   onItemDropOnPage?: (draggedItemId: ResolvedWorkspaceItem["id"]) => void;
+  onItemKeyboardMove?: (itemId: ResolvedWorkspaceItem["id"], columnDelta: number, rowDelta: number) => void;
 };
 
 /**
@@ -27,7 +28,8 @@ export function WorkspacePageSurface({
   rows,
   onItemDragStart,
   onItemDrop,
-  onItemDropOnPage
+  onItemDropOnPage,
+  onItemKeyboardMove
 }: WorkspacePageSurfaceProps) {
   return (
     <section
@@ -61,6 +63,19 @@ export function WorkspacePageSurface({
           data-workspace-item-id={item.id}
           key={item.id}
           draggable={editMode && Boolean(onItemDragStart)}
+          tabIndex={editMode && onItemKeyboardMove ? 0 : undefined}
+          aria-label={editMode && onItemKeyboardMove ? `Workspace item ${item.id}. Use arrow keys to move.` : undefined}
+          onKeyDown={(event) => {
+            if (!editMode || !onItemKeyboardMove || event.target !== event.currentTarget) return;
+            const delta = event.key === "ArrowLeft" ? [-1, 0]
+              : event.key === "ArrowRight" ? [1, 0]
+              : event.key === "ArrowUp" ? [0, -1]
+              : event.key === "ArrowDown" ? [0, 1]
+              : null;
+            if (!delta) return;
+            event.preventDefault();
+            onItemKeyboardMove(item.id, delta[0], delta[1]);
+          }}
           onDragStart={(event) => {
             if (!editMode || !onItemDragStart) return;
             event.dataTransfer.effectAllowed = "move";
