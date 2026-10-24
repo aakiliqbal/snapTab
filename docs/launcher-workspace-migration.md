@@ -57,6 +57,17 @@ Status: **in progress — shared surface and typed render adapter added; live UI
 
 **Exit criteria:** a user can render a page with shortcuts, folders, and at least one widget without nested shortcut-grid ownership.
 
+### Geometry safety seam — bounded collision-free placements
+
+Status: **pure domain helper added; renderer integration pending**
+
+- [x] Add an atomic geometry normalization helper that clamps item spans/coordinates to page bounds and resolves collisions deterministically in page membership order.
+- [x] Preserve immutability and return the original layout unchanged when the page is missing or its items cannot fit.
+- [x] Add tests for bounds, collision fallback, deterministic order, overflow rejection, and missing pages.
+- [ ] Use the helper at the workspace integration boundary only after a single unified grid metric is chosen for widgets and tiles.
+
+This is intentionally not wired into the legacy app yet: current canvas widgets and shortcut tiles use different coordinate systems, so choosing metrics is a product/migration decision rather than a safe implicit conversion.
+
 ### Slice 3 — Unified drag, drop, and edit mode
 
 Status: **in progress — pure operations, drag lifecycle, and bounded placement helpers added; UI wiring next**
