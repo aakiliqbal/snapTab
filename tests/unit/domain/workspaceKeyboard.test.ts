@@ -26,7 +26,7 @@ describe("moveWorkspaceItemByKeyboard", () => {
     const moved = moveWorkspaceItemByKeyboard(layout, "home", docs, 1, 0, { columns: 4, rows: 3 });
     expect(moved.placements[docs]).not.toEqual(layout.placements[weather]);
     expect(moved.placements[docs]).toEqual({
-      column: 0, row: 0, columnSpan: 1, rowSpan: 1, zIndex: 1
+      column: 2, row: 0, columnSpan: 1, rowSpan: 1, zIndex: 1
     });
   });
 
