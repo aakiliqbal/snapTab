@@ -93,9 +93,14 @@ export function commitWorkspaceDrag(
     return layout;
   }
 
+  const insertionIndex = session.targetIndex !== null
+    && session.targetPageId === session.sourcePageId
+    && session.targetIndex > session.sourceIndex
+    ? session.targetIndex - 1
+    : session.targetIndex ?? undefined;
   const moved = moveWorkspaceItem(layout, session.itemId, {
     pageId: session.targetPageId,
-    index: session.targetIndex ?? undefined
+    index: insertionIndex
   });
 
   if (!metrics) {
