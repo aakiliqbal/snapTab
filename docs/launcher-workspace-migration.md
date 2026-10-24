@@ -57,6 +57,19 @@ Status: **in progress — shared surface and typed render adapter added; live UI
 
 **Exit criteria:** a user can render a page with shortcuts, folders, and at least one widget without nested shortcut-grid ownership.
 
+### Opt-in live workspace preview
+
+Status: **integrated in App as a temporary read-only overlay; CI validation pending**
+
+- [x] Add a toolbar toggle to open/close the migration preview without replacing the default legacy canvas.
+- [x] Derive the preview grid from the same viewport canvas metrics used by the current app.
+- [x] Resolve projected pages into mixed widget/shortcut/folder items and render them through the shared pager and feature adapters.
+- [x] Route shortcut editing and folder opening to existing controller actions.
+- [x] Display a clear failure state when the projected items cannot fit; do not write projected placements to persisted state.
+- [ ] Validate the overlay at different viewport sizes and confirm all widget interactions work acceptably before considering a default switch.
+
+This is a migration preview, not the new source of truth. It intentionally has no drag-to-persist behavior and does not change saved TabState. Widget rendering in the preview uses feature components without the legacy absolute-positioned WidgetFrame, so visual differences are expected and should be reviewed before broader integration.
+
 ### Unified-grid compatibility projection
 
 Status: **read-only projection helper and tests added; live integration pending**
