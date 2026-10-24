@@ -48,6 +48,24 @@ describe("workspace drag session", () => {
     expect(commitWorkspaceDrag(layout, cancelled)).toBe(layout);
   });
 
+  it("inserts before a same-page drop target after removing the source item", () => {
+    const threeItemLayout: WorkspaceLayout = {
+      ...layout,
+      pages: [
+        { id: "home", itemIds: [docs, workspaceTileItemId("mail"), workspaceTileItemId("notes")] },
+        { id: "work", itemIds: [weather] }
+      ]
+    };
+    const session = beginWorkspaceDrag(threeItemLayout, docs)!;
+    const target = updateWorkspaceDragTarget(session, "home", 2, {
+      column: 4, row: 2, columnSpan: 1, rowSpan: 1, zIndex: 1
+    });
+
+    expect(commitWorkspaceDrag(threeItemLayout, target).pages[0].itemIds).toEqual([
+      workspaceTileItemId("mail"), docs, workspaceTileItemId("notes")
+    ]);
+  });
+
   it("commits a cross-page move and its preview placement", () => {
     const session = beginWorkspaceDrag(layout, docs)!;
     const target = updateWorkspaceDragTarget(session, "work", 0, {
