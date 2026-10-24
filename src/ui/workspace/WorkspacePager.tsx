@@ -23,6 +23,7 @@ export type WorkspacePagerProps = {
   onItemDragStart?: (itemId: ResolvedWorkspaceItem["id"]) => void;
   onItemDrop?: (draggedItemId: ResolvedWorkspaceItem["id"], targetItemId: ResolvedWorkspaceItem["id"], targetPageId: string) => void;
   onItemDropOnPage?: (draggedItemId: ResolvedWorkspaceItem["id"], targetPageId: string) => void;
+  onItemKeyboardMove?: (itemId: ResolvedWorkspaceItem["id"], targetPageId: string, columnDelta: number, rowDelta: number) => void;
 };
 
 /**
@@ -38,6 +39,7 @@ export function WorkspacePager({
   onItemDragStart,
   onItemDrop,
   onItemDropOnPage,
+  onItemKeyboardMove,
   pages,
   renderers,
   rows
@@ -130,6 +132,7 @@ export function WorkspacePager({
         onItemDragStart={onItemDragStart}
         onItemDrop={(draggedItemId, targetItemId) => onItemDrop?.(draggedItemId, targetItemId, activePage.id)}
         onItemDropOnPage={(draggedItemId) => onItemDropOnPage?.(draggedItemId, activePage.id)}
+        onItemKeyboardMove={(itemId, columnDelta, rowDelta) => onItemKeyboardMove?.(itemId, activePage.id, columnDelta, rowDelta)}
       />
     </div>
   );
