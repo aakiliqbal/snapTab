@@ -3,7 +3,8 @@ import {
   normalizeWorkspaceLayout,
   workspaceTileItemId,
   workspaceWidgetItemId,
-  type WorkspaceItemId
+  type WorkspaceItemId,
+  type WorkspaceLayout
 } from "../../../src/domain/workspace";
 
 const knownItems = new Set<WorkspaceItemId>([
@@ -38,22 +39,21 @@ describe("workspace layout contract", () => {
   });
 
   it("clamps invalid placement dimensions and ignores unknown placement IDs", () => {
-    const normalized = normalizeWorkspaceLayout(
-      {
-        pages: [{ id: "page-1", itemIds: [workspaceWidgetItemId("search")] }],
-        placements: {
-          [workspaceWidgetItemId("search")]: {
-            column: -2,
-            row: 1.9,
-            columnSpan: 0,
-            rowSpan: 2.8,
-            zIndex: 4.7
-          },
-          "widget:unknown": { column: 0, row: 0, columnSpan: 1, rowSpan: 1, zIndex: 1 }
-        }
-      },
-      knownItems
-    );
+    const source = {
+      pages: [{ id: "page-1", itemIds: [workspaceWidgetItemId("search")] }],
+      placements: {
+        [workspaceWidgetItemId("search")]: {
+          column: -2,
+          row: 1.9,
+          columnSpan: 0,
+          rowSpan: 2.8,
+          zIndex: 4.7
+        },
+        "widget:unknown": { column: 0, row: 0, columnSpan: 1, rowSpan: 1, zIndex: 1 }
+      }
+    } as unknown as Partial<WorkspaceLayout>;
+
+    const normalized = normalizeWorkspaceLayout(source, knownItems);
 
     expect(normalized.placements[workspaceWidgetItemId("search")]).toEqual({
       column: 0,
