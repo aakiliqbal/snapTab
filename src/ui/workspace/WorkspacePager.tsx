@@ -86,11 +86,11 @@ export function WorkspacePager({
         <button
           type="button"
           aria-label="Previous workspace page"
-          disabled={previousPageId === activePage.id}
+          disabled={!previousPageId || previousPageId === activePage.id}
           onClick={() => selectPage(previousPageId)}
-          onDragOver={(event) => { if (onItemDropOnPage && previousPageId !== activePage.id) event.preventDefault(); }}
+          onDragOver={(event) => { if (onItemDropOnPage && previousPageId && previousPageId !== activePage.id) event.preventDefault(); }}
           onDrop={(event) => {
-            if (!onItemDropOnPage || previousPageId === activePage.id) return;
+            if (!onItemDropOnPage || !previousPageId || previousPageId === activePage.id) return;
             event.preventDefault();
             const draggedItemId = event.dataTransfer.getData("text/plain");
             if (draggedItemId) {
@@ -107,11 +107,11 @@ export function WorkspacePager({
         <button
           type="button"
           aria-label="Next workspace page"
-          disabled={nextPageId === activePage.id}
+          disabled={!nextPageId || nextPageId === activePage.id}
           onClick={() => selectPage(nextPageId)}
-          onDragOver={(event) => { if (onItemDropOnPage && nextPageId !== activePage.id) event.preventDefault(); }}
+          onDragOver={(event) => { if (onItemDropOnPage && nextPageId && nextPageId !== activePage.id) event.preventDefault(); }}
           onDrop={(event) => {
-            if (!onItemDropOnPage || nextPageId === activePage.id) return;
+            if (!onItemDropOnPage || !nextPageId || nextPageId === activePage.id) return;
             event.preventDefault();
             const draggedItemId = event.dataTransfer.getData("text/plain");
             if (draggedItemId) {
