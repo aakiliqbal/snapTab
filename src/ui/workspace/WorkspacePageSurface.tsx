@@ -77,7 +77,9 @@ export function WorkspacePageSurface({
             onItemKeyboardMove(item.id, delta[0], delta[1]);
           }}
           onPointerDown={(event) => {
-            if (!editMode || !onItemDragStart || event.button !== 0) return;
+            // Mouse drag stays on native HTML DnD; pointer handling is for touch/pen
+            // so the two event paths cannot commit the same gesture twice.
+            if (!editMode || !onItemDragStart || event.button !== 0 || event.pointerType === "mouse") return;
             const target = event.target;
             if (target instanceof Element && target.closest("button, a, input, textarea, select, [contenteditable='true']")) return;
             event.currentTarget.setPointerCapture(event.pointerId);
