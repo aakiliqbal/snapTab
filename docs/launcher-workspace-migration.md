@@ -114,7 +114,7 @@ Status: **in progress — pure drag lifecycle wired to the opt-in preview for it
 - [x] Show a grab cursor for draggable items while edit mode is enabled.
 - [x] Commit preview-only moves through the shared stale-session and collision guards; discard temporary changes when the preview closes.
 - [ ] Add pointer/touch drag affordances; native HTML drag-and-drop is the current desktop interaction path.
-- [x] Add keyboard-accessible focus targets for workspace items and arrow-key movement within the active page; movement uses the same collision-safe placement resolver and remains preview-only.
+- [x] Add keyboard-accessible focus targets for workspace items and arrow-key movement within the active page; movement uses a pure domain operation, picks the nearest free cell when the requested cell is occupied, and remains preview-only.
 
 The domain guard now rejects stale source membership, source ordering, and source geometry. This protects the future UI integration from concurrent edits, but drag events are not yet wired into the preview surface.
 - Extract drag session lifecycle, pointer/keyboard intent, overlay, geometry, and cancellation into shared workspace drag infrastructure.
