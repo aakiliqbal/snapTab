@@ -14,6 +14,7 @@ describe("WorkspacePageSurface", () => {
     const renderItem = vi.fn(() => createElement("button", null, "Docs"));
     const onItemDragStart = vi.fn();
     const onItemDrop = vi.fn();
+    const onItemKeyboardMove = vi.fn();
 
     const markup = renderToStaticMarkup(
       createElement(WorkspacePageSurface, {
@@ -23,13 +24,16 @@ describe("WorkspacePageSurface", () => {
         items: [item],
         renderItem,
         onItemDragStart,
-        onItemDrop
+        onItemDrop,
+        onItemKeyboardMove
       })
     );
 
     expect(markup).toContain('aria-label="Launcher workspace"');
     expect(markup).toContain('class="workspace-page-surface editing"');
     expect(markup).toContain('draggable="true"');
+    expect(markup).toContain('tabindex="0"');
+    expect(markup).toContain("Use arrow keys to move.");
     expect(markup).toContain("grid-template-columns:repeat(6, minmax(0, 1fr))");
     expect(markup).toContain("grid-column:3 / span 2");
     expect(markup).toContain("grid-row:2 / span 1");
