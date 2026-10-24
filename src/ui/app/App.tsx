@@ -2,6 +2,8 @@ import { CSSProperties, Suspense, lazy, useEffect, useMemo, useState } from "rea
 import { getThemePreset } from "../../domain/themes";
 import { resolveWorkspacePageItems } from "../../domain/workspaceItemModel";
 import { projectTabStateToWorkspaceGrid } from "../../domain/workspaceProjection";
+import { beginWorkspaceDrag, commitWorkspaceDrag, updateWorkspaceDragTarget, type WorkspaceDragSession } from "../../domain/workspaceDrag";
+import type { WorkspaceItemId, WorkspaceLayout } from "../../domain/workspace";
 import { subscribeToExternalTabStateChanges, useTabStore } from "../../stores/useTabStore";
 import type { DragSource } from "../drag/dragModel";
 import { CanvasWidgetHost } from "../canvas";
@@ -23,6 +25,8 @@ export function App() {
   const [query, setQuery] = useState("");
   const [isCanvasEditMode, setIsCanvasEditMode] = useState(false);
   const [isWorkspacePreviewOpen, setIsWorkspacePreviewOpen] = useState(false);
+  const [workspacePreviewLayout, setWorkspacePreviewLayout] = useState<WorkspaceLayout | null>(null);
+  const [workspaceDragSession, setWorkspaceDragSession] = useState<WorkspaceDragSession | null>(null);
   const [outgoingDragSource, setOutgoingDragSource] = useState<DragSource | null>(null);
 
   useEffect(() => subscribeToExternalTabStateChanges(), []);
@@ -59,16 +63,52 @@ export function App() {
     }),
     [controller, isCanvasEditMode, outgoingDragSource, query, tabState, canvasMetrics]
   );
+  const activePreviewLayout = workspacePreviewLayout ?? (workspaceProjection.ok ? workspaceProjection.layout : null);
   const workspacePages = useMemo(
-    () => workspaceProjection.ok
-      ? workspaceProjection.layout.pages.map((page) => ({
+    () => activePreviewLayout
+      ? activePreviewLayout.pages.map((page) => ({
           id: page.id,
           label: page.id,
-          items: resolveWorkspacePageItems(tabState, page.id, workspaceProjection.layout)
+          items: resolveWorkspacePageItems(tabState, page.id, activePreviewLayout)
         }))
       : [],
-    [workspaceProjection, tabState]
+    [activePreviewLayout, tabState]
   );
+
+  const beginPreviewDrag = (itemId: string) => {
+    if (!activePreviewLayout) return;
+    setWorkspaceDragSession(beginWorkspaceDrag(activePreviewLayout, itemId as WorkspaceItemId));
+  };
+  const dropPreviewItem = (
+    draggedItemId: string,
+    targetItemId: string,
+    targetPageId: string
+  ) => {
+    if (!activePreviewLayout || !workspaceDragSession || workspaceDragSession.itemId !== draggedItemId) return;
+    const targetPage = activePreviewLayout.pages.find((page) => page.id === targetPageId);
+    if (!targetPage) return;
+    const targetPlacement = activePreviewLayout.placements[targetItemId as WorkspaceItemId];
+    const target = updateWorkspaceDragTarget(
+      workspaceDragSession,
+      targetPageId,
+      targetPage.itemIds.indexOf(targetItemId as WorkspaceItemId),
+      targetPlacement
+    );
+    setWorkspacePreviewLayout(commitWorkspaceDrag(activePreviewLayout, target, {
+      columns: canvasMetrics.columns,
+      rows: canvasMetrics.rows
+    }));
+    setWorkspaceDragSession(null);
+  };
+  const dropPreviewOnPage = (draggedItemId: string, targetPageId: string) => {
+    if (!activePreviewLayout || !workspaceDragSession || workspaceDragSession.itemId !== draggedItemId) return;
+    const target = updateWorkspaceDragTarget(workspaceDragSession, targetPageId, null);
+    setWorkspacePreviewLayout(commitWorkspaceDrag(activePreviewLayout, target, {
+      columns: canvasMetrics.columns,
+      rows: canvasMetrics.rows
+    }));
+    setWorkspaceDragSession(null);
+  };
 
   const searchBoxHeight = Math.max(44, searchWidget.placement.height * canvasMetrics.cellHeight);
   const searchBoxRoundness = Math.min(100, Math.max(0, searchSettings.radius));
@@ -115,7 +155,16 @@ export function App() {
             className={`edit-mode-button workspace-preview-toggle${isWorkspacePreviewOpen ? " active" : ""}`}
             type="button"
             aria-pressed={isWorkspacePreviewOpen}
-            onClick={() => setIsWorkspacePreviewOpen((current) => !current)}
+            onClick={() => {
+              if (!isWorkspacePreviewOpen && workspaceProjection.ok) {
+                setWorkspacePreviewLayout(workspaceProjection.layout);
+              }
+              if (isWorkspacePreviewOpen) {
+                setWorkspacePreviewLayout(null);
+                setWorkspaceDragSession(null);
+              }
+              setIsWorkspacePreviewOpen((current) => !current);
+            }}
           >
             {isWorkspacePreviewOpen ? "Close preview" : "Workspace preview"}
           </button>
@@ -170,14 +219,17 @@ export function App() {
                 Close
               </button>
             </div>
-            {workspaceProjection.ok ? (
+            {activePreviewLayout ? (
               <div style={{ flex: 1, minHeight: 0 }}>
                 <WorkspacePager
                   pages={workspacePages}
                   columns={canvasMetrics.columns}
                   rows={canvasMetrics.rows}
-                  editMode={false}
+                  editMode={true}
                   renderers={workspaceRenderers}
+                  onItemDragStart={beginPreviewDrag}
+                  onItemDrop={dropPreviewItem}
+                  onItemDropOnPage={dropPreviewOnPage}
                 />
               </div>
             ) : (
