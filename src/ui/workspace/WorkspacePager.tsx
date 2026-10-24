@@ -91,7 +91,10 @@ export function WorkspacePager({
             if (!onItemDropOnPage || previousPageId === activePage.id) return;
             event.preventDefault();
             const draggedItemId = event.dataTransfer.getData("text/plain");
-            if (draggedItemId) onItemDropOnPage(draggedItemId as ResolvedWorkspaceItem["id"], previousPageId);
+            if (draggedItemId) {
+              onItemDropOnPage(draggedItemId as ResolvedWorkspaceItem["id"], previousPageId);
+              selectPage(previousPageId);
+            }
           }}
         >
           Previous
@@ -109,7 +112,10 @@ export function WorkspacePager({
             if (!onItemDropOnPage || nextPageId === activePage.id) return;
             event.preventDefault();
             const draggedItemId = event.dataTransfer.getData("text/plain");
-            if (draggedItemId) onItemDropOnPage(draggedItemId as ResolvedWorkspaceItem["id"], nextPageId);
+            if (draggedItemId) {
+              onItemDropOnPage(draggedItemId as ResolvedWorkspaceItem["id"], nextPageId);
+              selectPage(nextPageId);
+            }
           }}
         >
           Next
