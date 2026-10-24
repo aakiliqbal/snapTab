@@ -1,10 +1,16 @@
-import { CSSProperties, Suspense, lazy, useEffect, useState } from "react";
+import { CSSProperties, Suspense, lazy, useEffect, useMemo, useState } from "react";
 import { getThemePreset } from "../../domain/themes";
+import { resolveWorkspacePageItems } from "../../domain/workspaceItemModel";
+import { projectTabStateToWorkspaceGrid } from "../../domain/workspaceProjection";
 import { subscribeToExternalTabStateChanges, useTabStore } from "../../stores/useTabStore";
 import type { DragSource } from "../drag/dragModel";
 import { CanvasWidgetHost } from "../canvas";
 import { useNewTabController } from "./useNewTabController";
 import { useCanvasMetrics } from "../canvas";
+import { WorkspacePager } from "../workspace/WorkspacePager";
+import { createWorkspaceTileRenderers } from "../workspace/WorkspaceTileRenderers";
+import { renderWorkspaceWidget } from "../workspace/workspaceWidgetAdapter";
+import type { WidgetRenderContext } from "../widgets/widgetRegistry";
 
 const SettingsDrawer = lazy(() => import("../settings/SettingsDrawer").then((module) => ({ default: module.SettingsDrawer })));
 const FolderModal = lazy(() => import("../modals/FolderModal").then((module) => ({ default: module.FolderModal })));
@@ -16,6 +22,7 @@ export function App() {
   const hasHydrated = useTabStore((state) => state.hasHydrated);
   const [query, setQuery] = useState("");
   const [isCanvasEditMode, setIsCanvasEditMode] = useState(false);
+  const [isWorkspacePreviewOpen, setIsWorkspacePreviewOpen] = useState(false);
   const [outgoingDragSource, setOutgoingDragSource] = useState<DragSource | null>(null);
 
   useEffect(() => subscribeToExternalTabStateChanges(), []);
@@ -25,6 +32,43 @@ export function App() {
   const searchWidget = tabState.canvas.widgets.search;
   const searchSettings = searchWidget.settings;
   const theme = getThemePreset(tabState.themeId);
+
+  const workspaceProjection = useMemo(
+    () => projectTabStateToWorkspaceGrid(tabState, {
+      columns: canvasMetrics.columns,
+      rows: canvasMetrics.rows
+    }),
+    [tabState, canvasMetrics.columns, canvasMetrics.rows]
+  );
+  const workspaceWidgetContext: WidgetRenderContext = {
+    canvasMetrics,
+    controller,
+    isCanvasEditMode,
+    outgoingDragSource,
+    query,
+    setOutgoingDragSource,
+    setQuery,
+    tabState
+  };
+  const workspaceRenderers = useMemo(
+    () => createWorkspaceTileRenderers({
+      renderWidget: (item) => renderWorkspaceWidget(item, workspaceWidgetContext),
+      onOpenFolder: (folderId) => controller.setActiveFolderId(folderId),
+      onEditShortcut: (shortcut) => controller.openEditShortcutDialog(shortcut),
+      showLabels: tabState.layout.showLabels
+    }),
+    [controller, isCanvasEditMode, outgoingDragSource, query, tabState, canvasMetrics]
+  );
+  const workspacePages = useMemo(
+    () => workspaceProjection.ok
+      ? workspaceProjection.layout.pages.map((page) => ({
+          id: page.id,
+          label: page.id,
+          items: resolveWorkspacePageItems(tabState, page.id, workspaceProjection.layout)
+        }))
+      : [],
+    [workspaceProjection, tabState]
+  );
 
   const searchBoxHeight = Math.max(44, searchWidget.placement.height * canvasMetrics.cellHeight);
   const searchBoxRoundness = Math.min(100, Math.max(0, searchSettings.radius));
@@ -68,6 +112,14 @@ export function App() {
             {isCanvasEditMode ? "Done" : "Edit"}
           </button>
           <button
+            className={`edit-mode-button workspace-preview-toggle${isWorkspacePreviewOpen ? " active" : ""}`}
+            type="button"
+            aria-pressed={isWorkspacePreviewOpen}
+            onClick={() => setIsWorkspacePreviewOpen((current) => !current)}
+          >
+            {isWorkspacePreviewOpen ? "Close preview" : "Workspace preview"}
+          </button>
+          <button
             className="settings-button"
             type="button"
             aria-label="Open settings menu"
@@ -89,6 +141,52 @@ export function App() {
           setQuery={setQuery}
           tabState={tabState}
         />
+        {isWorkspacePreviewOpen ? (
+          <div
+            className="workspace-preview-overlay"
+            role="region"
+            aria-label="Workspace migration preview"
+            style={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 50,
+              display: "flex",
+              flexDirection: "column",
+              minWidth: 0,
+              minHeight: 0,
+              padding: 16,
+              background: "var(--workspace-preview-background, rgba(15, 23, 42, 0.96))",
+              color: "var(--workspace-preview-color, #f8fafc)"
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, paddingBottom: 12 }}>
+              <div>
+                <strong>Workspace migration preview</strong>
+                <div style={{ fontSize: 12, opacity: 0.75 }}>
+                  Read-only layout preview · saved settings are unchanged
+                </div>
+              </div>
+              <button type="button" onClick={() => setIsWorkspacePreviewOpen(false)}>
+                Close
+              </button>
+            </div>
+            {workspaceProjection.ok ? (
+              <div style={{ flex: 1, minHeight: 0 }}>
+                <WorkspacePager
+                  pages={workspacePages}
+                  columns={canvasMetrics.columns}
+                  rows={canvasMetrics.rows}
+                  editMode={false}
+                  renderers={workspaceRenderers}
+                />
+              </div>
+            ) : (
+              <div role="status">
+                This viewport grid cannot fit the projected items without overlap. The existing layout is unchanged.
+              </div>
+            )}
+          </div>
+        ) : null}
       </section>
 
       <Suspense fallback={null}>
