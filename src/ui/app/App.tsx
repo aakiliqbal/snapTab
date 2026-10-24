@@ -3,6 +3,8 @@ import { getThemePreset } from "../../domain/themes";
 import { resolveWorkspacePageItems } from "../../domain/workspaceItemModel";
 import { projectTabStateToWorkspaceGrid } from "../../domain/workspaceProjection";
 import { beginWorkspaceDrag, commitWorkspaceDrag, updateWorkspaceDragTarget, type WorkspaceDragSession } from "../../domain/workspaceDrag";
+import { findWorkspacePlacement } from "../../domain/workspaceLayout";
+import { setWorkspaceItemPlacement } from "../../domain/workspaceOperations";
 import type { WorkspaceItemId, WorkspaceLayout } from "../../domain/workspace";
 import { subscribeToExternalTabStateChanges, useTabStore } from "../../stores/useTabStore";
 import type { DragSource } from "../drag/dragModel";
@@ -99,6 +101,31 @@ export function App() {
       rows: canvasMetrics.rows
     }));
     setWorkspaceDragSession(null);
+  };
+  const movePreviewItemByKeyboard = (
+    itemId: string,
+    pageId: string,
+    columnDelta: number,
+    rowDelta: number
+  ) => {
+    if (!activePreviewLayout) return;
+    const currentPlacement = activePreviewLayout.placements[itemId as WorkspaceItemId] ?? {
+      column: 0, row: 0, columnSpan: 1, rowSpan: 1, zIndex: 1
+    };
+    const placement = findWorkspacePlacement(
+      activePreviewLayout,
+      pageId,
+      itemId as WorkspaceItemId,
+      {
+        ...currentPlacement,
+        column: currentPlacement.column + columnDelta,
+        row: currentPlacement.row + rowDelta
+      },
+      { columns: canvasMetrics.columns, rows: canvasMetrics.rows }
+    );
+    if (placement) {
+      setWorkspacePreviewLayout(setWorkspaceItemPlacement(activePreviewLayout, itemId as WorkspaceItemId, placement));
+    }
   };
   const dropPreviewOnPage = (draggedItemId: string, targetPageId: string) => {
     if (!activePreviewLayout || !workspaceDragSession || workspaceDragSession.itemId !== draggedItemId) return;
@@ -234,6 +261,7 @@ export function App() {
                   onItemDragStart={beginPreviewDrag}
                   onItemDrop={dropPreviewItem}
                   onItemDropOnPage={dropPreviewOnPage}
+                  onItemKeyboardMove={movePreviewItemByKeyboard}
                 />
               </div>
             ) : (
