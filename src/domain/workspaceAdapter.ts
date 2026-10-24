@@ -105,15 +105,17 @@ export function workspaceLayoutToTabState(
     pages[0].tileIds.push(...unassignedTiles);
   }
 
-  const widgets = { ...state.canvas.widgets };
-  for (const widgetId of workspaceWidgetIds) {
+  const placementFor = (widgetId: Exclude<WidgetId, "shortcutGrid">) => {
     const placement = normalized.placements[workspaceWidgetItemId(widgetId)];
-    if (!placement) continue;
-    widgets[widgetId] = {
-      ...widgets[widgetId],
-      placement: fromGridPlacement(placement)
-    };
-  }
+    return placement ? fromGridPlacement(placement) : state.canvas.widgets[widgetId].placement;
+  };
+  const widgets = {
+    ...state.canvas.widgets,
+    search: { ...state.canvas.widgets.search, placement: placementFor("search") },
+    weather: { ...state.canvas.widgets.weather, placement: placementFor("weather") },
+    dateTime: { ...state.canvas.widgets.dateTime, placement: placementFor("dateTime") },
+    rss: { ...state.canvas.widgets.rss, placement: placementFor("rss") }
+  };
 
   return {
     ...state,
