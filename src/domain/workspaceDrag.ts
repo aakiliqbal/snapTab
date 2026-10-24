@@ -1,5 +1,6 @@
 import type { WorkspaceGridPlacement, WorkspaceItemId, WorkspaceLayout } from "./workspace";
 import { moveWorkspaceItem, setWorkspaceItemPlacement } from "./workspaceOperations";
+import { findWorkspacePlacement, type WorkspaceGridMetrics } from "./workspaceLayout";
 
 export type WorkspaceDragSession = {
   itemId: WorkspaceItemId;
@@ -63,7 +64,8 @@ export function cancelWorkspaceDrag(session: WorkspaceDragSession): WorkspaceDra
 
 export function commitWorkspaceDrag(
   layout: WorkspaceLayout,
-  session: WorkspaceDragSession
+  session: WorkspaceDragSession,
+  metrics?: WorkspaceGridMetrics
 ): WorkspaceLayout {
   if (!session.active || !layout.pages.some((page) => page.id === session.targetPageId)) {
     return layout;
@@ -74,5 +76,22 @@ export function commitWorkspaceDrag(
     index: session.targetIndex ?? undefined
   });
 
-  return setWorkspaceItemPlacement(moved, session.itemId, session.previewPlacement);
+  if (!metrics) {
+    return setWorkspaceItemPlacement(moved, session.itemId, session.previewPlacement);
+  }
+
+  const resolvedPlacement = findWorkspacePlacement(
+    moved,
+    session.targetPageId,
+    session.itemId,
+    session.previewPlacement,
+    metrics
+  );
+
+  // A full destination page must not partially commit the page move.
+  if (!resolvedPlacement) {
+    return layout;
+  }
+
+  return setWorkspaceItemPlacement(moved, session.itemId, resolvedPlacement);
 }
