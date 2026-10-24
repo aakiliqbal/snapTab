@@ -9,6 +9,7 @@ export type WorkspacePageSurfaceProps = {
   renderItem: (item: ResolvedWorkspaceItem) => ReactNode;
   onItemDragStart?: (itemId: ResolvedWorkspaceItem["id"]) => void;
   onItemDrop?: (draggedItemId: ResolvedWorkspaceItem["id"], targetItemId: ResolvedWorkspaceItem["id"]) => void;
+  onItemDropOnPage?: (draggedItemId: ResolvedWorkspaceItem["id"]) => void;
 };
 
 /**
@@ -25,12 +26,22 @@ export function WorkspacePageSurface({
   renderItem,
   rows,
   onItemDragStart,
-  onItemDrop
+  onItemDrop,
+  onItemDropOnPage
 }: WorkspacePageSurfaceProps) {
   return (
     <section
       aria-label="Launcher workspace"
       className={`workspace-page-surface${editMode ? " editing" : ""}`}
+      onDragOver={(event) => {
+        if (editMode && onItemDropOnPage) event.preventDefault();
+      }}
+      onDrop={(event) => {
+        if (!editMode || !onItemDropOnPage) return;
+        event.preventDefault();
+        const draggedItemId = event.dataTransfer.getData("text/plain");
+        if (draggedItemId) onItemDropOnPage(draggedItemId as ResolvedWorkspaceItem["id"]);
+      }}
       style={{
         "--workspace-columns": columns,
         "--workspace-rows": rows,
@@ -62,6 +73,7 @@ export function WorkspacePageSurface({
           onDrop={(event) => {
             if (!editMode || !onItemDrop) return;
             event.preventDefault();
+            event.stopPropagation();
             const draggedItemId = event.dataTransfer.getData("text/plain");
             if (draggedItemId && draggedItemId !== item.id) onItemDrop(draggedItemId as ResolvedWorkspaceItem["id"], item.id);
           }}
