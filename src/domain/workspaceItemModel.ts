@@ -48,7 +48,7 @@ export function resolveWorkspacePageItems(
     return [];
   }
 
-  return page.itemIds.flatMap((itemId, index) => {
+  return page.itemIds.flatMap<ResolvedWorkspaceItem>((itemId, index) => {
     const placement = layout.placements[itemId] ?? defaultItemPlacement(index);
     if (itemId.startsWith("widget:")) {
       const widgetId = itemId.slice("widget:".length) as WidgetId;
