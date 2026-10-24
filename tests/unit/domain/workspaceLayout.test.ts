@@ -58,10 +58,11 @@ describe("workspaceLayout", () => {
     expect(findWorkspacePlacement(state, "page-1", "tile:missing" as WorkspaceItemId, state.placements[tileA]!, { columns: 6, rows: 4 })).toBeNull();
     const full: WorkspaceLayout = {
       schemaVersion: 1,
-      pages: [{ id: "full", itemIds: [widgetA, widgetB] }],
+      pages: [{ id: "full", itemIds: [widgetA, widgetB, tileA] }],
       placements: {
         [widgetA]: { column: 0, row: 0, columnSpan: 3, rowSpan: 2, zIndex: 1 },
-        [widgetB]: { column: 3, row: 0, columnSpan: 3, rowSpan: 2, zIndex: 1 }
+        [widgetB]: { column: 2, row: 0, columnSpan: 2, rowSpan: 2, zIndex: 1 },
+        [tileA]: { column: 4, row: 0, columnSpan: 2, rowSpan: 2, zIndex: 1 }
       }
     };
     expect(findWorkspacePlacement(full, "full", widgetA, {
