@@ -93,6 +93,21 @@ describe("WorkspacePager", () => {
     expect(markup).not.toContain("Mail");
   });
 
+  it("disables both navigation controls when there is only one page", () => {
+    const markup = renderToStaticMarkup(
+      <WorkspacePager
+        pages={[{ id: "home", label: "Home", items: [shortcut("docs", "Docs")] }]}
+        columns={6}
+        rows={4}
+        editMode={false}
+        renderers={renderers}
+      />
+    );
+
+    expect(markup).toContain('aria-label="Previous workspace page" disabled=""');
+    expect(markup).toContain('aria-label="Next workspace page" disabled=""');
+  });
+
   it("renders a safe empty state for a layout without pages", () => {
     const markup = renderToStaticMarkup(
       <WorkspacePager pages={[]} columns={6} rows={4} editMode={false} renderers={renderers} />
