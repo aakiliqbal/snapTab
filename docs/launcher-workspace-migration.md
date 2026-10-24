@@ -107,7 +107,10 @@ Status: **in progress — pure operations, drag lifecycle, and bounded placement
 - [x] Allow drag commits to accept grid metrics and resolve overlapping previews to a deterministic free cell; reject the move atomically if the destination page is full.
 - [x] Add drag-commit tests for collision fallback, full-page rejection, and stale sessions after a concurrent move.
 - [x] Reject commits whose item no longer belongs to the session’s source page, avoiding stale drag sessions overwriting concurrent changes.
+- [x] Reject commits when the item’s placement changed after drag start, preventing an old drag preview from overwriting a concurrent resize/reposition.
 - [ ] Wire the shared drag session and collision resolver to workspace item hosts and page-edge navigation.
+
+The domain guard now rejects stale source membership and stale source geometry. This protects the future UI integration from concurrent edits, but drag events are not yet wired into the preview surface.
 - Extract drag session lifecycle, pointer/keyboard intent, overlay, geometry, and cancellation into shared workspace drag infrastructure.
 - Keep drop decisions pure and domain-owned; adapters translate UI events into domain actions.
 - Support reordering, moving across pages, widget movement/resizing, and valid shortcut/folder operations.
