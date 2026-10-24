@@ -110,6 +110,8 @@ Status: **in progress — pure drag lifecycle wired to the opt-in preview for it
 - [x] Reject commits when the item’s placement or source-page index changed after drag start, preventing an old drag preview from overwriting a concurrent resize/reposition/reorder.
 - [x] Wire native drag start/drop events through the shared item surface and page host while keeping the interaction behind the opt-in preview.
 - [x] Support dropping onto another item on the active page and onto the pager’s previous/next controls to move across adjacent pages.
+- [x] Correct same-page insertion indices after removing the dragged item, so dropping before a later item does not accidentally place it after that target.
+- [x] Show a grab cursor for draggable items while edit mode is enabled.
 - [x] Commit preview-only moves through the shared stale-session and collision guards; discard temporary changes when the preview closes.
 - [ ] Add pointer/touch drag affordances and keyboard move controls; native HTML drag-and-drop is the first desktop interaction path.
 
