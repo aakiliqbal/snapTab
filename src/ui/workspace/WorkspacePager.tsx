@@ -45,7 +45,10 @@ export function WorkspacePager({
     placements: {}
   };
   const requestedActivePageId = activePageId ?? internalActivePageId;
-  const activeIndex = getWorkspacePageIndex(navigationLayout, requestedActivePageId);
+  const requestedIndex = getWorkspacePageIndex(navigationLayout, requestedActivePageId);
+  // Page lists can change during migration or after an external state update.
+  // A stale active ID should recover to the first available page, not blank the pager.
+  const activeIndex = requestedIndex < 0 ? (pages.length > 0 ? 0 : -1) : requestedIndex;
   const activePage = activeIndex < 0 ? undefined : pages[activeIndex];
   const resolvedActivePageId = activePage?.id ?? "";
   const previousPageId = getAdjacentWorkspacePageId(navigationLayout, resolvedActivePageId, "previous");
