@@ -41,7 +41,7 @@ describe("prepareWorkspaceLayoutSave", () => {
   it("rejects saving if another tab or panel changed the state after preview opened", () => {
     const base = structuredClone(defaultTabState);
     const latest = structuredClone(base);
-    latest.themeId = latest.themeId === "light" ? "dark" : "light";
+    latest.searchProvider = latest.searchProvider === "google" ? "bing" : "google";
     const layout = tabStateToWorkspaceLayout(base);
     const latestSnapshot = structuredClone(latest);
 
