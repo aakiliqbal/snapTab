@@ -72,6 +72,27 @@ describe("WorkspacePager", () => {
     expect(onActivePageChange).not.toHaveBeenCalled();
   });
 
+  it("recovers to the first available page when the active page ID is stale", () => {
+    const markup = renderToStaticMarkup(
+      <WorkspacePager
+        pages={[
+          { id: "home", label: "Home", items: [shortcut("docs", "Docs")] },
+          { id: "work", label: "Work", items: [shortcut("mail", "Mail")] }
+        ]}
+        activePageId="removed-page"
+        columns={6}
+        rows={4}
+        editMode={false}
+        renderers={renderers}
+      />
+    );
+
+    expect(markup).toContain('data-workspace-active-page="home"');
+    expect(markup).toContain("Home (1 of 2)");
+    expect(markup).toContain("Docs");
+    expect(markup).not.toContain("Mail");
+  });
+
   it("renders a safe empty state for a layout without pages", () => {
     const markup = renderToStaticMarkup(
       <WorkspacePager pages={[]} columns={6} rows={4} editMode={false} renderers={renderers} />
