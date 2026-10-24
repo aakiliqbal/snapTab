@@ -4,3 +4,4 @@ export { WorkspacePageSurface, type WorkspacePageSurfaceProps } from "./Workspac
 export { renderWorkspaceWidget } from "./workspaceWidgetAdapter";
 export { createWorkspaceTileRenderers, type WorkspaceTileRendererOptions } from "./WorkspaceTileRenderers";
 export { WorkspaceAppBridge, type WorkspaceAppBridgeProps } from "./WorkspaceAppBridge";
+export { WorkspacePager, type WorkspacePagerPage, type WorkspacePagerProps } from "./WorkspacePager";
