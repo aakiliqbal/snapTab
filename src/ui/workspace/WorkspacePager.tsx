@@ -88,6 +88,7 @@ export function WorkspacePager({
         <button
           type="button"
           aria-label="Previous workspace page"
+          data-workspace-drop-page-id={previousPageId ?? undefined}
           disabled={!previousPageId || previousPageId === activePage.id}
           onClick={() => selectPage(previousPageId)}
           onDragOver={(event) => { if (onItemDropOnPage && previousPageId && previousPageId !== activePage.id) event.preventDefault(); }}
@@ -109,6 +110,7 @@ export function WorkspacePager({
         <button
           type="button"
           aria-label="Next workspace page"
+          data-workspace-drop-page-id={nextPageId ?? undefined}
           disabled={!nextPageId || nextPageId === activePage.id}
           onClick={() => selectPage(nextPageId)}
           onDragOver={(event) => { if (onItemDropOnPage && nextPageId && nextPageId !== activePage.id) event.preventDefault(); }}
@@ -135,6 +137,10 @@ export function WorkspacePager({
         onItemDragCancel={onItemDragCancel}
         onItemDrop={(draggedItemId, targetItemId) => onItemDrop?.(draggedItemId, targetItemId, activePage.id)}
         onItemDropOnPage={(draggedItemId) => onItemDropOnPage?.(draggedItemId, activePage.id)}
+        onItemDropOnTargetPage={(draggedItemId, targetPageId) => {
+          onItemDropOnPage?.(draggedItemId, targetPageId);
+          selectPage(targetPageId);
+        }}
         onItemKeyboardMove={(itemId, columnDelta, rowDelta) => onItemKeyboardMove?.(itemId, activePage.id, columnDelta, rowDelta)}
       />
     </div>
