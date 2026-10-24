@@ -129,6 +129,7 @@ export function WorkspacePager({
         rows={rows}
         onItemDragStart={onItemDragStart}
         onItemDrop={(draggedItemId, targetItemId) => onItemDrop?.(draggedItemId, targetItemId, activePage.id)}
+        onItemDropOnPage={(draggedItemId) => onItemDropOnPage?.(draggedItemId, activePage.id)}
       />
     </div>
   );
