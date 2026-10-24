@@ -460,3 +460,37 @@ function buildResponsiveWidgetState(size: { weatherWidth: number; weatherHeight:
     wallpaper: { type: "none", value: null, mediaId: null, dim: 40, blur: 0 }
   };
 }
+
+test("workspace widget layout save persists across reload", async ({ page }) => {
+  await page.goto("/newtab.html");
+  await page.getByRole("button", { name: "Workspace preview" }).click();
+
+  const weather = page.locator('[data-workspace-item-id="widget:weather"]');
+  await expect(weather).toBeVisible();
+  const before = await weather.getAttribute("style");
+  await weather.focus();
+  await weather.press("ArrowRight");
+  await expect(weather).not.toHaveAttribute("style", before ?? "");
+
+  await page.getByRole("button", { name: "Save layout" }).click();
+
+  const savedPlacement = await page.evaluate(() => {
+    const stored = window.localStorage.getItem("snapTabState");
+    if (!stored) throw new Error("SnapTab state was not persisted.");
+    const parsed = JSON.parse(stored) as {
+      state?: { canvas?: { widgets?: { weather?: { placement?: { x?: number; y?: number; width?: number; height?: number; zIndex?: number } } } } };
+    };
+    return parsed.state?.canvas?.widgets?.weather?.placement;
+  });
+  expect(savedPlacement).toBeDefined();
+
+  await page.reload();
+  await page.getByRole("button", { name: "Workspace preview" }).click();
+  const reloadedWeather = page.locator('[data-workspace-item-id="widget:weather"]');
+  await expect(reloadedWeather).toBeVisible();
+  const reloadedStyle = await reloadedWeather.getAttribute("style");
+  expect(reloadedStyle).toBeTruthy();
+  expect(savedPlacement?.x).toBeDefined();
+  expect(savedPlacement?.y).toBeDefined();
+  await page.getByRole("button", { name: "Close" }).click();
+});
