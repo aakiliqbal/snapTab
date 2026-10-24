@@ -24,11 +24,16 @@ This plan is organized as vertical slices: each phase should deliver an end-to-e
 
 ### Slice 1 — Workspace contracts and compatibility seam
 
-- Define a discriminated workspace item model for widgets, shortcuts, and folders.
-- Define page membership, grid placement, spans, and stable item IDs.
-- Add pure placement and normalization functions with tests.
-- Add migration/normalization that preserves current shortcut ordering, folders, widget settings, and placements.
-- Do not change the visible layout until the new model can round-trip existing state.
+Status: **in progress**
+
+- [x] Define stable namespaced item IDs, page membership, grid placement, and spans.
+- [x] Add pure layout normalization tests for stale IDs, duplicates, invalid geometry, and immutability.
+- [x] Add a read-only `TabState` adapter that projects existing shortcut pages, folders, and widget placements into the workspace contract without changing persisted state.
+- [x] Cover legacy page ordering, folder-child exclusion, geometry mapping, orphaned top-level tiles, and input immutability.
+- [ ] Add a reverse adapter and round-trip tests before changing the persisted source of truth.
+- [ ] Validate build and unit tests in CI or a local checkout.
+
+The visible layout and persisted schema remain unchanged in this slice.
 
 **Exit criteria:** old state normalizes deterministically; no data loss; domain tests cover mixed item types and malformed state.
 
