@@ -67,7 +67,7 @@ export function WorkspacePageSurface({
           aria-label={editMode && onItemKeyboardMove ? `Workspace item ${item.id}. Use arrow keys to move.` : undefined}
           onKeyDown={(event) => {
             if (!editMode || !onItemKeyboardMove || event.target !== event.currentTarget) return;
-            const delta = event.key === "ArrowLeft" ? [-1, 0]
+            const delta: [number, number] | null = event.key === "ArrowLeft" ? [-1, 0]
               : event.key === "ArrowRight" ? [1, 0]
               : event.key === "ArrowUp" ? [0, -1]
               : event.key === "ArrowDown" ? [0, 1]
