@@ -29,7 +29,13 @@ export function WorkspacePageSurface({
       className={`workspace-page-surface${editMode ? " editing" : ""}`}
       style={{
         "--workspace-columns": columns,
-        "--workspace-rows": rows
+        "--workspace-rows": rows,
+        display: "grid",
+        gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+        gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`,
+        position: "relative",
+        minWidth: 0,
+        minHeight: 0
       } as CSSProperties}
     >
       {items.map((item) => (
