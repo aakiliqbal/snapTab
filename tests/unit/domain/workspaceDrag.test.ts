@@ -97,5 +97,21 @@ describe("workspace drag session", () => {
 
     expect(commitWorkspaceDrag(fullLayout, target, { columns: 6, rows: 1 })).toBe(fullLayout);
   });
+  it("does not commit a stale drag after the item was moved concurrently", () => {
+    const session = beginWorkspaceDrag(layout, docs)!;
+    const target = updateWorkspaceDragTarget(session, "work", 0, {
+      column: 1, row: 2, columnSpan: 1, rowSpan: 1, zIndex: 4
+    });
+    const concurrentlyMoved: WorkspaceLayout = {
+      ...layout,
+      pages: [
+        { id: "home", itemIds: [] },
+        { id: "work", itemIds: [docs, weather] }
+      ]
+    };
+
+    expect(commitWorkspaceDrag(concurrentlyMoved, target)).toBe(concurrentlyMoved);
+  });
+
 
 });
