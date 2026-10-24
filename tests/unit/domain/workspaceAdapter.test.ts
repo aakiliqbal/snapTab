@@ -7,6 +7,11 @@ describe("tabStateToWorkspaceLayout", () => {
   it("preserves legacy shortcut page order and places widgets on the first workspace page", () => {
     const state = {
       ...defaultTabState,
+      tiles: {
+        docs: defaultTabState.tiles.docs,
+        mail: defaultTabState.tiles.mail,
+        "work-folder": defaultTabState.tiles["work-folder"]
+      },
       pages: [
         { id: "home", tileIds: ["docs", "work-folder"] },
         { id: "other", tileIds: ["mail"] }
