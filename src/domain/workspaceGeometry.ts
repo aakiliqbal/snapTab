@@ -29,8 +29,18 @@ export function normalizeWorkspacePageGeometry(
   };
   const occupied: WorkspaceGridPlacement[] = [];
 
-  for (let index = 0; index < page.itemIds.length; index += 1) {
-    const itemId = page.itemIds[index];
+  // Preserve existing widget coordinates first; newly projected tiles then
+  // occupy free cells around those widgets without moving the widget geometry.
+  const placementOrder = page.itemIds
+    .map((itemId, index) => ({ itemId, index }))
+    .sort((left, right) => {
+      const leftIsWidget = left.itemId.startsWith("widget:");
+      const rightIsWidget = right.itemId.startsWith("widget:");
+      return Number(rightIsWidget) - Number(leftIsWidget) || left.index - right.index;
+    });
+
+  for (let index = 0; index < placementOrder.length; index += 1) {
+    const itemId = placementOrder[index].itemId;
     const requested = layout.placements[itemId] ?? defaultPlacement(index);
     const candidate = clampWorkspacePlacement(requested, metrics);
 
