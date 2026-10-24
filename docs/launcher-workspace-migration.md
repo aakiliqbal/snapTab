@@ -113,10 +113,10 @@ Status: **in progress — pure drag lifecycle wired to the opt-in preview for it
 - [x] Correct same-page insertion indices after removing the dragged item, so dropping before a later item does not accidentally place it after that target.
 - [x] Show a grab cursor for draggable items while edit mode is enabled.
 - [x] Commit preview-only moves through the shared stale-session and collision guards; discard temporary changes when the preview closes.
-- [ ] Add pointer/touch drag affordances; native HTML drag-and-drop is the current desktop interaction path.
+- [x] Add pointer/touch drag affordances for touch and pen input, with pointer capture, an 8px movement threshold, and click-control exclusions; mouse continues to use native HTML drag-and-drop to avoid duplicate commits.
 - [x] Add keyboard-accessible focus targets for workspace items and arrow-key movement within the active page; movement uses a pure domain operation, picks the nearest free cell when the requested cell is occupied, and remains preview-only.
 
-The domain guard now rejects stale source membership, source ordering, and source geometry. This protects the future UI integration from concurrent edits, but drag events are not yet wired into the preview surface.
+The domain guard rejects stale source membership, source ordering, and source geometry. Native mouse drag/drop and touch/pen pointer gestures are wired into the opt-in preview; both remain temporary and do not update saved state.
 - Extract drag session lifecycle, pointer/keyboard intent, overlay, geometry, and cancellation into shared workspace drag infrastructure.
 - Keep drop decisions pure and domain-owned; adapters translate UI events into domain actions.
 - Support reordering, moving across pages, widget movement/resizing, and valid shortcut/folder operations.
