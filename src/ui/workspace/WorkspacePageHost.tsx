@@ -8,6 +8,8 @@ export type WorkspacePageHostProps = {
   rows: number;
   editMode: boolean;
   renderers: WorkspaceItemRenderers;
+  onItemDragStart?: (itemId: ResolvedWorkspaceItem["id"]) => void;
+  onItemDrop?: (draggedItemId: ResolvedWorkspaceItem["id"], targetItemId: ResolvedWorkspaceItem["id"]) => void;
 };
 
 /**
@@ -20,7 +22,9 @@ export function WorkspacePageHost({
   editMode,
   items,
   renderers,
-  rows
+  rows,
+  onItemDragStart,
+  onItemDrop
 }: WorkspacePageHostProps) {
   return (
     <WorkspacePageSurface
@@ -29,6 +33,8 @@ export function WorkspacePageHost({
       items={items}
       rows={rows}
       renderItem={(item) => <WorkspaceItemRenderer item={item} renderers={renderers} />}
+      onItemDragStart={onItemDragStart}
+      onItemDrop={onItemDrop}
     />
   );
 }
