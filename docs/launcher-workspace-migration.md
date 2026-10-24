@@ -31,7 +31,7 @@ Status: **compatibility seam complete; validation pending**
 - [x] Add a read-only `TabState` adapter that projects existing shortcut pages, folders, and widget placements into the workspace contract without changing persisted state.
 - [x] Cover legacy page ordering, folder-child exclusion, geometry mapping, orphaned top-level tiles, and input immutability.
 - [x] Add a pure typed resolver for mixed shortcut, folder, and widget page items, including deterministic fallback placement and stale-reference handling.
-- [ ] Add a reverse adapter and round-trip tests before changing the persisted source of truth. This remains blocked on deciding how shared workspace page membership maps to the legacy split state without data loss.
+- [x] Add a pure reverse adapter and round-trip tests that map shared page membership back to legacy shortcut pages while preserving tile records and folder relationships.
 - [ ] Validate build and unit tests in CI or a local checkout.
 
 The visible layout and persisted schema remain unchanged. The domain adapter/resolver and shared render primitives exist, but they are not yet wired into the live app or persistence.
@@ -59,7 +59,7 @@ Status: **in progress — shared surface and typed render adapter added; live UI
 
 ### Opt-in live workspace preview
 
-Status: **integrated in App as a temporary read-only overlay; build, unit tests, and browser smoke tests passed on the initial preview integration; pager stale-page recovery regression added afterward and awaits CI rerun**
+Status: **integrated in App as an opt-in preview with explicit save and stale-state protection; latest CI validation pending**
 
 - [x] Add a toolbar toggle to open/close the migration preview without replacing the default legacy canvas.
 - [x] Derive the preview grid from the same viewport canvas metrics used by the current app.
@@ -69,8 +69,10 @@ Status: **integrated in App as a temporary read-only overlay; build, unit tests,
 - [x] Validate build, unit tests, and browser smoke tests for the initial preview integration.
 - [ ] Manually review the overlay at different viewport sizes and confirm all widget interactions work acceptably before considering a default switch.
 - [x] Recover the pager to the first available page when its active page ID becomes stale; cover the regression with a focused UI test.
+- [x] Add an explicit Save layout action that maps preview membership and widget geometry back to legacy state.
+- [x] Guard saves against stale whole-state overwrites by comparing the current persisted state to the snapshot taken when the preview opened; ask the user to reopen the preview if state changed elsewhere.
 
-This is a migration preview, not the new source of truth. Drag/drop updates only the preview's in-memory projected layout and is discarded when the preview closes; it does not change saved TabState. Widget rendering in the preview uses feature components without the legacy absolute-positioned WidgetFrame, so visual differences are expected and should be reviewed before broader integration.
+This remains an opt-in migration preview, not the new default launcher. Drag/drop stays local until Save layout is explicitly chosen. Save is blocked if the underlying state changed while the preview was open; the user must close and reopen the preview to rebase rather than overwrite another tab's edits. Widget rendering in the preview uses feature components without the legacy absolute-positioned WidgetFrame, so visual differences are expected and should be reviewed before broader integration.
 
 ### Unified-grid compatibility projection
 
