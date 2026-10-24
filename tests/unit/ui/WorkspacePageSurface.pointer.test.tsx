@@ -116,6 +116,35 @@ describe("WorkspacePageSurface pointer interactions", () => {
     expect(onItemDropOnPage).not.toHaveBeenCalled();
   });
 
+  it("routes a touch drop on an adjacent-page target to that page", () => {
+    const onItemDragStart = vi.fn();
+    const onItemDropOnTargetPage = vi.fn();
+
+    act(() => {
+      root.render(createElement(WorkspacePageSurface, {
+        columns: 4,
+        rows: 3,
+        editMode: true,
+        items: [item("docs")],
+        renderItem: (resolved) => createElement("span", null, resolved.id),
+        onItemDragStart,
+        onItemDropOnTargetPage
+      }));
+    });
+
+    const source = container.querySelector<HTMLElement>('[data-workspace-item-id="tile:docs"]')!;
+    const nextPageTarget = document.createElement("button");
+    nextPageTarget.dataset.workspaceDropPageId = "work";
+    document.body.appendChild(nextPageTarget);
+    document.elementFromPoint = vi.fn(() => nextPageTarget);
+
+    act(() => source.dispatchEvent(pointerEvent("pointerdown", { clientX: 10, clientY: 10 })));
+    act(() => source.dispatchEvent(pointerEvent("pointerup", { clientX: 40, clientY: 40 })));
+
+    expect(onItemDropOnTargetPage).toHaveBeenCalledWith("tile:docs", "work");
+    nextPageTarget.remove();
+  });
+
   it("clears the drag session when the browser cancels the pointer", () => {
     const onItemDragCancel = vi.fn();
 
