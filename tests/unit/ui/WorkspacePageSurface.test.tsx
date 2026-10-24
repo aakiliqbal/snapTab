@@ -32,6 +32,7 @@ describe("WorkspacePageSurface", () => {
     expect(markup).toContain('aria-label="Launcher workspace"');
     expect(markup).toContain('class="workspace-page-surface editing"');
     expect(markup).toContain('draggable="true"');
+    expect(markup).toContain("touch-action:none");
     expect(markup).toContain('tabindex="0"');
     expect(markup).toContain("Use arrow keys to move.");
     expect(markup).toContain("grid-template-columns:repeat(6, minmax(0, 1fr))");
