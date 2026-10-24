@@ -82,25 +82,39 @@ export function WorkspacePageSurface({
             if (target instanceof Element && target.closest("button, a, input, textarea, select, [contenteditable='true']")) return;
             event.currentTarget.setPointerCapture(event.pointerId);
             event.currentTarget.dataset.pointerDragging = "true";
+            event.currentTarget.dataset.pointerStartX = String(event.clientX);
+            event.currentTarget.dataset.pointerStartY = String(event.clientY);
             onItemDragStart(item.id);
           }}
           onPointerUp={(event) => {
             if (!editMode || event.currentTarget.dataset.pointerDragging !== "true") return;
             delete event.currentTarget.dataset.pointerDragging;
+            const startX = Number(event.currentTarget.dataset.pointerStartX);
+            const startY = Number(event.currentTarget.dataset.pointerStartY);
+            delete event.currentTarget.dataset.pointerStartX;
+            delete event.currentTarget.dataset.pointerStartY;
+            if (Math.hypot(event.clientX - startX, event.clientY - startY) < 8) {
+              if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+              return;
+            }
             if (event.currentTarget.hasPointerCapture(event.pointerId)) {
               event.currentTarget.releasePointerCapture(event.pointerId);
             }
             const hit = event.currentTarget.ownerDocument.elementFromPoint(event.clientX, event.clientY);
             const targetItem = hit?.closest<HTMLElement>("[data-workspace-item-id]");
             const draggedId = item.id;
-            if (targetItem?.dataset.workspaceItemId && targetItem.dataset.workspaceItemId !== draggedId) {
-              onItemDrop?.(draggedId, targetItem.dataset.workspaceItemId as ResolvedWorkspaceItem["id"]);
+            if (targetItem?.dataset.workspaceItemId) {
+              if (targetItem.dataset.workspaceItemId !== draggedId) {
+                onItemDrop?.(draggedId, targetItem.dataset.workspaceItemId as ResolvedWorkspaceItem["id"]);
+              }
             } else if (hit?.closest(".workspace-page-surface")) {
               onItemDropOnPage?.(draggedId);
             }
           }}
           onPointerCancel={(event) => {
             delete event.currentTarget.dataset.pointerDragging;
+            delete event.currentTarget.dataset.pointerStartX;
+            delete event.currentTarget.dataset.pointerStartY;
             if (event.currentTarget.hasPointerCapture(event.pointerId)) {
               event.currentTarget.releasePointerCapture(event.pointerId);
             }
