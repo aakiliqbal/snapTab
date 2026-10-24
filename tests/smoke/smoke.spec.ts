@@ -467,10 +467,11 @@ test("workspace widget layout save persists across reload", async ({ page }) => 
 
   const weather = page.locator('[data-workspace-item-id="widget:weather"]');
   await expect(weather).toBeVisible();
-  const before = await weather.getAttribute("style");
+  const beforeStyle = await weather.getAttribute("style");
   await weather.focus();
   await weather.press("ArrowRight");
-  await expect(weather).not.toHaveAttribute("style", before ?? "");
+  const editedStyle = await weather.getAttribute("style");
+  expect(editedStyle).not.toBe(beforeStyle);
 
   await page.getByRole("button", { name: "Save layout" }).click();
 
@@ -482,15 +483,16 @@ test("workspace widget layout save persists across reload", async ({ page }) => 
     };
     return parsed.state?.canvas?.widgets?.weather?.placement;
   });
-  expect(savedPlacement).toBeDefined();
+  expect(savedPlacement?.x).toBeDefined();
+  expect(savedPlacement?.y).toBeDefined();
+  expect(savedPlacement?.width).toBeDefined();
 
   await page.reload();
   await page.getByRole("button", { name: "Workspace preview" }).click();
   const reloadedWeather = page.locator('[data-workspace-item-id="widget:weather"]');
   await expect(reloadedWeather).toBeVisible();
   const reloadedStyle = await reloadedWeather.getAttribute("style");
-  expect(reloadedStyle).toBeTruthy();
-  expect(savedPlacement?.x).toBeDefined();
-  expect(savedPlacement?.y).toBeDefined();
+  expect(reloadedStyle).toContain(`grid-column: ${savedPlacement!.x! + 1} / span ${savedPlacement!.width}`);
+  expect(reloadedStyle).toContain(`grid-row: ${savedPlacement!.y! + 1} / span ${savedPlacement!.height}`);
   await page.getByRole("button", { name: "Close" }).click();
 });
