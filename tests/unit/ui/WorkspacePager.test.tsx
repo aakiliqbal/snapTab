@@ -104,7 +104,7 @@ describe("WorkspacePager", () => {
       />
     );
 
-    expect(markup).toContain('aria-label="Previous workspace page" disabled=""');
+    expect(markup).toMatch(/<button[^>]*aria-label="Previous workspace page"[^>]*disabled=""/);
     expect(markup).toMatch(/<button[^>]*aria-label="Next workspace page"[^>]*disabled=""/);
   });
 
