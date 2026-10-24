@@ -11,6 +11,7 @@ export type WorkspacePageSurfaceProps = {
   onItemDragCancel?: () => void;
   onItemDrop?: (draggedItemId: ResolvedWorkspaceItem["id"], targetItemId: ResolvedWorkspaceItem["id"]) => void;
   onItemDropOnPage?: (draggedItemId: ResolvedWorkspaceItem["id"]) => void;
+  onItemDropOnTargetPage?: (draggedItemId: ResolvedWorkspaceItem["id"], targetPageId: string) => void;
   onItemKeyboardMove?: (itemId: ResolvedWorkspaceItem["id"], columnDelta: number, rowDelta: number) => void;
 };
 
@@ -31,6 +32,7 @@ export function WorkspacePageSurface({
   onItemDragCancel,
   onItemDrop,
   onItemDropOnPage,
+  onItemDropOnTargetPage,
   onItemKeyboardMove
 }: WorkspacePageSurfaceProps) {
   return (
@@ -106,9 +108,12 @@ export function WorkspacePageSurface({
               event.currentTarget.releasePointerCapture(event.pointerId);
             }
             const hit = event.currentTarget.ownerDocument.elementFromPoint(event.clientX, event.clientY);
+            const targetPage = hit?.closest<HTMLElement>("[data-workspace-drop-page-id]");
             const targetItem = hit?.closest<HTMLElement>("[data-workspace-item-id]");
             const draggedId = item.id;
-            if (targetItem?.dataset.workspaceItemId) {
+            if (targetPage?.dataset.workspaceDropPageId && onItemDropOnTargetPage) {
+              onItemDropOnTargetPage(draggedId, targetPage.dataset.workspaceDropPageId);
+            } else if (targetItem?.dataset.workspaceItemId) {
               if (targetItem.dataset.workspaceItemId !== draggedId) {
                 onItemDrop?.(draggedId, targetItem.dataset.workspaceItemId as ResolvedWorkspaceItem["id"]);
               } else {
