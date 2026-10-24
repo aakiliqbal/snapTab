@@ -45,6 +45,7 @@ Status: **in progress — shared surface and typed render adapter added; live UI
 - [x] Add a pure resolver that projects mixed workspace IDs into typed widget/shortcut/folder render models.
 - [x] Add a generic `WorkspacePageSurface` with shared CSS-grid placement, spans, z-order, and a render callback that does not branch on item type.
 - [x] Add `WorkspaceItemRenderer`, a typed adapter that delegates each resolved item kind to its owning feature renderer.
+- [x] Add focused UI unit tests for item-kind delegation and shared CSS-grid placement.
 - [ ] Connect the surface and adapter to the app behind a compatibility flag/path and add concrete item-specific render callbacks.
 - Render shortcuts and folders as first-class items alongside widget frames.
 - Keep the existing Shortcut Grid available behind a compatibility path while the shared renderer is validated.
