@@ -3,3 +3,4 @@ export { WorkspaceItemRenderer, type WorkspaceItemRenderers } from "./WorkspaceI
 export { WorkspacePageSurface, type WorkspacePageSurfaceProps } from "./WorkspacePageSurface";
 export { renderWorkspaceWidget } from "./workspaceWidgetAdapter";
 export { createWorkspaceTileRenderers, type WorkspaceTileRendererOptions } from "./WorkspaceTileRenderers";
+export { WorkspaceAppBridge, type WorkspaceAppBridgeProps } from "./WorkspaceAppBridge";
