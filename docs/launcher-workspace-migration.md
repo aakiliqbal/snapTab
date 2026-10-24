@@ -63,7 +63,8 @@ Status: **in progress — pure operations, drag lifecycle, and bounded placement
 - [x] Cover stale drag sources/targets, cancellation, placement preservation, and cross-page commits with domain tests.
 - [x] Cover workspace placement bounds, edge-touching rectangles, collision resolution, and full-page behavior with domain tests.
 - [x] Allow drag commits to accept grid metrics and resolve overlapping previews to a deterministic free cell; reject the move atomically if the destination page is full.
-- [x] Add drag-commit tests for collision fallback and full-page rejection.
+- [x] Add drag-commit tests for collision fallback, full-page rejection, and stale sessions after a concurrent move.
+- [x] Reject commits whose item no longer belongs to the session’s source page, avoiding stale drag sessions overwriting concurrent changes.
 - [ ] Wire the shared drag session and collision resolver to workspace item hosts and page-edge navigation.
 - Extract drag session lifecycle, pointer/keyboard intent, overlay, geometry, and cancellation into shared workspace drag infrastructure.
 - Keep drop decisions pure and domain-owned; adapters translate UI events into domain actions.
