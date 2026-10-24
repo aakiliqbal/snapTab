@@ -34,17 +34,18 @@ Status: **compatibility seam complete; validation pending**
 - [ ] Add a reverse adapter and round-trip tests before changing the persisted source of truth. This remains blocked on deciding how shared workspace page membership maps to the legacy split state without data loss.
 - [ ] Validate build and unit tests in CI or a local checkout.
 
-The visible layout and persisted schema remain unchanged. The adapter and resolver are domain-only and are not yet wired into rendering or persistence.
+The visible layout and persisted schema remain unchanged. The domain adapter/resolver and shared render primitives exist, but they are not yet wired into the live app or persistence.
 
 **Exit criteria:** old state normalizes deterministically; no data loss; domain tests cover mixed item types and malformed state.
 
 ### Slice 2 — Shared workspace renderer
 
-Status: **in progress — typed render model foundation added; UI integration next**
+Status: **in progress — shared surface and typed render adapter added; live UI integration still pending**
 
 - [x] Add a pure resolver that projects mixed workspace IDs into typed widget/shortcut/folder render models.
 - [x] Add a generic `WorkspacePageSurface` with shared CSS-grid placement, spans, z-order, and a render callback that does not branch on item type.
-- [ ] Connect the surface to the app behind a compatibility flag/path and add item-specific render adapters.
+- [x] Add `WorkspaceItemRenderer`, a typed adapter that delegates each resolved item kind to its owning feature renderer.
+- [ ] Connect the surface and adapter to the app behind a compatibility flag/path and add concrete item-specific render callbacks.
 - Render shortcuts and folders as first-class items alongside widget frames.
 - Keep the existing Shortcut Grid available behind a compatibility path while the shared renderer is validated.
 - Move only the minimum UI required for the first end-to-end mixed page.
