@@ -77,6 +77,19 @@ export function commitWorkspaceDrag(
     return layout;
   }
 
+  // A concurrent resize or reposition on the same page also invalidates the
+  // drag snapshot. Do not overwrite newer geometry with an old pointer preview.
+  const currentPlacement = layout.placements[session.itemId] ?? {
+    column: 0,
+    row: 0,
+    columnSpan: 1,
+    rowSpan: 1,
+    zIndex: 1
+  };
+  if (!samePlacement(currentPlacement, session.sourcePlacement)) {
+    return layout;
+  }
+
   const moved = moveWorkspaceItem(layout, session.itemId, {
     pageId: session.targetPageId,
     index: session.targetIndex ?? undefined
