@@ -8,6 +8,7 @@ export type WorkspacePageSurfaceProps = {
   editMode: boolean;
   renderItem: (item: ResolvedWorkspaceItem) => ReactNode;
   onItemDragStart?: (itemId: ResolvedWorkspaceItem["id"]) => void;
+  onItemDragCancel?: () => void;
   onItemDrop?: (draggedItemId: ResolvedWorkspaceItem["id"], targetItemId: ResolvedWorkspaceItem["id"]) => void;
   onItemDropOnPage?: (draggedItemId: ResolvedWorkspaceItem["id"]) => void;
   onItemKeyboardMove?: (itemId: ResolvedWorkspaceItem["id"], columnDelta: number, rowDelta: number) => void;
@@ -27,6 +28,7 @@ export function WorkspacePageSurface({
   renderItem,
   rows,
   onItemDragStart,
+  onItemDragCancel,
   onItemDrop,
   onItemDropOnPage,
   onItemKeyboardMove
@@ -97,6 +99,7 @@ export function WorkspacePageSurface({
             delete event.currentTarget.dataset.pointerStartY;
             if (Math.hypot(event.clientX - startX, event.clientY - startY) < 8) {
               if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+              onItemDragCancel?.();
               return;
             }
             if (event.currentTarget.hasPointerCapture(event.pointerId)) {
@@ -108,9 +111,14 @@ export function WorkspacePageSurface({
             if (targetItem?.dataset.workspaceItemId) {
               if (targetItem.dataset.workspaceItemId !== draggedId) {
                 onItemDrop?.(draggedId, targetItem.dataset.workspaceItemId as ResolvedWorkspaceItem["id"]);
+              } else {
+                onItemDragCancel?.();
               }
             } else if (hit?.closest(".workspace-page-surface")) {
-              onItemDropOnPage?.(draggedId);
+              if (onItemDropOnPage) onItemDropOnPage(draggedId);
+              else onItemDragCancel?.();
+            } else {
+              onItemDragCancel?.();
             }
           }}
           onPointerCancel={(event) => {
@@ -120,6 +128,7 @@ export function WorkspacePageSurface({
             if (event.currentTarget.hasPointerCapture(event.pointerId)) {
               event.currentTarget.releasePointerCapture(event.pointerId);
             }
+            onItemDragCancel?.();
           }}
           onDragStart={(event) => {
             if (!editMode || !onItemDragStart) return;
