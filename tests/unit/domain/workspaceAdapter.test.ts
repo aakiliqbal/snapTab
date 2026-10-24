@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { defaultTabState } from "../../../src/domain/tabState";
-import { tabStateToWorkspaceLayout } from "../../../src/domain/workspaceAdapter";
+import {
+  tabStateToWorkspaceLayout,
+  workspaceLayoutToTabState
+} from "../../../src/domain/workspaceAdapter";
 import { workspaceTileItemId, workspaceWidgetItemId } from "../../../src/domain/workspace";
 
 describe("tabStateToWorkspaceLayout", () => {
@@ -77,5 +80,64 @@ describe("tabStateToWorkspaceLayout", () => {
 
     expect(allItemIds).toContain(workspaceTileItemId("docs"));
     expect(allItemIds).not.toContain(workspaceWidgetItemId("shortcutGrid"));
+  });
+});
+
+describe("workspaceLayoutToTabState", () => {
+  it("round-trips page membership and widget placements without changing tile records", () => {
+    const state = structuredClone(defaultTabState);
+    const layout = tabStateToWorkspaceLayout(state);
+    layout.pages[0].itemIds = layout.pages[0].itemIds.filter(
+      (id) => id !== workspaceTileItemId("docs")
+    );
+    layout.pages[1] = {
+      id: "work",
+      itemIds: [workspaceTileItemId("docs"), workspaceWidgetItemId("weather")]
+    };
+    layout.placements[workspaceWidgetItemId("weather")] = {
+      column: 3,
+      row: 2,
+      columnSpan: 5,
+      rowSpan: 4,
+      zIndex: 12
+    };
+    const tileSnapshot = structuredClone(state.tiles);
+
+    const result = workspaceLayoutToTabState(state, layout);
+
+    expect(result.pages.map((page) => ({ id: page.id, tileIds: page.tileIds }))).toEqual([
+      {
+        id: "page-1",
+        tileIds: state.pages[0].tileIds.filter((id) => id !== "docs")
+      },
+      { id: "work", tileIds: ["docs"] }
+    ]);
+    expect(result.canvas.widgets.weather.placement).toEqual({
+      x: 3,
+      y: 2,
+      width: 5,
+      height: 4,
+      zIndex: 12
+    });
+    expect(result.tiles).toEqual(tileSnapshot);
+    expect(state).toEqual(defaultTabState);
+  });
+
+  it("retains valid top-level tiles omitted by a partial layout", () => {
+    const state = structuredClone(defaultTabState);
+    const partialLayout = {
+      schemaVersion: 1 as const,
+      pages: [{ id: "only-page", itemIds: [workspaceTileItemId("docs")] }],
+      placements: {}
+    };
+
+    const result = workspaceLayoutToTabState(state, partialLayout);
+    const allTiles = result.pages.flatMap((page) => page.tileIds);
+
+    expect(allTiles).toContain("docs");
+    expect(allTiles).toContain("mail");
+    expect(allTiles).toContain("work-folder");
+    expect(allTiles).not.toContain("work-notion");
+    expect(allTiles).not.toContain("work-reddit");
   });
 });
